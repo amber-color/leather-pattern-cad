@@ -56,21 +56,22 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .status select{font:12px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px}
 .status .hint{color:var(--fg);overflow:hidden;text-overflow:ellipsis;font-family:var(--ui)}
 .side{grid-row:2/4;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;box-sizing:border-box}
-.side.parts{grid-column:3;width:300px}
-.side.vars{grid-column:4;width:268px}
+.side.parts{grid-column:3;width:0;border-left-width:0;overflow:hidden auto;visibility:hidden;transition:width .24s cubic-bezier(.2,.7,.2,1),border-left-width .24s,visibility 0s .24s}
+.side.parts.open{width:300px;border-left-width:1px;visibility:visible;transition:width .24s cubic-bezier(.2,.7,.2,1),border-left-width .24s,visibility 0s}
+.side.parts .sec{width:300px;flex:none;box-sizing:border-box}
+.side.vars{grid-column:4;width:268px;position:relative;overflow:hidden auto;transition:width .24s cubic-bezier(.2,.7,.2,1)}
+.side.vars.collapsed{width:38px;overflow:hidden}
+.vfull{width:268px;flex:none;box-sizing:border-box;transition:opacity .16s}
+.vmini{position:absolute;top:0;left:0;bottom:0;width:38px;display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:10px;box-sizing:border-box;opacity:0;pointer-events:none;transition:opacity .16s}
+.vmini .vlabel{writing-mode:vertical-rl;letter-spacing:.3em;font-size:11px;color:var(--muted);cursor:pointer;border:none;background:none;padding:2px 0}
+.side.vars.collapsed .vfull{opacity:0;pointer-events:none}
+.side.vars.collapsed .vmini{opacity:1;pointer-events:auto;transition-delay:.08s}
 .vhead{display:flex;align-items:center;gap:6px}
 .vhead h2{flex:1}
 .vbody{display:flex;flex-direction:column;gap:8px}
 .vtoggle{width:26px;height:26px;padding:0;display:grid;place-items:center;flex:none}
-.vtoggle svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;transition:transform .15s}
-.side.vars.collapsed{width:38px;overflow:hidden}
-.side.vars.collapsed .sec{padding:10px 5px;align-items:center}
-.side.vars.collapsed .vhead{flex-direction:column}
-.side.vars.collapsed .vhead h2{writing-mode:vertical-rl;letter-spacing:.3em;cursor:pointer}
-.side.vars.collapsed .vbody,.side.vars.collapsed #addVar{display:none}
-.side.vars.collapsed .vtoggle svg{transform:rotate(180deg)}
-.side.vars.collapsed .vtoggle{order:-1}
-.side.vars.collapsed .vhead h2{flex:none;margin-top:6px}
+.vtoggle svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8}
+.noanim *{transition:none!important}
 .sec{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
 .sec h2{margin:0;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
 .row{display:grid;grid-template-columns:64px minmax(0,1fr) 62px;gap:6px;align-items:center}
@@ -115,14 +116,17 @@ input.err{border-color:var(--danger)}
   .rail{grid-row:2;flex-direction:row;border-right:none;border-bottom:1px solid var(--line);overflow-x:auto;padding-left:max(8px,env(safe-area-inset-left,0px))}
   .rail .sep{width:1px;height:28px;margin:0 4px}
   .stage{grid-row:3;grid-column:1}.status{grid-column:1;grid-row:4}
-  .side{grid-column:1;border-left:none;overflow:visible;width:auto!important}
+  .side{grid-column:1;border-left:none;overflow:visible;width:auto!important;transition:none!important}
+  .side.parts:not(.open){display:none}
+  .side.parts .sec,.vfull{width:auto}
   .side.parts{grid-row:5}.side.vars{grid-row:6}
   .app{grid-template-rows:46px auto 62vh 30px auto auto}
-  .side.vars.collapsed{height:auto}
-  .side.vars.collapsed .vhead{flex-direction:row}.side.vars.collapsed .vhead h2{writing-mode:horizontal-tb}
+  .side.vars.collapsed .vfull{display:none}
+  .side.vars.collapsed .vmini{position:static;width:auto;flex-direction:row;padding:10px 16px}
+  .vmini .vlabel{writing-mode:horizontal-tb}
   .status .hint{display:none}
 }
-@media (prefers-reduced-motion:reduce){.toast,.vtoggle svg{transition:none}}
+@media (prefers-reduced-motion:reduce){.toast,.side,.vfull,.vmini{transition:none!important}}
 </style>
 
 </head>
@@ -171,13 +175,17 @@ input.err{border-color:var(--danger)}
     <span class="hint" id="sHint"></span>
   </div>
 
-  <aside class="side parts" id="partsBar" aria-label="パーツ" hidden>
+  <aside class="side parts" id="partsBar" aria-label="パーツ" inert>
     <section class="sec" id="secProps"></section>
   </aside>
   <aside class="side vars" id="varsBar" aria-label="変数">
-    <section class="sec">
+    <div class="vmini" id="varsMini" inert>
+      <button class="btn vtoggle" id="varsExpand" aria-label="変数バーを広げる" title="変数バーを広げる"><svg viewBox="0 0 16 16"><path d="M10 3L5 8l5 5"/></svg></button>
+      <button class="vlabel" id="varsLabel" tabindex="-1">変数</button>
+    </div>
+    <section class="sec vfull" id="varsFull">
       <div class="vhead">
-        <h2 id="varsTitle">変数</h2>
+        <h2>変数</h2>
         <button class="btn" id="addVar" style="padding:3px 8px">＋ 追加</button>
         <button class="btn vtoggle" id="varsToggle" aria-expanded="true" title="変数バーを折りたたむ"><svg viewBox="0 0 16 16"><path d="M6 3l5 5-5 5"/></svg></button>
       </div>
@@ -421,7 +429,9 @@ const stResult=st=>{const sp=st.steps.length===1?fmt(st.steps[0],2):`${fmt(Math.
   return`<span>穴数</span><span>${st.n}</span><span>実ピッチ</span><span>${sp} mm</span><span>縫い長さ</span><span>${fmt(st.L)} mm</span>`};
 let lastPanelKey=null,showNodesFor=null;
 function renderPanel(){
-  const pb=$('partsBar'),show=picks.length>0;if(pb.hidden===show){pb.hidden=!show;requestAnimationFrame(applyView)}
+  const pb=$('partsBar'),show=picks.length>0;if(pb.classList.contains('open')!==show){pb.classList.toggle('open',show);pb.inert=!show}
+  // while the parts bar slides closed, keep its last content instead of flashing an empty state
+  if(!show){renderVars(false);return}
   const sec=$('secProps');const it=C.byId[sel];const act=document.activeElement;const key=picks.join(',');
   if(act&&act.dataset&&act.dataset.path&&act.type==='text'&&sec.contains(act)&&lastPanelKey===key){refreshVals(sec);renderVars(true);return}
   lastPanelKey=key;
@@ -507,11 +517,12 @@ $('vars').addEventListener('pointerdown',e=>{const d=e.target.dataset.vdel;if(d=
   const users=varUsers(v.n);if(users.length){toast(`「${v.n}」は ${users.join('、')} で使われているので削除できません`,5000);return}
   pushUndo();doc.vars.splice(+d,1);if(box_has_focus())document.activeElement.blur();renderVars(false);render()});
 const box_has_focus=()=>$('vars').contains(document.activeElement);
-function setVarsCollapsed(c){const v=$('varsBar');v.classList.toggle('collapsed',c);const t=$('varsToggle');t.setAttribute('aria-expanded',String(!c));t.title=c?'変数バーを広げる':'変数バーを折りたたむ';
-  try{localStorage.setItem('kawagata-ui',JSON.stringify({varsCollapsed:c}))}catch(e){}requestAnimationFrame(applyView)}
-$('varsToggle').onclick=()=>setVarsCollapsed(!$('varsBar').classList.contains('collapsed'));
-$('varsTitle').onclick=()=>{if($('varsBar').classList.contains('collapsed'))setVarsCollapsed(false)};
-try{if(JSON.parse(localStorage.getItem('kawagata-ui')||'{}').varsCollapsed)setVarsCollapsed(true)}catch(e){}
+function setVarsCollapsed(c){$('varsBar').classList.toggle('collapsed',c);$('varsFull').inert=c;$('varsMini').inert=!c;$('varsToggle').setAttribute('aria-expanded',String(!c));
+  try{localStorage.setItem('kawagata-ui',JSON.stringify({varsCollapsed:c}))}catch(e){}}
+$('varsToggle').onclick=()=>setVarsCollapsed(true);
+$('varsExpand').onclick=$('varsLabel').onclick=()=>setVarsCollapsed(false);
+document.body.classList.add('noanim');try{if(JSON.parse(localStorage.getItem('kawagata-ui')||'{}').varsCollapsed)setVarsCollapsed(true)}catch(e){}
+requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.remove('noanim')));
 $('addVar').onclick=()=>{pushUndo();let n='a',i=1;while(doc.vars.some(v=>v.n===n))n='a'+(i++);doc.vars.push({n,e:'10'});renderVars(false);render();$('vn'+(doc.vars.length-1)).focus()};
 const cur=()=>byId(sel);
 const sh=(e,d)=>!d?e:isNum(e)?num(+e+d):`(${e})${d<0?'-':'+'}${fmt(Math.abs(d),3).replace(/\.?0+$/,'')}`;
