@@ -105,6 +105,11 @@ input.err{border-color:var(--danger)}
 .edgebox{display:flex;flex-direction:column;gap:8px;border:1px solid var(--accent);border-radius:6px;padding:10px;background:var(--accent-soft)}
 .edgebox h2{color:var(--accent)}
 .edgebox .result{background:var(--panel)}
+.ctab{display:flex;flex-direction:column;gap:4px}
+.crow{display:grid;grid-template-columns:34px minmax(0,1fr) 62px 52px;gap:5px;align-items:center}
+.crow .cl{font-size:12px;color:var(--muted)}
+.crow .val{font:12px var(--mono);text-align:right;color:var(--muted)}.crow .val.err{color:var(--danger)}
+.seg.sm label{padding:4px 0;font-size:11px}
 .ntab{display:flex;flex-direction:column;gap:3px}
 .nrow{display:grid;grid-template-columns:22px minmax(0,1fr) minmax(0,1fr) 30px 18px;gap:4px;align-items:center}
 .nrow input[type=text]{font-size:12px;padding:4px 6px}
@@ -174,7 +179,7 @@ input.err{border-color:var(--danger)}
   </header>
   <nav class="rail" aria-label="ツール">
     <button class="tool" data-tool="select" title="選択・移動 (V)"><svg viewBox="0 0 20 20"><path d="M4 3l11 6-5 1.5L8 16z"/></svg><kbd>V</kbd></button>
-    <button class="tool" data-tool="rect" title="角丸矩形 (R)"><svg viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="10" rx="3"/></svg><kbd>R</kbd></button>
+    <button class="tool" data-tool="rect" title="矩形 (R)"><svg viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="10" rx="3"/></svg><kbd>R</kbd></button>
     <button class="tool" data-tool="circle" title="円 (C)"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.5"/></svg><kbd>C</kbd></button>
     <button class="tool" data-tool="line" title="直線・折れ線 (L)"><svg viewBox="0 0 20 20"><path d="M3 15l4-9 6 6 4-8"/></svg><kbd>L</kbd></button>
     <button class="tool" data-tool="dim" title="寸法線 (D)"><svg viewBox="0 0 20 20"><path d="M3 6v9M17 6v9M3 10.5h14"/><path d="M3 10.5l3-1.8v3.6zM17 10.5l-3-1.8v3.6z" fill="currentColor" stroke="none"/></svg><kbd>D</kbd></button>
@@ -343,6 +348,20 @@ const leaves=s=>s.type==='bool'?descendants(s).filter(c=>c.type!=='bool'):[s];
 // ---------- geometry ----------
 function envOf(){const env={},errs={};for(const v of doc.vars){try{env[v.n]=evalExpr(v.e,env)}catch(e){errs[v.n]=e.message}}return{env,errs}}
 function P(shape,key,env){return evalExpr(shape.p[key],env)}
+// rectangle corners in drawing order (top-right, bottom-right, bottom-left, top-left); each is round (角丸), chamfer (面取り) or none
+const CORNER_NAMES=['左上','右上','右下','左下'];
+function rectCorners(x,y,w,h,cr){const D=[
+    {C:[x,y],pin:r=>[x,y+r],pout:r=>[x+r,y],c:r=>[x+r,y+r],a0:180},
+    {C:[x+w,y],pin:r=>[x+w-r,y],pout:r=>[x+w,y+r],c:r=>[x+w-r,y+r],a0:-90},
+    {C:[x+w,y+h],pin:r=>[x+w,y+h-r],pout:r=>[x+w-r,y+h],c:r=>[x+w-r,y+h-r],a0:0},
+    {C:[x,y+h],pin:r=>[x+r,y+h],pout:r=>[x,y+h-r],c:r=>[x+r,y+h-r],a0:90}];
+  return[1,2,3,0].map(i=>{const{t,r}=cr[i],d=D[i];return t==='none'||r<=0?{i,t:'none',r:0,C:d.C,pin:d.C,pout:d.C}:{i,t,r,C:d.C,pin:d.pin(r),pout:d.pout(r),c:d.c(r),a0:d.a0}})}
+function cornerRectPts(x,y,w,h,cr,seg=16){const pts=[];
+  for(const k of rectCorners(x,y,w,h,cr)){if(k.t==='none')pts.push(k.C);else if(k.t==='chamfer')pts.push(k.pin,k.pout);
+    else for(let j=0;j<=seg;j++){const a=(k.a0+90*j/seg)*Math.PI/180;pts.push([k.c[0]+k.r*Math.cos(a),k.c[1]+k.r*Math.sin(a)])}}
+  return dedupe(pts,true)}
+function rectPathD(g){const P=q=>fmt(q[0],3)+' '+fmt(q[1],3),ks=rectCorners(g.x,g.y,g.w,g.h,g.corners);let d='M'+P(ks[3].pout);
+  for(const k of ks){d+='L'+P(k.pin);if(k.t==='round')d+=`A${fmt(k.r,3)} ${fmt(k.r,3)} 0 0 1 ${P(k.pout)}`;else if(k.t==='chamfer')d+='L'+P(k.pout)}return d+'Z'}
 function roundRectPts(x,y,w,h,r,seg=16){
   r=Math.max(0,Math.min(r,w/2,h/2));const pts=[];
   if(r<=0)return[[x,y],[x+w,y],[x+w,y+h],[x,y+h]];
@@ -380,7 +399,10 @@ function geomLeaf(s,env){
   if(s.type==='text'){const x=P(s,'x',env),y=P(s,'y',env),size=P(s,'size',env),rot=P(s,'rot',env);if(size<=0)throw Error('文字の高さは正の値に');
     const str=s.text||'',w=Math.max(textWidth(str,size),size*0.3),box=textBox(x,y,w,size,rot);return{paths:[box],pts:box,closed:false,isText:true,x,y,size,rot,w,str}}
   if(s.type==='rect'){const x=P(s,'x',env),y=P(s,'y',env),w=P(s,'w',env),h=P(s,'h',env),r=P(s,'r',env);
-    if(w<=0||h<=0)throw Error('幅と高さは正の値に');const pts=roundRectPts(x,y,w,h,r);return{paths:[pts],pts,closed:true,x,y,w,h,r:Math.max(0,Math.min(r,w/2,h/2))}}
+    if(w<=0||h<=0)throw Error('幅と高さは正の値に');const lim=v=>Math.max(0,Math.min(v,w/2,h/2)),each=s.cmode==='each'&&Array.isArray(s.cs);
+    const corners=[0,1,2,3].map(i=>{if(!each)return{t:s.ct||'round',r:lim(r)};const c=s.cs[i]||{},t=c.t||'round';if(t==='none')return{t,r:0};
+      let v;try{v=evalExpr(c.r,env)}catch(e){throw Error(`角（${CORNER_NAMES[i]}）：${e.message}`)}return{t,r:lim(v)}});
+    const pts=cornerRectPts(x,y,w,h,corners);return{paths:[pts],pts,closed:true,x,y,w,h,r:lim(r),corners}}
   if(s.type==='circle'){const cx=P(s,'cx',env),cy=P(s,'cy',env),d=P(s,'d',env);if(d<=0)throw Error('直径は正の値に');
     const pts=[];for(let i=0;i<96;i++){const a=-Math.PI/2+i/96*2*Math.PI;pts.push([cx+d/2*Math.cos(a),cy+d/2*Math.sin(a)])}return{paths:[pts],pts,closed:true,cx,cy,d}}
   const N=evalNodes(s,env);if(N.length<2)throw Error('頂点が足りません');
@@ -459,8 +481,8 @@ function edgeHoles(pts,L,e){const gaps=gapPlan(L,e.p,e.method,e.pos),d=[];let ac
   gaps.forEach((g,i)=>{if(Math.abs(g-e.p)>EPS)irr.push({a:all[i],b:all[i+1],g})});return{interior,irr}}
 // where edges split on a closed outline: sharp corners, or the middle of each rounded corner of a rectangle
 function breakPts(s,g,gOf){
-  if(s.type==='rect'){const{x,y,w,h,r}=g;if(r<=0)return[[x,y],[x+w,y],[x+w,y+h],[x,y+h]];const q=r*(1-Math.SQRT1_2);
-    return[[x+q,y+q],[x+w-q,y+q],[x+w-q,y+h-q],[x+q,y+h-q]]}
+  if(s.type==='rect')return rectCorners(g.x,g.y,g.w,g.h,g.corners).map(k=>{if(k.t==='none')return k.C;if(k.t==='chamfer')return[(k.pin[0]+k.pout[0])/2,(k.pin[1]+k.pout[1])/2];
+    const a=(k.a0+45)*Math.PI/180;return[k.c[0]+k.r*Math.cos(a),k.c[1]+k.r*Math.sin(a)]});
   if(s.type==='circle')return[];
   const own=g.paths.flatMap(P=>{const d=dedupe(P,true);return cornerIdx(d,true).map(i=>d[i])});
   if(s.type!=='bool'||!gOf)return own;
@@ -610,7 +632,7 @@ function drawSel(it,k){const s=it.s,g=it.g;if(g.isText)return;drawEdges(it,k);
 // ---------- panel ----------
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 const LABELS={x1:'始点X',y1:'始点Y',x2:'終点X',y2:'終点Y',off:'離れ',x:'X',y:'Y',w:'幅',h:'高さ',r:'角R',cx:'中心X',cy:'中心Y',d:'直径',size:'文字の高さ',rot:'回転（度）'};
-const TYPE_LABEL=s=>({dim:'寸法線',text:'テキスト',rect:'角丸矩形',circle:'円',poly:s.closed?'閉じたパス':'開いたパス',bool:'演算 · '+OPS[s.op]}[s.type]);
+const TYPE_LABEL=s=>({dim:'寸法線',text:'テキスト',rect:'矩形',circle:'円',poly:s.closed?'閉じたパス':'開いたパス',bool:'演算 · '+OPS[s.op]}[s.type]);
 function exprRow(path,label,expr,env){let v,e;try{v=evalExpr(expr,env)}catch(x){e=x.message}
   return `<div class="row"><label for="f_${path}">${label}</label><input type="text" id="f_${path}" data-path="${path}" value="${esc(expr)}" class="${e?'err':''}" spellcheck="false" autocomplete="off"><span class="val ${e?'err':''}" title="${esc(e||'')}">${e?'エラー':'= '+fmt(v)}</span></div>`}
 const irrText=irr=>{if(!irr.length)return'なし';const g={};irr.forEach(x=>{const k=fmt(x.g);g[k]=(g[k]||0)+1});return`<b style="color:var(--danger);font-weight:500">${Object.entries(g).map(([v,c])=>`${v}mm × ${c}`).join('、')}</b>`};
@@ -646,7 +668,13 @@ function renderPanel(){
       <div style="display:flex;flex-direction:column;gap:4px">${s.ops.map((id,i)=>{const c=byId(id);return`<div class="vrow" style="grid-template-columns:minmax(0,1fr) auto auto"><button class="btn" data-pick="${id}" style="text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i===0?'<span class="pill">本体</span> ':''}${esc(c?c.name:'?')}</button>${i>0?`<button class="btn" data-front="${id}" style="padding:3px 8px">本体にする</button>`:'<span></span>'}<button class="x" data-unuse="${id}" aria-label="材料から外す" title="材料から外す">×</button></div>`}).join('')}</div>`;
       if(it.g){const b=bboxG(it.g);h+=`<div class="result"><span>外形</span><span>${fmt(b[2]-b[0])} × ${fmt(b[3]-b[1])} mm</span><span>輪郭数</span><span>${it.g.paths.length}</span></div>`}}
     if(s.type==='text')h+=`<div class="row"><label for="f_text">文字</label><input type="text" id="f_text" data-path="text" value="${esc(s.text||'')}" autocomplete="off"><span></span></div>`;
-    for(const key in s.p)h+=exprRow('p.'+key,LABELS[key]||key,s.p[key],env);
+    for(const key in s.p)if(!(s.type==='rect'&&key==='r'))h+=exprRow('p.'+key,LABELS[key]||key,s.p[key],env);
+    if(s.type==='rect'){const each=s.cmode==='each'&&Array.isArray(s.cs);
+      h+=segRow('cmode',[['all','四隅まとめて'],['each','個別']],each?'each':'all','角','cmd');
+      if(!each)h+=segRow('ct',[['round','角丸'],['chamfer','面取り']],s.ct||'round','角の種類','cty')+exprRow('p.r','角R',s.p.r,env);
+      else h+=`<div class="ctab">`+[0,1,2,3].map(i=>{const c=s.cs[i]||{t:'round',r:'0'},t=c.t||'round';let v,e;if(t!=='none'){try{v=evalExpr(c.r,env)}catch(x){e=x.message}}
+        return`<div class="crow"><span class="cl">${CORNER_NAMES[i]}</span><div class="seg sm" role="radiogroup" aria-label="${CORNER_NAMES[i]}の種類">${[['round','R'],['chamfer','C'],['none','なし']].map(([k,l])=>`<label title="${{round:'角丸',chamfer:'面取り',none:'直角'}[k]}"><input type="radio" name="cs${i}" data-path="cs.${i}.t" value="${k}"${t===k?' checked':''}>${l}</label>`).join('')}</div>`+
+          (t==='none'?'<span></span><span></span>':`<input type="text" data-path="cs.${i}.r" value="${esc(c.r)}" aria-label="${CORNER_NAMES[i]}の大きさ" class="${e?'err':''}" spellcheck="false" autocomplete="off"><span class="val ${e?'err':''}" title="${esc(e||'')}">${e?'エラー':'= '+fmt(v)}</span>`)+`</div>`}).join('')+`</div><div class="small">R は角丸の半径、C は面取りの大きさ（角から切り落とす長さ）です。式も書けます。</div>`}
     if(s.type==='poly'){h+=`<label class="check"><input type="checkbox" id="f_closed" data-path="closed"${s.closed?' checked':''}> 閉じた形にする</label>`;
       if(s.nodes.length>40&&showNodesFor!==s.id)h+=`<div class="small">頂点 ${s.nodes.length} 個 <button class="btn" id="bShowNodes" style="padding:2px 8px">表を表示</button></div>`;
       else{const ni=(path,v,lab)=>`<input type="text" data-path="${path}" value="${esc(v)}" aria-label="${lab}" spellcheck="false" autocomplete="off">`;
@@ -689,7 +717,7 @@ function renderPanel(){
   renderVars(false)}
 function refreshVals(sec){const env=C.env;sec.querySelectorAll('input[data-path]').forEach(inp=>{const p=inp.dataset.path;
   if(/^nodes\./.test(p)){try{inp.title='= '+fmt(evalExpr(inp.value,env),2);inp.classList.remove('err')}catch(e){inp.title=e.message;inp.classList.add('err')}return}
-  if(!/^(p|st)\./.test(p)||inp.type!=='text')return;
+  if(!/^(p|st|cs)\./.test(p)||inp.type!=='text')return;
   const span=inp.nextElementSibling;if(/^st\.edges\./.test(p)&&!inp.value.trim()){const it=C.byId[sel];span.textContent='= '+fmt(p.endsWith('.pitch')?(it&&it.st?it.st.pitch:0):0);span.className='val';inp.classList.remove('err');return}
   try{const v=evalExpr(inp.value,env);span.textContent='= '+fmt(v);span.className='val';inp.classList.remove('err')}catch(e){span.textContent='エラー';span.className='val err';span.title=e.message;inp.classList.add('err')}});
   const it=C.byId[sel];if(it&&it.st){if($('stRes'))$('stRes').innerHTML=stResult(it.st);const e=selEdge&&it.st.edges.find(x=>x.key===selEdge.key);if(e&&$('edRes'))$('edRes').innerHTML=edResult(e);if(e&&$('edMsg'))$('edMsg').innerHTML=edMsg(e)}}
@@ -714,7 +742,10 @@ $('secProps').addEventListener('input',e=>{const t=e.target,p=t.dataset.path;if(
   if(t.type==='checkbox'){pushUndo();if(p==='closed')s.closed=t.checked;else if(p==='st.on')s.st.on=t.checked;
     else if(p==='edge.on'&&selEdge)setDeep(s,`st.edges.${selEdge.key}.off`,t.checked?'':true);lastPanelKey=null;render();return}
   if(t.tagName==='SELECT'){pushUndo();s[p]=t.value;lastPanelKey=null;render();return}
-  if(t.type==='radio'){pushUndo();setDeep(s,p,t.value);lastPanelKey=null;render();return}
+  if(t.type==='radio'){pushUndo();
+    if(p==='cmode'&&t.value==='each'&&!Array.isArray(s.cs))s.cs=[0,1,2,3].map(()=>({t:s.ct||'round',r:s.p.r}));
+    if(/^cs\.\d\.t$/.test(p)&&t.value!=='none'){const c=s.cs[+p[3]];if(!c.r||!String(c.r).trim())c.r=s.p.r}
+    setDeep(s,p,t.value);lastPanelKey=null;render();return}
   setDeep(s,p,t.value);render()});
 // set a dotted path, creating objects on the way; an empty value under st.edges removes the override
 function setDeep(o,p,v){const ks=p.split('.');const edge=ks[0]==='st'&&ks[1]==='edges';let t=o;
@@ -807,7 +838,7 @@ const toastEl=$('toast');let toastT;
 function toast(m,ms=2600){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),ms)}
 function toMM(e){const r=svg.getBoundingClientRect();return[(e.clientX-r.left-view.tx)/view.s,(e.clientY-r.top-view.ty)/view.s]}
 const snap=v=>snapStep?Math.round(v/snapStep)*snapStep:Math.round(v*100)/100;
-const HINT={dim:'始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック',text:'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集',select:'クリックで選択、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで角丸矩形を描く',circle:'中心からドラッグして円を描く',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直'};
+const HINT={dim:'始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック',text:'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集',select:'クリックで選択、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで矩形を描く',circle:'中心からドラッグして円を描く',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直'};
 function setTool(t){tool=t;draft=null;document.querySelectorAll('.tool[data-tool]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));svg.className.baseVal=t==='select'?'':'draw';$('sHint').textContent=HINT[t];render()}
 document.querySelectorAll('.tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
 function contentBB(){let bb=[1e9,1e9,-1e9,-1e9];for(const it of C.items){if(!it.g||it.parent)continue;const b=bboxG(it.g);
@@ -998,7 +1029,7 @@ function buildSVG(){const{items,bb}=exportItems();const m=5,x0=bb[0]-m,y0=bb[1]-
   for(const{s,g,st}of items){const id=esc(s.name);let e;
     if(g.isDim){const D=g.dim;groups.dim+=`<g><title>${id}</title><path d="${D.lines.map(([a,b])=>`M${fmt(a[0],3)} ${fmt(a[1],3)}L${fmt(b[0],3)} ${fmt(b[1],3)}`).join('')}"/><path fill="#444" stroke="none" d="${D.arrows.map(t=>dOf(t,true)).join('')}"/><text x="${fmt(D.text.x,3)}" y="${fmt(D.text.y,3)}" font-size="${fmt(D.text.size,3)}" text-anchor="middle" fill="#444" stroke="none" transform="rotate(${fmt(D.text.rot,3)} ${fmt(D.text.x,3)} ${fmt(D.text.y,3)})">${D.text.str}</text></g>\n`;continue}
     if(g.isText){groups.text+=`<text x="${fmt(g.x,3)}" y="${fmt(g.y,3)}" font-size="${fmt(g.size,3)}"${g.rot?` transform="rotate(${fmt(g.rot,3)} ${fmt(g.x,3)} ${fmt(g.y,3)})"`:''} fill="${s.kind==='guide'?'#2c6fbb':'#000'}">${esc(g.str)}</text>\n`;continue}
-    if(s.type==='rect')e=`<rect x="${fmt(g.x,3)}" y="${fmt(g.y,3)}" width="${fmt(g.w,3)}" height="${fmt(g.h,3)}" rx="${fmt(g.r,3)}"><title>${id}</title></rect>\n`;
+    if(s.type==='rect')e=`<path d="${rectPathD(g)}"><title>${id}</title></path>\n`;
     else if(s.type==='circle')e=`<circle cx="${fmt(g.cx,3)}" cy="${fmt(g.cy,3)}" r="${fmt(g.d/2,3)}"><title>${id}</title></circle>\n`;
     else e=`<path fill-rule="evenodd" d="${s.type==='poly'?nodesD(g.nodes,g.closed):dPaths(g.paths,g.closed)}"><title>${id}</title></path>\n`;
     groups[s.kind==='guide'?'guide':'cut']+=e;
@@ -1019,11 +1050,9 @@ function buildDXF(){const{items}=exportItems();const L=[];const add=(...a)=>L.pu
       add(0,'TEXT',8,'DIM',10,n(D.text.x),20,n(-D.text.y),30,0,40,n(D.text.size*0.72),1,D.text.str,50,n(-D.text.rot),72,1,11,n(D.text.x),21,n(-D.text.y),31,0);continue}
     if(g.isText){add(0,'TEXT',8,'TEXT',10,n(g.x),20,n(-g.y),30,0,40,n(g.size*0.72),1,dxfStr(g.str),50,n(-g.rot));continue}
     if(s.type==='circle')circ(layer,g.cx,g.cy,g.d/2);
-    else if(s.type==='rect'){const{x,y,w,h,r}=g;
-      if(r<=0)poly(layer,[[x,y],[x+w,y],[x+w,y+h],[x,y+h]],true);
-      else{// screen-clockwise path stays clockwise after the y flip, so arcs take a negative bulge
-        const B=-Math.tan(Math.PI/8);
-        poly(layer,[[x+r,y],[x+w-r,y,B],[x+w,y+r],[x+w,y+h-r,B],[x+w-r,y+h],[x+r,y+h,B],[x,y+h-r],[x,y+r,B]],true)}}
+    else if(s.type==='rect'){// screen-clockwise path stays clockwise after the y flip, so a round corner's arc takes a negative bulge
+      const B=-Math.tan(Math.PI/8),v=[];for(const c of rectCorners(g.x,g.y,g.w,g.h,g.corners)){if(c.t==='none'){v.push([...c.C]);continue}v.push(c.t==='round'?[...c.pin,B]:[...c.pin]);v.push([...c.pout])}
+      poly(layer,v.filter((q,i)=>i===0||dist(q,v[i-1])>1e-6),true)}
     else for(const p of g.paths)poly(layer,p,g.closed);
     if(st)for(const[hx,hy]of st.holes)circ('STITCH',hx,hy,st.hole/2)}
   add(0,'ENDSEC',0,'EOF');return L.join('\n')+'\n'}
