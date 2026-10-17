@@ -267,14 +267,14 @@ const isNum=s=>/^\s*-?\d+(\.\d+)?\s*$/.test(String(s));
 const fmt=(v,d=1)=>(Math.round(v*10**d)/10**d).toFixed(d);
 
 // ---------- state ----------
-const SAMPLE={vars:[{n:'W',e:'95'},{n:'H',e:'66'},{n:'R',e:'5'},{n:'コバ',e:'3'},{n:'ピッチ',e:'4'},{n:'穴',e:'1.2'},{n:'間',e:'15'},{n:'指',e:'24'},{n:'ベロ幅',e:'30'},{n:'ベロ長',e:'45'}],
+const SAMPLE={vars:[{n:'W',e:'95'},{n:'H',e:'66'},{n:'R',e:'5'},{n:'縫い代',e:'3'},{n:'ピッチ',e:'4'},{n:'穴',e:'1.2'},{n:'間',e:'15'},{n:'指',e:'24'},{n:'ベロ幅',e:'30'},{n:'ベロ長',e:'45'}],
   shapes:[
-    {id:'s1',name:'外装',type:'rect',kind:'cut',p:{x:'0',y:'0',w:'W',h:'2*H',r:'R'},st:{on:true,inset:'コバ',pitch:'ピッチ',hole:'穴'}},
-    {id:'s2',name:'ポケット板',type:'rect',kind:'cut',p:{x:'W+間',y:'0',w:'W',h:'H',r:'R'},st:{on:false,inset:'コバ',pitch:'ピッチ',hole:'穴'}},
-    {id:'s6',name:'親指カット',type:'circle',kind:'cut',p:{cx:'W+間+W/2',cy:'0',d:'指'},st:{on:false,inset:'コバ',pitch:'ピッチ',hole:'穴'}},
-    {id:'s7',name:'内ポケット',type:'bool',op:'diff',ops:['s2','s6'],kind:'cut',p:{},st:{on:true,inset:'コバ',pitch:'ピッチ',hole:'穴'}},
-    {id:'s3',name:'マチ',type:'poly',kind:'cut',nodes:[{x:'110',y:'80'},{x:'150',y:'80'},{x:'140',y:'128'},{x:'120',y:'128'}],closed:true,p:{},st:{on:true,inset:'コバ',pitch:'ピッチ',hole:'穴'}},
-    {id:'s8',name:'ベロ',type:'poly',kind:'cut',closed:true,p:{},st:{on:true,inset:'コバ',pitch:'ピッチ',hole:'穴'},nodes:[
+    {id:'s1',name:'外装',type:'rect',kind:'cut',p:{x:'0',y:'0',w:'W',h:'2*H',r:'R'},st:{on:true,inset:'縫い代',pitch:'ピッチ',hole:'穴'}},
+    {id:'s2',name:'ポケット板',type:'rect',kind:'cut',p:{x:'W+間',y:'0',w:'W',h:'H',r:'R'},st:{on:false,inset:'縫い代',pitch:'ピッチ',hole:'穴'}},
+    {id:'s6',name:'親指カット',type:'circle',kind:'cut',p:{cx:'W+間+W/2',cy:'0',d:'指'},st:{on:false,inset:'縫い代',pitch:'ピッチ',hole:'穴'}},
+    {id:'s7',name:'内ポケット',type:'bool',op:'diff',ops:['s2','s6'],kind:'cut',p:{},st:{on:true,inset:'縫い代',pitch:'ピッチ',hole:'穴'}},
+    {id:'s3',name:'マチ',type:'poly',kind:'cut',nodes:[{x:'110',y:'80'},{x:'150',y:'80'},{x:'140',y:'128'},{x:'120',y:'128'}],closed:true,p:{},st:{on:true,inset:'縫い代',pitch:'ピッチ',hole:'穴'}},
+    {id:'s8',name:'ベロ',type:'poly',kind:'cut',closed:true,p:{},st:{on:true,inset:'縫い代',pitch:'ピッチ',hole:'穴'},nodes:[
       {x:'W+間+50',y:'80'},{x:'W+間+50+ベロ幅',y:'80'},
       {x:'W+間+50+ベロ幅',y:'80+ベロ長-ベロ幅/2',ho:['0','0.5523*ベロ幅/2']},
       {x:'W+間+50+ベロ幅/2',y:'80+ベロ長',t:'smooth',hi:['0.5523*ベロ幅/2','0'],ho:['-0.5523*ベロ幅/2','0']},
@@ -405,7 +405,7 @@ function insertAt(P,b){const n=nearestOn(P,b);if(n.t<1e-6)return{path:P,i:n.i,ad
 function stitch(s,g,env,gOf){
   if(!s.st||!s.st.on)return null;const st=s.st;
   const pitch=evalExpr(st.pitch,env),hole=evalExpr(st.hole,env);if(pitch<=0)throw Error('ピッチは正の値に');
-  let contours;if(g.closed){contours=insetPaths(g.paths,evalExpr(st.inset,env));if(!contours.length)throw Error('コバ幅が大きすぎます')}else contours=[g.pts];
+  let contours;if(g.closed){contours=insetPaths(g.paths,evalExpr(st.inset,env));if(!contours.length)throw Error('縫い代が大きすぎます')}else contours=[g.pts];
   const f=g.paths[0][0],out={closed:g.closed,edges:[],holes:[],irr:[],L:0,hole,pitch};
   const bps=g.closed?breakPts(s,g,gOf):[];const paths=contours.map(raw=>dedupe(raw,g.closed));
   // assign each outline break point to the contour it is closest to
@@ -559,7 +559,7 @@ function renderPanel(){
       h+=`<div class="small">頂点のX・Yとハンドル（頂点からの相対位置）にも式が書けます。頂点をクリックで選択（Shiftで追加）してDeleteで削除、ダブルクリックで角⇔曲線、線上をダブルクリックで頂点を追加。中に点がある頂点は式で決まっているのでドラッグでは動きません。</div>`}
     if(it.err)h+=`<div class="small" style="color:var(--danger)">${esc(it.err)}</div>`;
     if(!it.parent){h+=`<h2 style="margin-top:6px">ステッチ穴</h2><label class="check"><input type="checkbox" id="f_st" data-path="st.on"${s.st.on?' checked':''}> 穴を並べる</label>`;
-      if(s.st.on){if(it.g&&it.g.closed)h+=exprRow('st.inset','コバ幅',s.st.inset,env);
+      if(s.st.on){if(it.g&&it.g.closed)h+=exprRow('st.inset','縫い代',s.st.inset,env);
         h+=exprRow('st.pitch','ピッチ',s.st.pitch,env)+exprRow('st.hole','穴径',s.st.hole,env);
         h+=segRow('st.method',METHODS,s.st.method||'auto','余りの処理','stm')+segRow('st.pos',POSES,s.st.pos||'both','余りの位置','stp');
         if(it.st)h+=`<div class="result" id="stRes">${stResult(it.st)}</div><div class="small">ピッチは変えずに、角から角までの辺ごとに余りを処理します。縫い線（点線）をクリックすると、その辺だけの設定ができます。</div>`;
@@ -723,7 +723,7 @@ function finishPoly(close){if(!draft||draft.type!=='poly')return;const D=draft.n
   const curved=D.some(n=>n.ho);
   if(D.length<2||(close&&D.length<3&&!curved)){render();return}pushUndo();
   const nodes=D.map(n=>{const o={x:num(n.x),y:num(n.y)};if(n.ho){o.t='smooth';o.hi=n.hi.map(num);o.ho=n.ho.map(num)}return o});
-  const s={id:newId(),name:close?(curved?'曲線パーツ':'多角形'):(curved?'曲線':'線'),type:'poly',kind:'cut',nodes,closed:!!close,p:{},st:{on:false,inset:'コバ',pitch:'ピッチ',hole:'穴'}};
+  const s={id:newId(),name:close?(curved?'曲線パーツ':'多角形'):(curved?'曲線':'線'),type:'poly',kind:'cut',nodes,closed:!!close,p:{},st:{on:false,inset:'縫い代',pitch:'ピッチ',hole:'穴'}};
   fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select')}
 function fixStitchDefaults(s){const env=C.env;for(const k of['inset','pitch','hole'])if(!(s.st[k]in env))s.st[k]={inset:'3',pitch:'4',hole:'1.2'}[k]}
 svg.addEventListener('pointerdown',e=>{
@@ -799,7 +799,7 @@ svg.addEventListener('pointerup',e=>{svg.classList.remove('pan');
     if(hit.length)toast(`${hit.length}個を選択しました`);return}
   if(draft&&draft.type!=='poly'){const d=draft;draft=null;
     if(d.type==='rect'){const x=Math.min(d.a[0],d.b[0]),y=Math.min(d.a[1],d.b[1]),w=Math.abs(d.b[0]-d.a[0]),h=Math.abs(d.b[1]-d.a[1]);
-      if(w>=1&&h>=1){pushUndo();const s={id:newId(),name:'パーツ',type:'rect',kind:'cut',p:{x:String(x),y:String(y),w:String(w),h:String(h),r:'R' in C.env?'R':'0'},st:{on:true,inset:'コバ',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
+      if(w>=1&&h>=1){pushUndo();const s={id:newId(),name:'パーツ',type:'rect',kind:'cut',p:{x:String(x),y:String(y),w:String(w),h:String(h),r:'R' in C.env?'R':'0'},st:{on:true,inset:'縫い代',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
     else{const r=Math.hypot(d.b[0]-d.a[0],d.b[1]-d.a[1]);if(r>=0.5){pushUndo();const s={id:newId(),name:'穴・円',type:'circle',kind:'cut',p:{cx:String(d.a[0]),cy:String(d.a[1]),d:String(+(2*r).toFixed(2))},st:{on:false,inset:'2',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
     render()}
   drag=null});
