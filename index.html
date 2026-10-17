@@ -40,7 +40,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .top{grid-column:1/-1;grid-row:1;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
 .top .brand{font-weight:500;font-size:14px;letter-spacing:.01em;color:var(--accent);margin-right:10px;white-space:nowrap}
 .top .brand img{display:block;width:30px;height:30px}
-.opt{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;align-items:center}
+.opt{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;align-items:center}html[lang=en] .opt{grid-template-columns:58px minmax(0,1fr)}
 .opt>label,.opt>span{font-size:12px;color:var(--muted)}
 .seg{display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
 .seg label{flex:1;text-align:center;padding:6px 0;font-size:12px;cursor:pointer;border-left:1px solid var(--line)}
@@ -191,6 +191,7 @@ input.err{border-color:var(--danger)}
   .app{height:100vh;height:100dvh;grid-template-columns:minmax(0,1fr);grid-template-rows:46px auto minmax(0,1fr) 30px 44vh;grid-template-rows:46px auto minmax(0,1fr) 30px 44dvh}
   .top{grid-column:1;padding-left:max(12px,env(safe-area-inset-left,0px))}
   .top .lbl,.top .spacer,.top .brand{display:none}
+  .top,.top .grp{gap:2px}.top .ibtn{width:36px}
   .rail{grid-row:2;flex-direction:row;border-right:none;border-bottom:1px solid var(--line);overflow-x:auto;padding-left:max(8px,env(safe-area-inset-left,0px))}
   .rail .sep{width:1px;height:28px;margin:0 4px}
   .stage{grid-row:3;grid-column:1}.status{grid-column:1;grid-row:4}
@@ -255,6 +256,7 @@ input.err{border-color:var(--danger)}
         </div></div>
       <button class="btn ibtn" id="xFrame" aria-pressed="false" title="印刷枠：PDFの用紙と向きで印刷される範囲を図面に表示" aria-label="印刷枠"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v2"/><path d="M20 16v2a2 2 0 0 1 -2 2h-2"/><path d="M8 20h-2a2 2 0 0 1 -2 -2v-2"/><path d="M4 8v-2a2 2 0 0 1 2 -2h2"/></svg></button>
       <button class="btn ibtn" id="xTheme" title="ライト / ダークを切り替え" aria-label="ライト / ダークを切り替え"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="t-moon"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454l0 .008"/></g><g class="t-sun"><path d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"/></g></svg></button>
+      <button class="btn ibtn" id="xLang" title="言語を切り替え（日本語 / English）" aria-label="言語を切り替え（日本語 / English）"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.371c0 4.418 -2.239 6.629 -5 6.629"/><path d="M4 6.371h7"/><path d="M5 9c0 2.144 2.252 3.908 6 4"/><path d="M12 20l4 -9l4 9"/><path d="M19.1 18h-6.2"/><path d="M6.694 3l.793 .582"/></svg></button>
       <input type="file" id="fileIn" accept=".json,application/json" hidden>
     </div>
     <button class="btn ibtn share" id="xShare" title="共有：型紙を埋め込んだURLをクリップボードにコピー" aria-label="共有"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 6a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M8.7 10.7l6.6 -3.4"/><path d="M8.7 13.3l6.6 3.4"/></svg></button>
@@ -342,14 +344,14 @@ const CONST={pi:Math.PI};
 const IDRE=/^[\p{L}_][\p{L}\p{N}_]*$/u;
 function tokenize(s){
   const t=[];let i=0;const re=/[\p{L}_][\p{L}\p{N}_]*/uy;
-  const prop=()=>{if(s[i]!=='.')return null;re.lastIndex=i+1;const m=re.exec(s);if(!m)throw Error('「.」の後ろに図形の値の名前（右・上・幅など）を書いてください');i+=1+m[0].length;return m[0]};
+  const prop=()=>{if(s[i]!=='.')return null;re.lastIndex=i+1;const m=re.exec(s);if(!m)throw Error('「.」の後ろに図形の値の名前（右・上・幅など）を書いてください');i+=1+m[0].length;return propIn(m[0])};
   while(i<s.length){const c=s[i],at=i;
     if(/\s/.test(c)){i++;continue}
     if(/[0-9.]/.test(c)){let j=i;while(j<s.length&&/[0-9.]/.test(s[j]))j++;const v=parseFloat(s.slice(i,j));if(isNaN(v))throw Error('数値が不正');t.push({k:'n',v,at,end:j});i=j;continue}
     if(c==='['){const j=s.indexOf(']',i);if(j<0)throw Error('「]」が足りません');const name=s.slice(i+1,j).trim();i=j+1;
-      const pr=prop();if(!pr)throw Error(`[${name}] の後ろに「.右」のような値の名前が要ります`);t.push({k:'ref',name,prop:pr,at,end:i});continue}
+      const dot=i,pr=prop();if(!pr)throw Error(`[${name}] の後ろに「.右」のような値の名前が要ります`);t.push({k:'ref',name,prop:pr,at,end:i,dot});continue}
     re.lastIndex=i;const m=re.exec(s);
-    if(m){i+=m[0].length;if(s[i]==='.'&&/[\p{L}_]/u.test(s[i+1]||'')){const pr=prop();t.push({k:'ref',name:m[0],prop:pr,at,end:i});continue}
+    if(m){i+=m[0].length;if(s[i]==='.'&&/[\p{L}_]/u.test(s[i+1]||'')){const dot=i,pr=prop();t.push({k:'ref',name:m[0]==='self'?SELF:m[0],prop:pr,at,end:i,dot});continue}
       t.push({k:'id',v:m[0],at,end:i});continue}
     if('+-*/^(),'.includes(c)){t.push({k:c,at,end:i+1});i++;continue}
     if(c==='×'){t.push({k:'*',at,end:i+1});i++;continue}
@@ -375,6 +377,140 @@ function evalExpr(src,env){
   const v=expr();if(p<t.length)throw Error('式の後ろに余計な文字');if(!isFinite(v))throw Error('計算できません');return v}
 const isNum=s=>/^\s*-?\d+(\.\d+)?\s*$/.test(String(s));
 const fmt=(v,d=1)=>(Math.round(v*10**d)/10**d).toFixed(d);
+// ---------- language ----------
+// The interface is written in Japanese; in English mode, text shown on screen is swapped through this table
+// (exact strings, then patterns with {0} {1} … whose captured parts are translated in turn). Names people give to
+// shapes and variables, and the text of text shapes, are left alone.
+const LANG=(()=>{let u={};try{u=JSON.parse(localStorage.getItem('ppp-ui')||'{}')||{}}catch(e){}
+  if(u.lang==='ja'||u.lang==='en')return u.lang;const l=(navigator.languages&&navigator.languages[0])||navigator.language||'ja';return/^ja/i.test(l)?'ja':'en'})();
+const EN_EXACT={
+  // top bar, menus
+  'ファイル':'File','新規':'New','開く':'Open','開く：保存した .json を読み込む':'Open: load a saved .json','保存':'Save','保存：型紙を .json で保存':'Save the pattern as .json',
+  '使い方':'Help','書き出し':'Export','書き出し（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)','印刷枠':'Print area','印刷枠：PDFの用紙と向きで印刷される範囲を図面に表示':'Print area: show the area the PDF paper and orientation will print',
+  'ライト / ダークを切り替え':'Switch light / dark','ライトにする':'Switch to light','ダークにする':'Switch to dark','ライトテーマにする':'Switch to the light theme','ダークテーマにする':'Switch to the dark theme',
+  '共有':'Share','共有：型紙を埋め込んだURLをクリップボードにコピー':'Share: copy a URL that contains the pattern','言語を切り替え（日本語 / English）':'Switch language (日本語 / English)',
+  'Parametric Pattern Plotter — 式で描くレザークラフト型紙CAD':'Parametric Pattern Plotter — a leathercraft pattern CAD driven by expressions',
+  '空の型紙':'Blank pattern','変数は残して、図形をすべて消します':'Keeps the variables and removes every shape','サンプル':'Sample','二つ折り名刺入れ（全機能を使った例）':'Bifold card case (uses every feature)',
+  '実寸で印刷。用紙と向きを選んで書き出します':'Full-size print; choose paper and orientation','mm単位。裁断線・ステッチ穴・ガイドをグループ分け':'In mm, grouped into cut lines, stitch holes and guides','R12形式。レイヤー CUT / STITCH / GUIDE':'R12, layers CUT / STITCH / GUIDE',
+  // tools, status bar
+  'ツール':'Tools','選択・移動 (V)':'Select / move (V)','矩形 (R)':'Rectangle (R)','円 (C)':'Circle (C)','直線・折れ線 (L)':'Line / polyline (L)','寸法線 (D)':'Dimension (D)','テキスト (T)':'Text (T)','ベジェ曲線 (P)':'Bézier curve (P)',
+  '元に戻す (⌘Z)':'Undo (⌘Z)','やり直し (⇧⌘Z)':'Redo (⇧⌘Z)','全体表示 (F)':'Fit to view (F)','縮小':'Zoom out','拡大':'Zoom in','スナップ':'Snap','なし':'None','図形スナップ':'Object snap',
+  '図形の端点・中点・中心・交点などに吸着します（S で切り替え。Ctrl / ⌘ を押している間は一時的に無効）':'Snap to endpoints, midpoints, centres, intersections and more (S toggles; hold Ctrl / ⌘ to suspend)',
+  'クリックで選択（重なっている所は同じ場所をもう一度クリックで奥の図形へ）、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動':'Click to select (click the same spot again for the shape underneath); drag on the background to box-select (Shift adds). Drag a shape to move it; right-drag to pan',
+  'ドラッグで矩形を描く。図形の角・中点・辺に吸着すると、その図形に連動します（Ctrl / ⌘ で一時的に吸着なし）':'Drag to draw a rectangle. Snapping to a shape’s corner, midpoint or edge links it to that shape (Ctrl / ⌘ to suspend snapping)',
+  '中心からドラッグして円を描く。中心は図形の点に吸着・連動します':'Drag from the centre to draw a circle; the centre snaps to and links with shape points',
+  'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直':'Click to add points. Click the first point to close; double-click or Enter to finish; Shift for horizontal / vertical',
+  'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直':'Click for a corner point, drag for a curve point. Click the first point to close; double-click or Enter to finish; Shift for horizontal / vertical',
+  '始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック':'Click the start and end (snaps to corners, midpoints and centres), move to place the line, then click again',
+  'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集':'Click to place text (anchored at its lower left); then edit the text, height and rotation in the panel',
+  // variables bar
+  '変数':'Variables','＋ 追加':'+ Add','変数バーを広げる':'Expand the variables bar','変数バーを折りたたむ':'Collapse the variables bar','変数名':'Variable name',
+  '寸法欄には':'Dimension fields take expressions such as ','のような式が書けます。':'. Other shapes’ values work too, as in ','のように図形の値も参照できます。変数を変えると全パーツが追従します。':'. Change a variable and every part follows.',
+  'まだどこにも使われていません':'Not used anywhere yet','外装.右':'外装.right',
+  // part panel
+  'パーツ':'Part','パーツを選ぶと寸法を式で編集できます。背景を左ドラッグで範囲選択、Shift＋クリックで追加選択。複数選ぶと合体・差などの演算ができます。':'Select a part to edit its dimensions as expressions. Drag on the background to box-select; Shift-click to add. Select several to combine them (union, difference …).',
+  'Shift＋クリックで選択を追加・解除。最初に選んだ図形が「本体」になります（範囲選択では作図順）。ドラッグでまとめて移動できます。':'Shift-click adds or removes. The first one picked is the base (drawing order for a box selection). Drag to move them together.',
+  '元の図形は「材料」として式付きのまま残り、変数を変えると結果も作り直されます。':'The originals stay as materials with their expressions; change a variable and the result is rebuilt.',
+  '合体':'Union','差（本体から引く）':'Difference (from the base)','差':'Difference','交差':'Intersect','排他':'Exclude','本体':'Base','本体にする':'Make base','材料から外す':'Remove from materials',
+  '← 演算に戻る':'← Back to the operation','名前':'Name','線種':'Line','裁断線':'Cut line','ガイド':'Guide','演算':'Operation','材料（上から順に演算。差は1番目から残りを引きます）':'Materials (applied top to bottom; difference takes the rest away from the first)',
+  '外形':'Size','輪郭数':'Contours','文字':'Text','寸法線':'Dimension','テキスト':'Text','矩形':'Rectangle','円':'Circle','閉じたパス':'Closed path','開いたパス':'Open path',
+  '幅':'Width','高さ':'Height','角R':'Corner R','中心X':'Centre X','中心Y':'Centre Y','直径':'Diameter','文字の高さ':'Text height','回転（度）':'Rotation (°)','始点X':'Start X','始点Y':'Start Y','終点X':'End X','終点Y':'End Y','離れ':'Offset','回転中心X':'Pivot X','回転中心Y':'Pivot Y',
+  '角':'Corners','四隅まとめて':'All four','個別':'Each','角の種類':'Corner type','角丸':'Round','面取り':'Chamfer','直角':'Square','左上':'Top left','右上':'Top right','右下':'Bottom right','左下':'Bottom left',
+  'R は角丸の半径、C は面取りの大きさ（角から切り落とす長さ）です。式も書けます。':'R is the rounding radius, C the chamfer size (how much is cut off the corner). Expressions work here too.',
+  '閉じた形にする':'Closed shape','表を表示':'Show table','角と曲線を切り替え':'Switch corner / curve','入':'In','出':'Out',
+  '頂点のX・Yとハンドル（頂点からの相対位置）にも式が書けます。頂点をクリックで選択（Shiftで追加）してDeleteで削除、ダブルクリックで角⇔曲線、線上をダブルクリックで頂点を追加。中に橙の点がある頂点は変数の式で決まっているのでドラッグでは動きません。水色の点は、ほかの図形に連動している頂点です。':'Node X / Y and handles (relative to the node) take expressions. Click a node to select it (Shift adds) and Delete removes it; double-click toggles corner / curve; double-click the line to add a node. A node with an orange dot is set by a variable expression and won’t drag; a cyan dot means it is linked to another shape.',
+  '寸法':'Dimension','始点・終点の丸い四角、線の中央の丸をドラッグで調整。図形の角や中心に吸着します。離れは、始点から終点へ向かって右側が正、左側が負です。':'Drag the square handles at the ends and the round one in the middle to adjust; they snap to corners and centres. The offset is positive to the right of start → end, negative to the left.',
+  'ステッチ穴':'Stitch holes','穴を並べる':'Place stitch holes','縫い代':'Margin','ピッチ':'Pitch','穴径':'Hole size','余りの処理':'Remainder','余りの位置':'Remainder at','自動':'Auto','詰める':'Tighter gap','空ける':'Wider gap',
+  '両端':'Both ends','始点':'Start','中央':'Middle','終点':'End','既定':'Default','穴数':'Holes','縫い長さ':'Stitch length','縫う辺':'Stitched edges','不揃い':'Uneven','穴':'Holes',
+  'ピッチは変えずに、角から角までの辺ごとに余りを処理します。縫い線（点線）をクリックすると、その辺だけの設定ができます。':'The pitch never changes; any remainder is handled per edge, corner to corner. Click a stitch line (dotted) to set that edge on its own.',
+  'この辺を縫う':'Stitch this edge','始点から':'From start','終点から':'From end','辺の選択を解除':'Deselect the edge','削除':'Delete','確定':'Bake','演算を解除':'Ungroup','複製':'Duplicate','左右複製':'Mirror L↔R','上下複製':'Mirror T↕B',
+  '材料と式を捨てて、今の形で固定します':'Drop the materials and expressions and keep the current shape','演算をやめて材料を元の図形に戻します':'Undo the operation and turn the materials back into shapes',
+  '左右反転した形を右側に複製':'Copy flipped left–right, to the right','上下反転した形を下側に複製':'Copy flipped top–bottom, below','エラー':'Error',
+  // PDF, modals
+  'PDFのプレビュー':'PDF preview','実寸PDFの書き出し':'Full-size PDF','用紙':'Paper','レター（216 × 279 mm）':'Letter (216 × 279 mm)','図形に合わせる（1枚）':'Fit to the shapes (1 page)','向き':'Layout','縦':'Portrait','横':'Landscape',
+  '「自動」は枚数が少なくなる向きを選びます。印刷は「実際のサイズ（100%）」で行い、各ページ下の50mm目盛りで確認してください。':'“Auto” picks the orientation with fewer pages. Print at “Actual size (100%)” and check the 50 mm scale at the bottom of each page.',
+  '書き出す':'Export','キャンセル':'Cancel','読み込んでいます…':'Loading…','コピー':'Copy','テキストで保存':'Save as text','閉じる':'Close','枚数':'Pages','型紙':'Pattern','書き出す図形がありません':'Nothing to export','レター':'Letter',
+  '共有用のURL':'Share URL','自動でコピーできなかったので、下の文字列をコピーしてください。':'Copying automatically didn’t work; copy the text below.',
+  '使い方を読み込めませんでした。':'The guide could not be loaded.','GitHub の README':'the README on GitHub','を開いてください。':'Please open it there.',
+  // canvas
+  '端点':'Endpoint','中点':'Midpoint','中心':'Centre','四分点':'Quadrant','交点':'Intersection','線上':'On edge','延長':'Aligned',
+  // toasts
+  '頂点は2個以上必要です':'A path needs at least two nodes','エラーのある図形は反転できません':'A shape with an error can’t be mirrored','左右反転した形を右に複製しました':'Copied, flipped left–right, to the right','上下反転した形を下に複製しました':'Copied, flipped top–bottom, below',
+  '確定しました。式は消え、座標が固定されています':'Baked: the expressions are gone and the coordinates are fixed','材料は演算結果ごと選んでください':'Select materials through their operation result',
+  '縫う範囲が式で決まっているので、パネルで編集してください':'The stitched range is set by an expression; edit it in the panel','回転が式で決まっているので、パネルで編集してください':'The rotation is set by an expression; edit it in the panel',
+  '離れが式で決まっているので、パネルで編集してください':'The offset is set by an expression; edit it in the panel','この点は変数の式で決まっているので、パネルで編集してください':'This point is set by a variable expression; edit it in the panel',
+  'この頂点は変数の式で決まっているので、パネルで編集してください':'This node is set by a variable expression; edit it in the panel','このハンドルは式で決まっているので、パネルで編集してください':'This handle is set by an expression; edit it in the panel',
+  '直径が式なので、パネルで編集してください':'The diameter is an expression; edit it in the panel','頂点を追加しました':'Node added','図形スナップ：オフ':'Object snap: off','図形スナップ：オン':'Object snap: on',
+  '保存できませんでした':'Couldn’t save','保存の確認が開いています':'A save prompt is already open','コピーしました':'Copied','選択しました。⌘Cでコピーしてください':'Selected; press ⌘C to copy','読み込みました':'Loaded',
+  '型紙ファイルとして読めませんでした':'That file isn’t a pattern this app can read','サンプル（二つ折り名刺入れ）を開きました（⌘Zで戻せます）':'Opened the sample (bifold card case). ⌘Z to go back','新規にしました（⌘Zで戻せます）':'Started a new pattern. ⌘Z to go back',
+  '共有用のURLを作れませんでした':'Couldn’t make a share URL','共有された型紙を開きました（⌘Zで前の作業に戻せます）':'Opened the shared pattern. ⌘Z returns to your previous work','共有リンクの型紙を読み込めませんでした':'Couldn’t read the pattern in the shared link',
+  'オフセット計算ライブラリを読み込めませんでした':'The offset library could not be loaded',
+  // errors
+  '「.」の後ろに図形の値の名前（右・上・幅など）を書いてください':'After “.” write a value name (right, top, width …)','数値が不正':'Invalid number','「]」が足りません':'Missing “]”','空です':'Empty','式が途中で終わっています':'The expression ends too early',
+  '「自分」は図形の欄でだけ使えます':'“self” works only in shape fields','変数の式では図形を参照できません':'Variables can’t refer to shapes','")" が足りません':'Missing ")"','式が不正です':'Invalid expression','式の後ろに余計な文字':'Extra characters after the expression','計算できません':'Can’t be calculated',
+  '自分の値の参照が循環しています':'The shape’s own values refer to each other in a loop','演算結果の「自分」は、角R・ステッチ穴・回転の欄でだけ使えます':'In an operation result, “self” works only in corner R, stitch and rotation fields',
+  '文字の高さは正の値に':'Text height must be positive','始点と終点が同じ位置です':'Start and end are the same point','幅と高さは正の値に':'Width and height must be positive','直径は正の値に':'Diameter must be positive',
+  '頂点が足りません':'Not enough nodes','閉じた形にするには頂点が足りません':'Not enough nodes for a closed shape','演算ライブラリが読み込めていません':'The geometry library isn’t loaded','材料が見つかりません':'A material is missing','材料がありません':'No materials',
+  '演算結果が空です（図形が重なっていません）':'The result is empty (the shapes don’t overlap)','ピッチは正の値に':'Pitch must be positive','縫い代が大きすぎます':'The margin is too large',
+  '演算か図形の参照が循環しています':'Operations or shape references form a loop','図形の参照が循環しています':'Shape references form a loop','入X':'in-handle X','入Y':'in-handle Y','出X':'out-handle X','出Y':'out-handle Y','回転':'Rotation',
+};
+// [Japanese with {0}…, English, optional {index:{ja:en}} for words that read differently inside the sentence]
+const EN_PAT=[
+  ['{0}（材料）  {1}穴','{0} (material)  {1} holes'],['{0}  {1}穴','{0}  {1} holes'],['{0}（材料）','{0} (material)'],['周長 {0}','Perimeter {0}'],['{0} · 連動','{0} · linked',{0:'T'}],
+  ['{0} 横  {1}','{0} landscape  {1}',{0:'T'}],['{0} 縦  {1}','{0} portrait  {1}',{0:'T'}],['{0} 横','{0} landscape',{0:'T'}],['{0} 縦','{0} portrait',{0:'T'}],['図形に合わせる（{0} × {1} mm）  {2}','Fit to the shapes ({0} × {1} mm)  {2}'],['図形に合わせる（{0} × {1} mm）','Fit to the shapes ({0} × {1} mm)'],
+  ['{0}枚（横{1} × 縦{2}）','{0} pages ({1} across × {2} down)'],['{0}枚','{0} page(s)'],['{0}-{1} ページ','Page {0}-{1}'],['ほか {0} 枚','{0} more'],
+  ['演算 · {0}','Operation · {0}',{0:'T'}],['{0}個を選択中','{0} selected'],['「{0}」の材料です','A material of “{0}”'],['頂点 {0} 個','{0} nodes'],['頂点{0} {1}ハンドル X','Node {0} {1}-handle X',{1:'T'}],['頂点{0} {1}ハンドル Y','Node {0} {1}-handle Y',{1:'T'}],
+  ['頂点{0} X','Node {0} X'],['頂点{0} Y','Node {0} Y'],['頂点{0}を削除','Delete node {0}'],['{0}の種類','{0} type',{0:'T'}],['{0}の大きさ','{0} size',{0:'T'}],
+  ['どの辺にも当てはまらなくなった辺ごとの設定が {0} 件あります（図形の形が大きく変わったため）。','{0} per-edge setting(s) no longer match any edge (the shape changed a lot).'],
+  ['辺 {0}（輪郭 {1}）','Edge {0} (contour {1})'],['辺 {0}','Edge {0}'],['長さ {0} mm。角がないので一周を1辺として扱います。矢印の向きが始点→終点です。','Length {0} mm. With no corners, the whole loop is one edge. The arrow points from start to end.'],
+  ['長さ {0} mm。矢印の向きが始点→終点です。','Length {0} mm. The arrow points from start to end.'],['{0}個（両端を除く）','{0} (excluding the ends)'],
+  ['この間の {0} mm を縫います（辺の長さ {1} mm）。範囲の端には縫い止まりの穴が入ります。キャンバスの丸いハンドルでも調整できます。','Stitches {0} mm of it (the edge is {1} mm). The ends of the range get a stop hole. The round handles on the canvas adjust it too.'],
+  ['縫う範囲がありません。始点から・終点からの合計を辺の長さ（{0} mm）より小さくしてください。','Nothing left to stitch: keep “from start” + “from end” under the edge length ({0} mm).'],
+  ['{0} の式','Expression for {0}'],['{0} を削除','Delete {0}'],
+  ['「{0}」は {1} で使われているので削除できません','“{0}” is used by {1}, so it can’t be deleted'],
+  ['{0}は {1} ほか{2}件 の式で参照されているので{3}できません','{0} is referred to by {1} and {2} more, so it can’t be {3}',{3:{'削除':'deleted','演算を解除':'ungrouped'}}],
+  ['{0}は {1} の式で参照されているので{2}できません','{0} is referred to by {1}, so it can’t be {2}',{2:{'削除':'deleted','演算を解除':'ungrouped'}}],
+  ['「{0}」という名前の図形がほかにもあります。式から参照するときは名前を変えてください','Another shape is also called “{0}”; rename one before referring to it in expressions'],
+  ['{0}は頂点が{1}個以上必要なので、これ以上削除できません','{0} needs at least {1} nodes, so no more can be deleted',{0:{'閉じた形':'A closed shape','開いた線':'An open line'}}],
+  ['「{0}」は閉じた形ではないので演算に使えません','“{0}” isn’t closed, so it can’t be used in an operation'],['{0}しました。元の図形は材料として残っています','{0} done; the original shapes remain as materials',{0:{'合体':'Union','差':'Difference','交差':'Intersection','排他':'Exclusion'}}],
+  ['{0}が変数の式で決まっているので、パネルで編集してください','{0} is set by a variable expression; edit it in the panel',{0:'T'}],['{0}個を選択しました','{0} selected'],['奥の図形：{0}（{1}/{2}）','Underneath: {0} ({1}/{2})'],
+  ['{0} を保存しました','Saved {0}'],['{0}・{1}枚のPDFを保存しました','Saved a {1}-page PDF ({0})',{0:'T'}],['{0}・{1}枚の印刷範囲を表示しています（用紙と向きはPDFボタンで変更）','Showing the print area: {0}, {1} page(s) (change the paper and orientation in the PDF dialog)',{0:'T'}],
+  ['共有用のURLをコピーしました（{0} KB）','Share URL copied ({0} KB)'],
+  ['[{0}] の後ろに「.右」のような値の名前が要ります','[{0}] needs a value name after it, such as “.right”'],['「{0}」は使えません','“{0}” isn’t allowed'],['関数 {0} はありません','No function called {0}'],['変数 {0} が未定義','Variable {0} isn’t defined'],
+  ['「{0}」に頂点{1}はありません（{2}個）','“{0}” has no node {1} ({2} nodes)'],['頂点{0}はありません（{1}個）','There is no node {0} ({1} nodes)'],['「自分」に「{0}」はありません（{1}）','“self” has no “{0}” ({1})',{1:'T'}],['「{0}」に「{1}」はありません（{2} など）','“{0}” has no “{1}” ({2} …)',{2:'T'}],
+  ['角（{0}）：{1}','Corner ({0}): {1}',{0:'T',1:'T'}],['頂点{0}の{1}：{2}','Node {0} {1}: {2}',{1:'T',2:'T'}],['回転：{0}','Rotation: {0}',{0:'T'}],['回転中心X：{0}','Pivot X: {0}',{0:'T'}],['回転中心Y：{0}','Pivot Y: {0}',{0:'T'}],
+  ['「{0}」が閉じた形ではありません','“{0}” isn’t a closed shape'],['辺{0}のピッチは正の値に','Edge {0}: pitch must be positive'],['図形「{0}」が見つかりません','No shape called “{0}”'],['「{0}」という名前の図形が{1}個あります','{1} shapes are called “{0}”'],
+  ['図形「{0}」との参照が循環しています','References with “{0}” form a loop'],['図形「{0}」にエラーがあります','Shape “{0}” has an error'],
+].map(([ja,en,caps])=>{const lit=ja.replace(/\{\d\}/g,'');const re=new RegExp('^'+ja.replace(/[.*+?^$()|[\]\\]/g,'\\$&').replace(/\\?\{(\d)\\?\}/g,'(.+?)')+'$','s');
+  const order=[...ja.matchAll(/\{(\d)\}/g)].map(m=>+m[1]);return{re,en,caps:caps||{},order,w:lit.length}}).sort((a,b)=>b.w-a.w);
+const HAS_JA=/[　-ヿ㐀-鿿！-～]/;
+function tr(text,depth=0){if(LANG!=='en'||!text||!HAS_JA.test(text)||depth>4)return text;
+  const lead=text.match(/^\s*/)[0],tail=text.match(/\s*$/)[0],core=text.trim();if(!core)return text;
+  if(core in EN_EXACT)return lead+EN_EXACT[core]+tail;
+  for(const p of EN_PAT){const m=p.re.exec(core);if(!m)continue;const got={};p.order.forEach((n,i)=>{const v=m[i+1],c=p.caps[n];got[n]=c==='T'?tr(v,depth+1):c&&v in c?c[v]:v});
+    return lead+p.en.replace(/\{(\d)\}/g,(_,n)=>got[n]??'')+tail}
+  // lists joined with ・ or 、 translate piece by piece
+  if(/[・、]/.test(core)){const parts=core.split(/([・、])/);const out=parts.map(x=>x==='・'?' / ':x==='、'?', ':tr(x,depth+1));
+    if(out.every((x,i)=>i%2||!HAS_JA.test(x)))return lead+out.join('')+tail}
+  return text}
+const nm=s=>LANG==='en'?(EN_NAME[s]??tr(s)):s;
+// default names for new shapes and copies
+const EN_NAME={'パーツ':'Part','穴・円':'Hole','線':'Line','多角形':'Polygon','曲線':'Curve','曲線パーツ':'Curved part','寸法':'Dimension','テキスト':'Text',' のコピー':' copy',' (左右反転)':' (flipped L–R)',' (上下反転)':' (flipped T–B)'};
+// expression value names: Japanese is canonical (and what files store); English aliases are accepted everywhere
+const PROP_EN={左:'left',右:'right',上:'top',下:'bottom',幅:'width',高さ:'height',中心X:'centerX',中心Y:'centerY',直径:'diameter',半径:'radius',始点X:'startX',始点Y:'startY',終点X:'endX',終点Y:'endY',長さ:'length',X:'X',Y:'Y'};
+const PROP_JA=Object.fromEntries(Object.entries(PROP_EN).map(([j,e])=>[e.toLowerCase(),j]));
+function propIn(p){const l=p.toLowerCase();if(l in PROP_JA)return PROP_JA[l];const m=/^(?:pt|node|p)(\d+)([xy])$/i.exec(p);if(m)return`点${m[1]}${m[2].toUpperCase()}`;return p}
+const propOut=p=>LANG!=='en'?p:PROP_EN[p]||p.replace(/^点(\d+)([XY])$/,'pt$1$2');
+// translate every visible text node and label attribute below root (not the drawing's own text, not the guide)
+function i18nNode(n){if(n.nodeType===3){const p=n.parentElement;if(!p||p.closest('#shapes,#helpBody,[data-noi18n]'))return;
+    const NT=p.classList&&p.classList.contains('nt');const v=NT?({'曲':'Cv','角':'Cn'}[n.nodeValue.trim()]||n.nodeValue):tr(n.nodeValue);if(v!==n.nodeValue)n.nodeValue=v;return}
+  if(n.nodeType!==1||n.closest('#shapes,#helpBody,[data-noi18n]'))return;
+  for(const a of['title','aria-label','placeholder']){const v=n.getAttribute(a);if(v&&HAS_JA.test(v)){const t=tr(v);if(t!==v)n.setAttribute(a,t)}}}
+function i18nTree(root){if(LANG!=='en')return;i18nNode(root);const w=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT|NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode()))i18nNode(n)}
+function startI18n(){document.documentElement.lang=LANG;if(LANG!=='en')return;i18nTree(document.body);
+  new MutationObserver(ms=>{for(const m of ms){if(m.type==='childList')m.addedNodes.forEach(i18nTree);else if(m.type==='characterData')i18nNode(m.target);else if(m.type==='attributes')i18nNode(m.target)}})
+    .observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','placeholder']})}
+
 
 // ---------- state ----------
 // Sample: a bifold business-card case with a snap flap that can actually be built.
@@ -459,7 +595,7 @@ function selfProp(s,prop,E){const f=k=>P(s,k,E);
     if(pm){const i=+pm[1]-1,n=s.nodes[i];if(!n)throw Error(`頂点${pm[1]}はありません（${s.nodes.length}個）`);return gEv(E,`n${i}.${pm[2]}`,n[pm[2]==='X'?'x':'y'])}
     const bb=()=>{const N=evalNodes(s,E);return bbox(flatten(N,s.closed))};o=box(()=>bb()[0],()=>bb()[1],()=>bb()[2]-bb()[0],()=>bb()[3]-bb()[1])}
   else if(s.type==='bool'){const b=LOCALBB[s.id];if(!b)throw Error('演算結果の「自分」は、角R・ステッチ穴・回転の欄でだけ使えます');o=box(()=>b[0],()=>b[1],()=>b[2]-b[0],()=>b[3]-b[1])}
-  if(!o||!(prop in o))throw Error(`「自分」に「${prop}」はありません（${o?Object.keys(o).join('・'):''}${s.type==='poly'?'・点1X…':''}）`);
+  if(!o||!(prop in o))throw Error(`「自分」に「${prop}」はありません（${o?Object.keys(o).map(propOut).join('・'):''}${s.type==='poly'?'・'+propOut('点1X')+'…':''}）`);
   return o[prop]()}
 // rectangle corners in drawing order (top-right, bottom-right, bottom-left, top-left); each is round (角丸), chamfer (面取り) or none
 const CORNER_NAMES=['左上','右上','右下','左下'];
@@ -721,7 +857,7 @@ function shapeProp(s,g,prop){
   if(pm&&s.type==='poly'){const n=g.nodes[+pm[1]-1];if(!n)throw Error(`「${s.name}」に頂点${pm[1]}はありません（${g.nodes.length}個）`);return pm[2]==='X'?n.x:n.y}
   if(prop in BBP&&!(s.type==='dim'))return BBP[prop](bboxG(g));
   const ok=Object.keys(BBP).concat(s.type==='circle'?['直径','半径']:s.type==='rect'||s.type==='text'?['X','Y']:s.type==='poly'?['点1X','点1Y']:s.type==='dim'?['始点X','終点X','長さ']:[]);
-  throw Error(`「${s.name}」に「${prop}」はありません（${ok.join('・')} など）`)}
+  throw Error(`「${s.name}」に「${prop}」はありません（${ok.map(propOut).join('・')} など）`)}
 const refName=n=>IDRE.test(n)&&!(n in FN)&&!(n in CONST)?n:`[${n}]`;
 const refOK=s=>!!s&&s.name&&!/[\[\]]/.test(s.name)&&doc.shapes.filter(x=>x.name===s.name).length===1;
 // every expression slot of a shape as [object, key], so references can be found and rewritten
@@ -734,7 +870,7 @@ function exprSlots(s){const out=[];const add=(o,k)=>{if(o&&o[k]!=null&&o[k]!==''
 const refsIn=e=>{try{return tokenize(String(e)).filter(t=>t.k==='ref')}catch(x){return[]}};
 // rewrite references to one name, keeping the rest of the text as typed
 function renameIn(e,from,to){let t;try{t=tokenize(String(e))}catch(x){return e}let out=String(e);
-  for(const k of t.filter(k=>k.k==='ref'&&k.name===from).reverse())out=out.slice(0,k.at)+refName(to)+'.'+k.prop+out.slice(k.end);return out}
+  for(const k of t.filter(k=>k.k==='ref'&&k.name===from).reverse())out=out.slice(0,k.at)+refName(to)+out.slice(k.dot,k.end)+out.slice(k.end);return out}
 // shapes whose expressions read the given shapes (by name), skipping the ones listed in `skip`
 function refUsers(targets,skip=new Set()){const names=new Set(targets.map(t=>t.name));const out=[];
   for(const s of doc.shapes){if(skip.has(s.id))continue;if(exprSlots(s).some(([o,k])=>refsIn(o[k]).some(r=>names.has(r.name))))out.push(s)}return out}
@@ -968,7 +1104,9 @@ function refreshVals(sec){const env=sel&&byId(sel)?C.envFor(byId(sel)):C.env;sec
   const it=C.byId[sel];if(it&&it.st){if($('stRes'))$('stRes').innerHTML=stResult(it.st);const e=selEdge&&it.st.edges.find(x=>x.key===selEdge.key);if(e&&$('edRes'))$('edRes').innerHTML=edResult(e);if(e&&$('edMsg'))$('edMsg').innerHTML=edMsg(e)}}
 // variable rows: one line each; the focused row opens into a card with the full name, a wrapping expression,
 // the computed value (or the error) and where the variable is used
-const varUseText=n=>{const u=varUsers(n);if(!u.length)return'まだどこにも使われていません';return'使用中：'+u.slice(0,3).map(esc).join('、')+(u.length>3?` ほか${u.length-3}件`:'')};
+const varUseText=n=>{const u=varUsers(n);if(!u.length)return'まだどこにも使われていません';
+  if(LANG==='en')return'Used by '+u.slice(0,3).map(esc).join(', ')+(u.length>3?` and ${u.length-3} more`:'');
+  return'使用中：'+u.slice(0,3).map(esc).join('、')+(u.length>3?` ほか${u.length-3}件`:'')};
 function fillVarRow(r,i){const v=doc.vars[i];if(!v)return;const e=C.verr[v.n],ta=r.querySelector('textarea'),env=C.env;
   ta.classList.toggle('err',!!e);ta.title=e?e:'= '+fmt(env[v.n],3).replace(/\.?0+$/,'');
   const res=r.querySelector('.vres');res.classList.toggle('err',!!e);res.textContent=e?e:'= '+fmt(env[v.n],4).replace(/\.?0+$/,'');
@@ -983,8 +1121,9 @@ function renderVars(soft){const box=$('vars');
 function exprsOf(s){const off=s.st&&!s.st.on;return exprSlots(s).filter(([o])=>!(off&&(o===s.st||(s.st.eo||[]).includes(o)))).map(([o,k])=>o[k])}
 function usesVar(expr,name){try{return tokenize(String(expr)).some(t=>t.k==='id'&&t.v===name)}catch(e){return String(expr).includes(name)}}
 function varUsers(name){
-  const shapes=doc.shapes.filter(s=>exprsOf(s).some(e=>usesVar(e,name))).map(s=>{const p=parentOf(s.id);return p?`${s.name}（${p.name}の材料）`:s.name});
-  const vars=doc.vars.filter(v=>v.n!==name&&usesVar(v.e,name)).map(v=>`変数 ${v.n}`);
+  const en=LANG==='en';
+  const shapes=doc.shapes.filter(s=>exprsOf(s).some(e=>usesVar(e,name))).map(s=>{const p=parentOf(s.id);return p?(en?`${s.name} (material of ${p.name})`:`${s.name}（${p.name}の材料）`):s.name});
+  const vars=doc.vars.filter(v=>v.n!==name&&usesVar(v.e,name)).map(v=>en?`variable ${v.n}`:`変数 ${v.n}`);
   return shapes.concat(vars)}
 
 // panel events
@@ -1024,7 +1163,7 @@ $('vars').addEventListener('focusout',e=>setTimeout(()=>{const a=document.active
   if(!$('vars').contains(a))renderVars(false)},0));
 // pointerdown + preventDefault: keeps the name/value field from blurring and rebuilding the list before the click lands
 $('vars').addEventListener('pointerdown',e=>{const d=e.target.dataset.vdel;if(d===undefined)return;e.preventDefault();const v=doc.vars[+d];
-  const users=varUsers(v.n);if(users.length){toast(`「${v.n}」は ${users.join('、')} で使われているので削除できません`,5000);return}
+  const users=varUsers(v.n);if(users.length){toast(LANG==='en'?`“${v.n}” is used by ${users.join(', ')}, so it can’t be deleted`:`「${v.n}」は ${users.join('、')} で使われているので削除できません`,5000);return}
   pushUndo();doc.vars.splice(+d,1);if(box_has_focus())document.activeElement.blur();renderVars(false);render()});
 const box_has_focus=()=>$('vars').contains(document.activeElement);
 // per-viewer UI settings
@@ -1078,13 +1217,13 @@ function cloneTree(s,dx){const c=structuredClone(s);c.id=newId();c.name=uniqName
   doc.shapes.push(c);return c.id}
 function dup(){const s=cur();if(!s)return;pushUndo();
   const it=C.byId[s.id];const bb=it&&it.g?bboxG(it.g):[0,0,0,0];const dx=bb[2]-bb[0]+10;
-  const id=cloneTree(s,dx);const c=byId(id);c.name=uniqName(s.name+' のコピー',c);setSel(id);render()}
+  const id=cloneTree(s,dx);const c=byId(id);c.name=uniqName(s.name+nm(' のコピー'),c);setSel(id);render()}
 // mirrored copy: flipped left-right (axis 'x') or top-bottom (axis 'y') about a line just past the shape, so it lands beside / below it.
 // Expressions stay expressions (2A − x …), so a mirrored copy keeps following the variables.
 function mirrorCopy(axis){const s=cur();if(!s)return;const it=C.byId[s.id];if(!it||!it.g){toast('エラーのある図形は反転できません');return}pushUndo();
   const bb=bboxG(it.g),A2=num(2*((axis==='x'?bb[2]:bb[3])+5));
   const id=mirrorTree(s,axis,A2);setSel(id);render();toast(axis==='x'?'左右反転した形を右に複製しました':'上下反転した形を下に複製しました')}
-function mirrorTree(s,axis,A2){const c=structuredClone(s);c.id=newId();c.name=uniqName(s.name+(axis==='x'?' (左右反転)':' (上下反転)'));
+function mirrorTree(s,axis,A2){const c=structuredClone(s);c.id=newId();c.name=uniqName(s.name+nm(axis==='x'?' (左右反転)':' (上下反転)'));
   if(c.type==='bool')c.ops=s.ops.map(id=>mirrorTree(byId(id),axis,A2));
   mirrorShape(c,axis,A2);doc.shapes.push(c);return c.id}
 function mirrorShape(c,axis,A2){const X=axis==='x',has=e=>e!=null&&String(e).trim()!=='';
@@ -1095,7 +1234,7 @@ function mirrorShape(c,axis,A2){const X=axis==='x',has=e=>e!=null&&String(e).tri
     if(Array.isArray(c.cs))c.cs=(X?[1,0,3,2]:[3,2,1,0]).map(i=>c.cs[i])}
   else if(c.type==='circle'){if(X)p.cx=M(p.cx);else p.cy=M(p.cy)}
   else if(c.type==='poly'){const k=X?'x':'y',h=X?0:1;c.nodes=c.nodes.map(n=>{const o={...n,[k]:M(n[k])};for(const hk of['hi','ho'])if(n[hk]){o[hk]=n[hk].slice();o[hk][h]=neg(n[hk][h])}return o})}
-  else if(c.type==='text'){if(X)p.x=MW(p.x,SELF+'.幅');else p.y=combE(M(p.y),p.size,1,0.75);if(has(p.rot))p.rot=neg(p.rot)}
+  else if(c.type==='text'){if(X)p.x=MW(p.x,(LANG==='en'?'self':SELF)+'.'+propOut('幅'));else p.y=combE(M(p.y),p.size,1,0.75);if(has(p.rot))p.rot=neg(p.rot)}
   else if(c.type==='dim'){if(X){p.x1=M(p.x1);p.x2=M(p.x2)}else{p.y1=M(p.y1);p.y2=M(p.y2)}p.off=neg(p.off)}
   if(ROTATABLE(c.type)&&has(p.rot)){p.rot=neg(p.rot);if(X&&has(p.rcx))p.rcx=M(p.rcx);if(!X&&has(p.rcy))p.rcy=M(p.rcy)}
   // per-edge stitch settings follow the mirrored edges, whose direction is now reversed
@@ -1111,6 +1250,7 @@ function blockedByRefs(gone,verb){const ids=new Set(gone.map(x=>x.id));
   const names=gone.filter(x=>doc.shapes.filter(y=>y.name===x.name&&!ids.has(y.id)).length===0);
   const users=refUsers(names,ids);if(!users.length)return false;
   const used=names.filter(n=>users.some(u=>exprSlots(u).some(([o,k])=>refsIn(o[k]).some(r=>r.name===n.name))));
+  if(LANG==='en'){toast(`${used.map(n=>`“${n.name}”`).join(', ')} ${used.length>1?'are':'is'} used in the expressions of ${users.slice(0,4).map(u=>u.name).join(', ')}${users.length>4?` and ${users.length-4} more`:''}, so it can’t be ${verb==='削除'?'deleted':'ungrouped'}`,5000);return true}
   toast(`${used.map(n=>`「${n.name}」`).join('')}は ${users.slice(0,4).map(u=>u.name).join('、')}${users.length>4?` ほか${users.length-4}件`:''} の式で参照されているので${verb}できません`,5000);return true}
 function delSel(){const targets=picks.map(byId).filter(Boolean);if(!targets.length)return;
   if(blockedByRefs([...new Set(targets.flatMap(t=>[t,...descendants(t)]))],'削除'))return;pushUndo();
@@ -1158,7 +1298,7 @@ const osnapOn=e=>UI.osnap!==false&&!(e&&(e.ctrlKey||e.metaKey));
 function snapCands(ctx){const out=[];const skip=ctx.skip||new Set(),noref=ctx.noref||new Set();
   for(const it of C.items){const g=it.g,s=it.s;if(!g||skip.has(s.id)||g.isDim)continue;
     // a rotated shape is snapped to by number only (its references would name unrotated sides)
-    const RT=g.rot,R=!RT&&!noref.has(s.id)&&refOK(s)?refName(s.name)+'.':null,E=p=>R?R+p:null;
+    const RT=g.rot,R=!RT&&!noref.has(s.id)&&refOK(s)?refName(s.name)+'.':null,E=p=>R?R+propOut(p):null;
     const P=(x,y,kind,px,py,role)=>{const q=RT&&s.type==='rect'?rotP(RT,[x,y]):[x,y];out.push({x:q[0],y:q[1],kind,ex:px&&E(px),ey:py&&E(py),id:s.id,role})};
     if(g.isText){P(g.x,g.y,'end','X','Y','a');continue}
     if(s.type==='rect'){const{x,y,w,h}=g;
@@ -1170,7 +1310,7 @@ function snapCands(ctx){const out=[];const skip=ctx.skip||new Set(),noref=ctx.no
     else if(s.type==='poly'){const N=g.nodes;N.forEach((n,i)=>P(n.x,n.y,'end',`点${i+1}X`,`点${i+1}Y`,'n'+i));
       const segs=s.closed?N.length:N.length-1;
       for(let i=0;i<segs;i++){const c=segCtrl(N,i),j=(i+1)%N.length;
-        if(c.line)out.push({x:(c.p0[0]+c.p3[0])/2,y:(c.p0[1]+c.p3[1])/2,kind:'mid',id:s.id,ex:R&&`(${R}点${i+1}X+${R}点${j+1}X)/2`,ey:R&&`(${R}点${i+1}Y+${R}点${j+1}Y)/2`});
+        if(c.line)out.push({x:(c.p0[0]+c.p3[0])/2,y:(c.p0[1]+c.p3[1])/2,kind:'mid',id:s.id,ex:R&&`(${R}${propOut(`点${i+1}X`)}+${R}${propOut(`点${j+1}X`)})/2`,ey:R&&`(${R}${propOut(`点${i+1}Y`)}+${R}${propOut(`点${j+1}Y`)})/2`});
         else{const q=bez(c,0.5);out.push({x:q[0],y:q[1],kind:'mid',id:s.id})}}}
     else for(const Pp of g.paths){const d=dedupe(Pp,true);for(const i of cornerIdx(d,true))out.push({x:d[i][0],y:d[i][1],kind:'end',id:s.id})}}
   for(const q of ctx.extra||[])out.push({kind:'end',own:true,...q});
@@ -1217,9 +1357,9 @@ function snapAt(m,e,ctx={}){const px=(e&&e.pointerType==='touch')?18:10,tol=px/v
   if(near)return{x:near.q[0],y:near.q[1],kind:'near'};
   return grid}
 // a rectangle's side (or a bool's straight bbox side) as a reference
-function sideRef(S,axis,v,ctx){const s=S.s,g=S.g;if(g.rot||!refOK(s)||(ctx&&ctx.noref&&ctx.noref.has(s.id)))return null;const b=bboxG(g),R=refName(s.name)+'.',e=1e-6;
-  if(axis==='y'){if(Math.abs(v-b[1])<e)return R+'上';if(Math.abs(v-b[3])<e)return R+'下'}else{if(Math.abs(v-b[0])<e)return R+'左';if(Math.abs(v-b[2])<e)return R+'右'}
-  if(s.type==='circle'){if(axis==='y'&&Math.abs(v-g.cy)<e)return R+'中心Y';if(axis==='x'&&Math.abs(v-g.cx)<e)return R+'中心X'}return null}
+function sideRef(S,axis,v,ctx){const s=S.s,g=S.g;if(g.rot||!refOK(s)||(ctx&&ctx.noref&&ctx.noref.has(s.id)))return null;const b=bboxG(g),R0=refName(s.name)+'.',e=1e-6,Q=p=>R0+propOut(p);
+  if(axis==='y'){if(Math.abs(v-b[1])<e)return Q('上');if(Math.abs(v-b[3])<e)return Q('下')}else{if(Math.abs(v-b[0])<e)return Q('左');if(Math.abs(v-b[2])<e)return Q('右')}
+  if(s.type==='circle'){if(axis==='y'&&Math.abs(v-g.cy)<e)return Q('中心Y');if(axis==='x'&&Math.abs(v-g.cx)<e)return Q('中心X')}return null}
 // snapping context for editing the shapes in `ids`: those (and whatever depends on them) can't be referenced
 // (they move along, so they are not snapped to at all)
 function makeCtx(ids){const d=dependents(ids);return{skip:d,noref:d}}
@@ -1268,7 +1408,7 @@ function finishPoly(close){if(!draft||draft.type!=='poly')return;const D=draft.n
   const curved=D.some(n=>n.ho);
   if(D.length<2||(close&&D.length<3&&!curved)){render();return}pushUndo();
   const nodes=D.map(n=>{const o={x:n.ex||num(n.x),y:n.ey||num(n.y)};if(n.ho){o.t='smooth';o.hi=n.hi.map(num);o.ho=n.ho.map(num)}return o});
-  const s={id:newId(),name:uniqName(close?(curved?'曲線パーツ':'多角形'):(curved?'曲線':'線')),type:'poly',kind:'cut',nodes,closed:!!close,p:{},st:{on:false,inset:'縫い代',pitch:'ピッチ',hole:'穴'}};
+  const s={id:newId(),name:uniqName(nm(close?(curved?'曲線パーツ':'多角形'):(curved?'曲線':'線'))),type:'poly',kind:'cut',nodes,closed:!!close,p:{},st:{on:false,inset:'縫い代',pitch:'ピッチ',hole:'穴'}};
   fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select')}
 function fixStitchDefaults(s){const env=C.env;for(const k of['inset','pitch','hole'])if(!(s.st[k]in env))s.st[k]={inset:'3',pitch:'4',hole:'1.2'}[k]}
 svg.addEventListener('pointerdown',e=>{
@@ -1280,9 +1420,9 @@ svg.addEventListener('pointerdown',e=>{
     if(!draft){draft={type:'dim',a:q,b:q,stage:1};setHint(q);render();return}
     if(draft.stage===1){if(Math.hypot(draft.a.x-q.x,draft.a.y-q.y)<0.5)return;draft.b=q;draft.stage=2;draft.off=0;setHint(null);render();return}
     pushUndo();const d=draft;draft=null;
-    const t={id:newId(),name:uniqName('寸法'),type:'dim',kind:'guide',p:{x1:exOf(d.a),y1:eyOf(d.a),x2:exOf(d.b),y2:eyOf(d.b),off:num(d.off),size:'3.5'},st:{on:false,inset:'3',pitch:'4',hole:'1.2'}};
+    const t={id:newId(),name:uniqName(nm('寸法')),type:'dim',kind:'guide',p:{x1:exOf(d.a),y1:eyOf(d.a),x2:exOf(d.b),y2:eyOf(d.b),off:num(d.off),size:'3.5'},st:{on:false,inset:'3',pitch:'4',hole:'1.2'}};
     doc.shapes.push(t);setSel(t.id);setTool('select');return}
-  if(tool==='text'){pushUndo();const q=snapAt(m,e);const t={id:newId(),name:uniqName('テキスト'),type:'text',kind:'cut',text:'テキスト',p:{x:exOf(q),y:eyOf(q),size:'5',rot:'0'},st:{on:false,inset:'3',pitch:'4',hole:'1.2'}};
+  if(tool==='text'){pushUndo();const q=snapAt(m,e);const t={id:newId(),name:uniqName(nm('テキスト')),type:'text',kind:'cut',text:nm('テキスト'),p:{x:exOf(q),y:eyOf(q),size:'5',rot:'0'},st:{on:false,inset:'3',pitch:'4',hole:'1.2'}};
     doc.shapes.push(t);setSel(t.id);setTool('select');requestAnimationFrame(()=>{const f=$('f_text');if(f){f.focus();f.select()}});return}
   if(tool==='rect'||tool==='circle'){const q=snapAt(m,e);draft={type:tool,a:q,b:q};setHint(q);render();return}
   if(tool==='poly'||tool==='line'){if(!draft)draft={type:'poly',nodes:[],straight:tool==='line'};const D=draft.nodes;
@@ -1399,8 +1539,8 @@ svg.addEventListener('pointerup',e=>{svg.classList.remove('pan');dimHint=null;if
     if(hit.length)toast(`${hit.length}個を選択しました`);return}
   if(draft&&draft.type!=='poly'&&draft.type!=='dim'){const d=draft;draft=null;
     if(d.type==='rect'){const A=d.a,B=d.b,L=A.x<=B.x?A:B,Rt=A.x<=B.x?B:A,T=A.y<=B.y?A:B,Bt=A.y<=B.y?B:A,w=Rt.x-L.x,h=Bt.y-T.y;
-      if(w>=1&&h>=1){pushUndo();const s={id:newId(),name:uniqName('パーツ'),type:'rect',kind:'cut',p:(()=>{const X=span(L.ex,Rt.ex,L.x,w,'x','w'),Y=span(T.ey,Bt.ey,T.y,h,'y','h');return{x:X.x,y:Y.y,w:X.w,h:Y.h,r:'R' in C.env?'R':'0'}})(),st:{on:true,inset:'縫い代',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
-    else{const r=Math.hypot(d.b.x-d.a.x,d.b.y-d.a.y);if(r>=0.5){pushUndo();const s={id:newId(),name:uniqName('穴・円'),type:'circle',kind:'cut',p:{cx:exOf(d.a),cy:eyOf(d.a),d:String(+(2*r).toFixed(2))},st:{on:false,inset:'2',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
+      if(w>=1&&h>=1){pushUndo();const s={id:newId(),name:uniqName(nm('パーツ')),type:'rect',kind:'cut',p:(()=>{const X=span(L.ex,Rt.ex,L.x,w,'x','w'),Y=span(T.ey,Bt.ey,T.y,h,'y','h');return{x:X.x,y:Y.y,w:X.w,h:Y.h,r:'R' in C.env?'R':'0'}})(),st:{on:true,inset:'縫い代',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
+    else{const r=Math.hypot(d.b.x-d.a.x,d.b.y-d.a.y);if(r>=0.5){pushUndo();const s={id:newId(),name:uniqName(nm('穴・円')),type:'circle',kind:'cut',p:{cx:exOf(d.a),cy:eyOf(d.a),d:String(+(2*r).toFixed(2))},st:{on:false,inset:'2',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
     render()}
   if(drag&&drag.kind==='move'&&!drag.moved&&drag.click)clickPick(drag.click);
   drag=null});
@@ -1627,6 +1767,8 @@ $('xTheme').onclick=()=>{UI.theme=darkNow()?'light':'dark';saveUI();
   if(document.startViewTransition&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.startViewTransition(go);return}
   const r=document.documentElement;r.classList.add('theme-fade');go();setTimeout(()=>r.classList.remove('theme-fade'),500)};
 applyTheme();
+// switching language reloads the page (the pattern is saved locally); a shared link in the address bar is dropped first so it isn't opened again
+$('xLang').onclick=()=>{UI.lang=LANG==='en'?'ja':'en';saveUI();if(location.hash)history.replaceState(null,'',location.pathname+location.search);location.reload()};
 function setFrame(on){UI.showFrame=on;saveUI();$('xFrame').setAttribute('aria-pressed',String(on));render()}
 $('xFrame').onclick=()=>{setFrame(!UI.showFrame);if(UI.showFrame){const bb=contentBB();if(bb){const L=pdfLayout(bb,{size:UI.pdfSize||'A4',orient:UI.pdfOrient||'auto'});toast(`${L.label}・${L.cols*L.rows}枚の印刷範囲を表示しています（用紙と向きはPDFボタンで変更）`,3500)}}};
 // share: the whole pattern goes into the URL after "#p=" (compressed when the browser can), so nothing is uploaded anywhere
@@ -1646,7 +1788,7 @@ async function loadFromLink(){const h=location.hash;if(!h.startsWith('#p='))retu
 addEventListener('hashchange',loadFromLink);
 
 // ---------- boot ----------
-function boot(){if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}$('xFrame').setAttribute('aria-pressed',String(!!UI.showFrame));setTool('select');requestAnimationFrame(fit);loadFromLink()}
+function boot(){startI18n();if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}$('xFrame').setAttribute('aria-pressed',String(!!UI.showFrame));setTool('select');requestAnimationFrame(fit);loadFromLink()}
 if(document.readyState==='complete')boot();else addEventListener('load',boot);
 })();
 </script>
