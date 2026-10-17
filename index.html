@@ -15,7 +15,7 @@
   --bg:#eef0ec; --panel:#f8f9f6; --line:#d3d8cf; --fg:#1f2a24; --muted:#5f6d64;
   --accent:#b8611f; --accent-soft:#f3e1d1; --danger:#b3261e; --ok:#2f7a4b;
   --mat:#1f4a3a; --mat-minor:rgba(255,255,255,.07); --mat-major:rgba(255,255,255,.16);
-  --cut:#f4efe2; --guide:#9fc3b1; --stitch:#f0a94a; --sel:#ffb36b;
+  --cut:#f4efe2; --guide:#9fc3b1; --stitch:#f0a94a; --sel:#ffb36b; --irr:#ff6f6f;
   --ui:"IBM Plex Sans JP",system-ui,-apple-system,"Hiragino Sans",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
   color-scheme:light;
@@ -95,6 +95,9 @@ input.err{border-color:var(--danger)}
 .vrow{display:grid;grid-template-columns:minmax(0,1fr) 10px 76px 16px;gap:4px;align-items:center}
 .vrow .eq{color:var(--muted);text-align:center;font-family:var(--mono)}
 .vrow .val{font:12px var(--mono);text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.edgebox{display:flex;flex-direction:column;gap:8px;border:1px solid var(--accent);border-radius:6px;padding:10px;background:var(--accent-soft)}
+.edgebox h2{color:var(--accent)}
+.edgebox .result{background:var(--panel)}
 .ntab{display:flex;flex-direction:column;gap:3px}
 .nrow{display:grid;grid-template-columns:22px minmax(0,1fr) minmax(0,1fr) 30px 18px;gap:4px;align-items:center}
 .nrow input[type=text]{font-size:12px;padding:4px 6px}
@@ -284,7 +287,7 @@ function migrate(d){for(const s of d.shapes||[])if(s.type==='poly'&&!s.nodes){s.
 migrate(doc);
 const num=v=>String(+(+v).toFixed(3));
 let picks=[],tool='select',snapStep=1;
-let sel=null;const setSel=id=>{sel=id;picks=id?[id]:[]};
+let sel=null,selEdge=null;const setSel=id=>{sel=id;picks=id?[id]:[];selEdge=null};
 const view={tx:0,ty:0,s:3};
 let undoS=[],redoS=[];
 function pushUndo(){undoS.push(JSON.stringify(doc));if(undoS.length>100)undoS.shift();redoS=[]}
@@ -358,21 +361,74 @@ function insetPaths(paths,d){
   if(d<=0)return fromC(norm);
   const co=new ClipperLib.ClipperOffset(2,0.05*CS);co.AddPaths(norm,ClipperLib.JoinType.jtMiter,ClipperLib.EndType.etClosedPolygon);
   const sol=new ClipperLib.Paths();co.Execute(sol,-d*CS);return fromC(sol)}
-function stitch(s,g,env){
-  if(!s.st||!s.st.on)return null;
-  const pitch=evalExpr(s.st.pitch,env),hole=evalExpr(s.st.hole,env);
-  if(pitch<=0)throw Error('ピッチは正の値に');
-  if(g.closed){
-    const ins=evalExpr(s.st.inset,env);const paths=insetPaths(g.paths,ins);
-    if(!paths.length)throw Error('コバ幅が大きすぎます');
-    const f=g.paths[0][0],out={paths:[],closed:true,holes:[],n:0,L:0,steps:[],hole};
-    for(let path of paths){let bi=0,bd=1e18;path.forEach((q,i)=>{const d=(q[0]-f[0])**2+(q[1]-f[1])**2;if(d<bd){bd=d;bi=i}});
-      path=path.slice(bi).concat(path.slice(0,bi));
-      const L=plen(path,true),n=Math.max(3,Math.round(L/pitch)),step=L/n;
-      out.paths.push(path);out.holes.push(...sampleAlong(path,true,[...Array(n)].map((_,i)=>i*step)));out.n+=n;out.L+=L;out.steps.push(step)}
-    return out}
-  const L=plen(g.pts,false),n=Math.max(1,Math.round(L/pitch)),step=L/n;
-  return{paths:[g.pts],closed:false,holes:sampleAlong(g.pts,false,[...Array(n+1)].map((_,i)=>i*step)),n:n+1,L,steps:[step],hole}}
+// ---------- stitch holes ----------
+// The pitch is never changed. Each edge (split at corners of 30° or more) starts and ends on a hole;
+// the remainder that does not divide by the pitch is absorbed by one or two irregular gaps.
+const CORNER=30*Math.PI/180,EPS=0.05;
+function dedupe(p,closed){const o=[];for(const q of p)if(!o.length||dist(o.at(-1),q)>1e-3)o.push(q);if(closed&&o.length>1&&dist(o[0],o.at(-1))<=1e-3)o.pop();return o}
+function cornerIdx(p,closed){const n=p.length,out=[];
+  for(let i=0;i<n;i++){if(!closed&&(i===0||i===n-1)){out.push(i);continue}
+    const A=p[(i-1+n)%n],P=p[i],B=p[(i+1)%n],v1=[P[0]-A[0],P[1]-A[1]],v2=[B[0]-P[0],B[1]-P[1]];
+    if(Math.abs(Math.atan2(v1[0]*v2[1]-v1[1]*v2[0],v1[0]*v2[0]+v1[1]*v2[1]))>=CORNER)out.push(i)}
+  return out}
+function gapPlan(L,p,method,pos){let n=Math.floor(L/p+1e-9),r=L-n*p;
+  if(p-r<EPS){n++;r=0}
+  if(r<EPS)return n?Array(n).fill(L/n):[L];
+  if(!n)return[L];
+  const m=method==='auto'?(r<p/2?'loosen':'tighten'):method;let base,spec;
+  if(m==='loosen'){if(pos==='both'&&n>=2){base=n-2;spec=[p+r/2,p+r/2]}else{base=n-1;spec=[p+r]}}
+  else{if(pos==='both'){base=n-1;spec=[(p+r)/2,(p+r)/2]}else{base=n;spec=[r]}}
+  const full=Array(base).fill(p);
+  if(spec.length===2)return[spec[0],...full,spec[1]];
+  if(pos==='start')return[spec[0],...full];if(pos==='end')return[...full,spec[0]];
+  const h=Math.floor(full.length/2);return[...full.slice(0,h),spec[0],...full.slice(h)]}
+function edgeHoles(pts,L,e){const gaps=gapPlan(L,e.p,e.method,e.pos),d=[];let acc=0;for(let i=0;i<gaps.length-1;i++){acc+=gaps[i];d.push(acc)}
+  const interior=sampleAlong(pts,false,d),all=[pts[0],...interior,pts.at(-1)],irr=[];
+  gaps.forEach((g,i)=>{if(Math.abs(g-e.p)>EPS)irr.push({a:all[i],b:all[i+1],g})});return{interior,irr}}
+// where edges split on a closed outline: sharp corners, or the middle of each rounded corner of a rectangle
+function breakPts(s,g,gOf){
+  if(s.type==='rect'){const{x,y,w,h,r}=g;if(r<=0)return[[x,y],[x+w,y],[x+w,y+h],[x,y+h]];const q=r*(1-Math.SQRT1_2);
+    return[[x+q,y+q],[x+w-q,y+q],[x+w-q,y+h-q],[x+q,y+h-q]]}
+  if(s.type==='circle')return[];
+  const own=g.paths.flatMap(P=>{const d=dedupe(P,true);return cornerIdx(d,true).map(i=>d[i])});
+  if(s.type!=='bool'||!gOf)return own;
+  // a boolean result keeps the break points of its materials that still lie on the result's outline
+  const mat=descendants(s).filter(c=>c.type!=='bool').flatMap(c=>{try{const cg=gOf(c);return cg.closed?breakPts(c,cg):[]}catch(e){return[]}})
+    .filter(b=>Math.min(...g.paths.map(P=>nearestOn(P,b).d))<0.05);
+  return own.concat(mat)}
+function nearestOn(P,b){let best={d:1e18};for(let i=0;i<P.length;i++){const A=P[i],B=P[(i+1)%P.length],vx=B[0]-A[0],vy=B[1]-A[1],l2=vx*vx+vy*vy;
+  const t=l2?Math.max(0,Math.min(1,((b[0]-A[0])*vx+(b[1]-A[1])*vy)/l2)):0,q=[A[0]+vx*t,A[1]+vy*t],d=dist(q,b);if(d<best.d)best={d,i,t,q}}return best}
+function insertAt(P,b){const n=nearestOn(P,b);if(n.t<1e-6)return{path:P,i:n.i,added:false};if(n.t>1-1e-6)return{path:P,i:(n.i+1)%P.length,added:false};
+  const out=P.slice();out.splice(n.i+1,0,n.q);return{path:out,i:n.i+1,added:true}}
+function stitch(s,g,env,gOf){
+  if(!s.st||!s.st.on)return null;const st=s.st;
+  const pitch=evalExpr(st.pitch,env),hole=evalExpr(st.hole,env);if(pitch<=0)throw Error('ピッチは正の値に');
+  let contours;if(g.closed){contours=insetPaths(g.paths,evalExpr(st.inset,env));if(!contours.length)throw Error('コバ幅が大きすぎます')}else contours=[g.pts];
+  const f=g.paths[0][0],out={closed:g.closed,edges:[],holes:[],irr:[],L:0,hole,pitch};
+  const bps=g.closed?breakPts(s,g,gOf):[];const paths=contours.map(raw=>dedupe(raw,g.closed));
+  // assign each outline break point to the contour it is closest to
+  const owner=bps.map(b=>{let best=-1,bd=1e18;paths.forEach((P,c)=>{const d=nearestOn(P,b).d;if(d<bd){bd=d;best=c}});return best});
+  paths.forEach((path0,c)=>{let path=path0;if(path.length<2)return;let cs;
+    if(g.closed){const marks=[];for(let k=0;k<bps.length;k++)if(owner[k]===c){const r=insertAt(path,bps[k]);path=r.path;marks.forEach((m,i)=>{if(m>=r.i&&r.added)marks[i]++});marks.push(r.i)}
+      cs=[...new Set(marks)].sort((x,y)=>x-y);
+      // drop break points that ended up almost on top of each other
+      cs=cs.filter((v,i)=>i===0||dist(path[v],path[cs[i-1]])>0.5);if(cs.length>1&&dist(path[cs[0]],path[cs.at(-1)])<=0.5)cs.pop();
+      let bi=0,bd=1e18;path.forEach((q,i)=>{const d=(q[0]-f[0])**2+(q[1]-f[1])**2;if(d<bd){bd=d;bi=i}});
+      if(cs.length)bi=[...cs].reverse().find(i=>i<=bi)??cs.at(-1);
+      const rot=i=>(i-bi+path.length)%path.length;path=path.slice(bi).concat(path.slice(0,bi));cs=cs.map(rot).sort((x,y)=>x-y)}
+    else cs=cornerIdx(path,false);
+    const segs=[];
+    if(g.closed){const cl=path.concat([path[0]]);if(!cs.length)segs.push({pts:cl,loop:true});else{const idx=cs.concat([path.length]);for(let k=0;k<cs.length;k++)segs.push({pts:cl.slice(idx[k],idx[k+1]+1)})}}
+    else for(let k=0;k<cs.length-1;k++)segs.push({pts:path.slice(cs[k],cs[k+1]+1)});
+    const ons=segs.map((sg,i)=>{const key=c+':'+i,ov=(st.edges||{})[key]||{},on=!ov.off;let p=pitch;
+      if(ov.pitch!==undefined&&String(ov.pitch).trim()!==''){p=evalExpr(ov.pitch,env);if(p<=0)throw Error(`辺${i+1}のピッチは正の値に`)}
+      const e={key,c,i,pts:sg.pts,L:plen(sg.pts,false),p,on,loop:!!sg.loop,method:ov.method||st.method||'auto',pos:ov.pos||st.pos||'both',ov,n:0,irr:[]};
+      if(on){const h=edgeHoles(sg.pts,e.L,e);e.irr=h.irr;e.n=h.interior.length;out.holes.push(...h.interior);out.irr.push(...h.irr);out.L+=e.L}
+      out.edges.push(e);return on});
+    // a corner gets a hole when either edge next to it is stitched
+    if(g.closed){if(!cs.length){if(ons[0])out.holes.push(path[0].slice())}else segs.forEach((sg,i)=>{if(ons[i]||ons[(i-1+segs.length)%segs.length])out.holes.push(sg.pts[0].slice())})}
+    else{segs.forEach((sg,i)=>{if(ons[i]||(i>0&&ons[i-1]))out.holes.push(sg.pts[0].slice())});if(ons.at(-1))out.holes.push(segs.at(-1).pts.at(-1).slice())}});
+  out.n=out.holes.length;return out}
 function compute(){
   const{env,errs}=envOf();const out={env,verr:errs,items:[],byId:{}};
   const parent={};for(const s of doc.shapes)if(s.type==='bool')for(const id of s.ops)parent[id]=s.id;
@@ -380,7 +436,7 @@ function compute(){
   const gOf=s=>{if(memo[s.id])return memo[s.id];if(busy[s.id])throw Error('演算が循環しています');busy[s.id]=1;
     try{return memo[s.id]=s.type==='bool'?geomBool(s,gOf):geomLeaf(s,env)}finally{busy[s.id]=0}};
   for(const s of doc.shapes){const it={s,parent:parent[s.id]||null};try{it.g=gOf(s)}catch(e){it.err=e.message}
-    if(it.g&&!it.parent){try{it.st=stitch(s,it.g,env)}catch(e){it.sterr=e.message}}out.items.push(it);out.byId[s.id]=it}
+    if(it.g&&!it.parent){try{it.st=stitch(s,it.g,env,gOf)}catch(e){it.sterr=e.message}}out.items.push(it);out.byId[s.id]=it}
   return out}
 
 // ---------- rendering ----------
@@ -400,6 +456,7 @@ function drawGrid(){
 function render(){
   C=compute();gShapes.textContent='';gOver.textContent='';
   if(sel&&!byId(sel))setSel(null);picks=picks.filter(id=>byId(id));
+  if(selEdge){const si=C.byId[sel];if(selEdge.id!==sel||picks.length!==1||!si||!si.st||!si.st.edges.some(e=>e.key===selEdge.key))selEdge=null}
   const k=1/view.s;
   // materials first (faint), then top-level shapes on top
   const order=C.items.filter(i=>i.parent&&i.s.id!==sel).concat(C.items.filter(i=>!i.parent||i.s.id===sel));
@@ -410,7 +467,8 @@ function render(){
     el('path',{d,'fill-rule':'evenodd',fill:g.closed&&!faint?'rgba(244,239,226,0.06)':'none',stroke:on?'var(--sel)':s.kind==='guide'?'var(--guide)':'var(--cut)',
       'stroke-width':on?2:1.4,'stroke-dasharray':faint?'3 3':s.kind==='guide'?'6 4':'','vector-effect':'non-scaling-stroke','stroke-linejoin':'round'},grp);
     el('path',{d,fill:'none',stroke:'transparent','stroke-width':12,'vector-effect':'non-scaling-stroke'},grp);
-    if(it.st){el('path',{d:dPaths(it.st.paths,it.st.closed),fill:'none',stroke:'var(--stitch)','stroke-opacity':.35,'stroke-width':1,'stroke-dasharray':'2 3','vector-effect':'non-scaling-stroke','pointer-events':'none'},grp);
+    if(it.st){for(const e of it.st.edges)el('path',{d:dOf(e.pts,false),fill:'none',stroke:e.on?'var(--stitch)':'var(--guide)','stroke-opacity':e.on?.35:.3,'stroke-width':1,'stroke-dasharray':e.on?'2 3':'1 4','vector-effect':'non-scaling-stroke','pointer-events':'none'},grp);
+      for(const q of it.st.irr)el('line',{x1:q.a[0],y1:q.a[1],x2:q.b[0],y2:q.b[1],stroke:'var(--irr)','stroke-width':3,'stroke-linecap':'round','vector-effect':'non-scaling-stroke','pointer-events':'none'},grp);
       const r=Math.max(it.st.hole/2,0.2);let hd='';for(const[x,y]of it.st.holes)hd+=`M${fmt(x-r,3)} ${fmt(y,3)}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0`;
       el('path',{d:hd,fill:'var(--stitch)','fill-opacity':.25,stroke:'var(--stitch)','stroke-width':1,'vector-effect':'non-scaling-stroke','pointer-events':'none'},grp)}
     if(!faint){const bb=bboxG(g);const t=el('text',{x:bb[0],y:bb[1]-5*k,'font-size':11*k,fill:on?'var(--sel)':'var(--cut)','fill-opacity':on?1:.7,'font-family':'var(--ui)','pointer-events':'none'},gOver);
@@ -427,7 +485,14 @@ function handle(x,y,k,attrs){return el('rect',Object.assign({x:x-4*k,y:y-4*k,wid
 function dimBox(x,y,w,h,k){
   el('path',{d:`M${x} ${y-14*k}H${x+w}M${x} ${y-18*k}v${8*k}M${x+w} ${y-18*k}v${8*k}M${x-14*k} ${y}V${y+h}M${x-18*k} ${y}h${8*k}M${x-18*k} ${y+h}h${8*k}`,stroke:'var(--sel)','stroke-width':1,'vector-effect':'non-scaling-stroke',fill:'none'},gOver);
   dimText(x+w/2,y-17*k,fmt(w),k);dimText(x-17*k,y+h/2,fmt(h),k,'middle',-90)}
-function drawSel(it,k){const s=it.s,g=it.g;
+function drawEdges(it,k){if(!it.st)return;
+  for(const e of it.st.edges){const on=selEdge&&selEdge.key===e.key;
+    if(on){el('path',{d:dOf(e.pts,false),fill:'none',stroke:'var(--sel)','stroke-width':4,'stroke-opacity':.85,'stroke-linecap':'round','vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver);
+      const mid=sampleAlong(e.pts,false,[e.L/2])[0],ah=sampleAlong(e.pts,false,[Math.min(e.L,e.L/2+0.01)])[0];let dx=ah[0]-mid[0],dy=ah[1]-mid[1];const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;
+      const z=7*k;el('path',{d:`M${mid[0]+dx*z} ${mid[1]+dy*z}L${mid[0]-dx*z-dy*z*.7} ${mid[1]-dy*z+dx*z*.7}L${mid[0]-dx*z+dy*z*.7} ${mid[1]-dy*z-dx*z*.7}Z`,fill:'var(--sel)','pointer-events':'none'},gOver);
+      const st=e.pts[0];el('circle',{cx:st[0],cy:st[1],r:3*k,fill:'none',stroke:'var(--sel)','stroke-width':1.5,'vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver)}
+    el('path',{d:dOf(e.pts,false),fill:'none',stroke:'transparent','stroke-width':10,'vector-effect':'non-scaling-stroke','data-edge':e.key,style:'cursor:pointer'},gOver)}}
+function drawSel(it,k){const s=it.s,g=it.g;drawEdges(it,k);
   if(s.type==='rect'){const{x,y,w,h}=g;dimBox(x,y,w,h,k);
     const H={nw:[x,y,'nwse'],n:[x+w/2,y,'ns'],ne:[x+w,y,'nesw'],e:[x+w,y+h/2,'ew'],se:[x+w,y+h,'nwse'],s:[x+w/2,y+h,'ns'],sw:[x,y+h,'nesw'],w:[x,y+h/2,'ew']};
     for(const d in H){const[hx,hy,c]=H[d];handle(hx,hy,k,{'data-h':'rs-'+d,style:`cursor:${c}-resize`,...(d.length===1?{rx:4*k}:{})})}}
@@ -448,14 +513,17 @@ const LABELS={x:'X',y:'Y',w:'幅',h:'高さ',r:'角R',cx:'中心X',cy:'中心Y',
 const TYPE_LABEL=s=>({rect:'角丸矩形',circle:'円',poly:s.closed?'閉じたパス':'開いたパス',bool:'演算 · '+OPS[s.op]}[s.type]);
 function exprRow(path,label,expr,env){let v,e;try{v=evalExpr(expr,env)}catch(x){e=x.message}
   return `<div class="row"><label for="f_${path}">${label}</label><input type="text" id="f_${path}" data-path="${path}" value="${esc(expr)}" class="${e?'err':''}" spellcheck="false" autocomplete="off"><span class="val ${e?'err':''}" title="${esc(e||'')}">${e?'エラー':'= '+fmt(v)}</span></div>`}
-const stResult=st=>{const sp=st.steps.length===1?fmt(st.steps[0],2):`${fmt(Math.min(...st.steps),2)}–${fmt(Math.max(...st.steps),2)}`;
-  return`<span>穴数</span><span>${st.n}</span><span>実ピッチ</span><span>${sp} mm</span><span>縫い長さ</span><span>${fmt(st.L)} mm</span>`};
+const irrText=irr=>{if(!irr.length)return'なし';const g={};irr.forEach(x=>{const k=fmt(x.g);g[k]=(g[k]||0)+1});return`<b style="color:var(--danger);font-weight:500">${Object.entries(g).map(([v,c])=>`${v}mm × ${c}`).join('、')}</b>`};
+const stResult=st=>`<span>穴数</span><span>${st.n}</span><span>縫い長さ</span><span>${fmt(st.L)} mm</span><span>縫う辺</span><span>${st.edges.filter(e=>e.on).length} / ${st.edges.length}</span><span>不揃い</span><span>${irrText(st.irr)}</span>`;
+const edResult=e=>`<span>穴</span><span>${e.n}個（両端の角を除く）</span><span>不揃い</span><span>${irrText(e.irr)}</span>`;
+const METHODS=[['auto','自動'],['tighten','詰める'],['loosen','空ける']],POSES=[['both','両端'],['start','始点'],['center','中央'],['end','終点']];
+const segRow=(path,opts,val,label,name)=>`<div class="row" style="grid-template-columns:64px minmax(0,1fr)"><label>${label}</label><div class="seg" role="radiogroup" aria-label="${label}">${opts.map(([v,t])=>`<label><input type="radio" name="${name}" data-path="${path}" value="${v}"${val===v?' checked':''}>${t}</label>`).join('')}</div></div>`;
 let lastPanelKey=null,showNodesFor=null;
 function renderPanel(){
   const pb=$('partsBar'),show=picks.length>0;if(pb.classList.contains('open')!==show){pb.classList.toggle('open',show);pb.inert=!show}
   // while the parts bar slides closed, keep its last content instead of flashing an empty state
   if(!show){renderVars(false);return}
-  const sec=$('secProps');const it=C.byId[sel];const act=document.activeElement;const key=picks.join(',');
+  const sec=$('secProps');const it=C.byId[sel];const act=document.activeElement;const key=picks.join(',')+'|'+(selEdge?selEdge.key:'');
   if(act&&act.dataset&&act.dataset.path&&act.type==='text'&&sec.contains(act)&&lastPanelKey===key){refreshVals(sec);renderVars(true);return}
   lastPanelKey=key;
   if(picks.length>1){
@@ -489,7 +557,15 @@ function renderPanel(){
     if(!it.parent){h+=`<h2 style="margin-top:6px">ステッチ穴</h2><label class="check"><input type="checkbox" id="f_st" data-path="st.on"${s.st.on?' checked':''}> 穴を並べる</label>`;
       if(s.st.on){if(it.g&&it.g.closed)h+=exprRow('st.inset','コバ幅',s.st.inset,env);
         h+=exprRow('st.pitch','ピッチ',s.st.pitch,env)+exprRow('st.hole','穴径',s.st.hole,env);
-        if(it.st)h+=`<div class="result">${stResult(it.st)}</div><div class="small">ピッチは縫い長さを割り切れるよう自動で微調整されます。</div>`;
+        h+=segRow('st.method',METHODS,s.st.method||'auto','余りの処理','stm')+segRow('st.pos',POSES,s.st.pos||'both','位置','stp');
+        if(it.st)h+=`<div class="result" id="stRes">${stResult(it.st)}</div><div class="small">ピッチは変えずに、角から角までの辺ごとに余りを処理します。縫い線（点線）をクリックすると、その辺だけの設定ができます。</div>`;
+        const e=it.st&&selEdge&&it.st.edges.find(x=>x.key===selEdge.key);
+        if(e){const kp=`st.edges.${e.key}`;h+=`<div class="edgebox"><h2>辺 ${e.i+1}${it.st.edges.some(x=>x.c>0)?`（輪郭 ${e.c+1}）`:''}<button class="x" id="bEdgeX" aria-label="辺の選択を解除" title="辺の選択を解除">×</button></h2>
+          <div class="small">長さ ${fmt(e.L)} mm${e.loop?'。角がないので一周を1辺として扱います':''}。矢印の向きが始点→終点です。</div>
+          <label class="check"><input type="checkbox" data-path="edge.on"${e.on?' checked':''}> この辺を縫う</label>`;
+          if(e.on)h+=`<div class="row"><label for="f_ep">ピッチ</label><input type="text" id="f_ep" data-path="${kp}.pitch" value="${esc(e.ov.pitch||'')}" placeholder="既定" spellcheck="false" autocomplete="off"><span class="val">= ${fmt(e.p)}</span></div>`+
+            segRow(`${kp}.method`,[['','既定'],...METHODS],e.ov.method||'','余りの処理','edm')+segRow(`${kp}.pos`,[['','既定'],...POSES],e.ov.pos||'','位置','edp')+`<div class="result" id="edRes">${edResult(e)}</div>`;
+          h+=`</div>`}
         if(it.sterr)h+=`<div class="small" style="color:var(--danger)">${esc(it.sterr)}</div>`}}
     h+=`<div class="btns" style="margin-top:4px">`+(s.type==='bool'?`<button class="btn" id="bBake" title="材料と式を捨てて、今の形で固定します">確定</button><button class="btn" id="bUngroup" title="演算をやめて材料を元の図形に戻します">演算を解除</button>`:'')+
       `<button class="btn" id="bDup">複製</button>`+(s.type!=='bool'?`<button class="btn" id="bMir">左右反転コピー</button>`:'')+`<button class="btn" id="bDel">削除</button></div>`;
@@ -497,6 +573,7 @@ function renderPanel(){
     $('bDup').onclick=()=>dup(false);if($('bMir'))$('bMir').onclick=()=>dup(true);$('bDel').onclick=delSel;
     if($('bParent'))$('bParent').onclick=()=>{setSel(it.parent);render()};
     if($('bBake'))$('bBake').onclick=bake;if($('bUngroup'))$('bUngroup').onclick=ungroup;
+    if($('bEdgeX'))$('bEdgeX').onclick=()=>{selEdge=null;render()};
     if($('bShowNodes'))$('bShowNodes').onclick=()=>{showNodesFor=s.id;lastPanelKey=null;render()};
     sec.querySelectorAll('[data-ntog]').forEach(b=>b.onclick=()=>{pushUndo();toggleNode(s,+b.dataset.ntog);lastPanelKey=null;render()});
     sec.querySelectorAll('[data-ndel]').forEach(b=>b.onclick=()=>{if(s.nodes.length<=2){toast('頂点は2個以上必要です');return}pushUndo();s.nodes.splice(+b.dataset.ndel,1);lastPanelKey=null;render()});
@@ -507,10 +584,10 @@ function renderPanel(){
   renderVars(false)}
 function refreshVals(sec){const env=C.env;sec.querySelectorAll('input[data-path]').forEach(inp=>{const p=inp.dataset.path;
   if(/^nodes\./.test(p)){try{inp.title='= '+fmt(evalExpr(inp.value,env),2);inp.classList.remove('err')}catch(e){inp.title=e.message;inp.classList.add('err')}return}
-  if(!/^(p|st)\./.test(p))return;
-  const span=inp.nextElementSibling;try{const v=evalExpr(inp.value,env);span.textContent='= '+fmt(v);span.className='val';inp.classList.remove('err')}catch(e){span.textContent='エラー';span.className='val err';span.title=e.message;inp.classList.add('err')}});
-  const it=C.byId[sel];const r=sec.querySelector('.result:not([style])');
-  if(r&&it&&it.st)r.innerHTML=stResult(it.st)}
+  if(!/^(p|st)\./.test(p)||inp.type!=='text')return;
+  const span=inp.nextElementSibling;if(/^st\.edges\./.test(p)&&!inp.value.trim()){const it=C.byId[sel];span.textContent='= '+fmt(it&&it.st?it.st.pitch:0);span.className='val';inp.classList.remove('err');return}
+  try{const v=evalExpr(inp.value,env);span.textContent='= '+fmt(v);span.className='val';inp.classList.remove('err')}catch(e){span.textContent='エラー';span.className='val err';span.title=e.message;inp.classList.add('err')}});
+  const it=C.byId[sel];if(it&&it.st){if($('stRes'))$('stRes').innerHTML=stResult(it.st);const e=selEdge&&it.st.edges.find(x=>x.key===selEdge.key);if(e&&$('edRes'))$('edRes').innerHTML=edResult(e)}}
 function renderVars(soft){const box=$('vars');const env=C.env;
   const mark=(inp,v)=>{const e=C.verr[v.n];inp.classList.toggle('err',!!e);inp.title=e?e:'= '+fmt(env[v.n],3).replace(/\.?0+$/,'')};
   if(soft&&box.contains(document.activeElement)){box.querySelectorAll('.vrow').forEach((r,i)=>{const v=doc.vars[i];if(v)mark(r.querySelector('[data-vk="e"]'),v)});return}
@@ -529,9 +606,15 @@ function varUsers(name){
 // panel events
 $('secProps').addEventListener('focusin',e=>{if(e.target.dataset.path&&e.target.type==='text')pushUndo()});
 $('secProps').addEventListener('input',e=>{const t=e.target,p=t.dataset.path;if(!p)return;const s=cur();if(!s)return;
-  if(t.type==='checkbox'){pushUndo();if(p==='closed')s.closed=t.checked;else if(p==='st.on')s.st.on=t.checked;lastPanelKey=null;render();return}
+  if(t.type==='checkbox'){pushUndo();if(p==='closed')s.closed=t.checked;else if(p==='st.on')s.st.on=t.checked;
+    else if(p==='edge.on'&&selEdge)setDeep(s,`st.edges.${selEdge.key}.off`,t.checked?'':true);lastPanelKey=null;render();return}
   if(t.tagName==='SELECT'){pushUndo();s[p]=t.value;lastPanelKey=null;render();return}
-  const ks=p.split('.');let o=s;for(const k of ks.slice(0,-1))o=o[k];o[ks.at(-1)]=t.value;render()});
+  if(t.type==='radio'){pushUndo();setDeep(s,p,t.value);lastPanelKey=null;render();return}
+  setDeep(s,p,t.value);render()});
+// set a dotted path, creating objects on the way; an empty value under st.edges removes the override
+function setDeep(o,p,v){const ks=p.split('.');const edge=ks[0]==='st'&&ks[1]==='edges';let t=o;
+  for(const k of ks.slice(0,-1)){if(t[k]==null||typeof t[k]!=='object')t[k]={};t=t[k]}
+  if(edge&&(v===''||v===false)){delete t[ks.at(-1)];const e=o.st.edges;for(const k in e)if(!Object.keys(e[k]).length)delete e[k]}else t[ks.at(-1)]=v}
 $('vars').addEventListener('focusin',()=>pushUndo());
 $('vars').addEventListener('input',e=>{const t=e.target;if(t.dataset.vi===undefined)return;doc.vars[+t.dataset.vi][t.dataset.vk]=t.value;render()});
 $('vars').addEventListener('focusout',()=>setTimeout(()=>{if(!$('vars').contains(document.activeElement))renderVars(false)},0));
@@ -649,6 +732,7 @@ svg.addEventListener('pointerdown',e=>{
     draft.dragging=D.length-1;draft.sx=e.clientX;draft.sy=e.clientY;render();return}
   const h=e.target.dataset&&e.target.dataset.h;
   if(h){const s=cur();pushUndo();drag={kind:'handle',h,s,m0:m,g0:C.byId[s.id]&&C.byId[s.id].g};return}
+  const ek=e.target.dataset&&e.target.dataset.edge;if(ek&&!e.shiftKey){selEdge={id:sel,key:ek};render();return}
   const g=e.target.closest('g[data-id]');
   if(g){const id=g.dataset.id;
     if(e.shiftKey){if(C.byId[id].parent){toast('材料は演算結果ごと選んでください');return}
@@ -736,7 +820,7 @@ document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden)return;const in
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!inField){e.preventDefault();e.shiftKey?redo():undo();return}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='d'&&!inField){e.preventDefault();dup(false);return}
   if(inField){if(e.key==='Enter')document.activeElement.blur();return}
-  if(e.key==='Escape'){if(draft){draft=null;render()}else{setSel(null);render()}return}
+  if(e.key==='Escape'){if(draft){draft=null;render()}else if(selEdge){selEdge=null;render()}else{setSel(null);render()}return}
   if(e.key==='Enter'&&draft&&draft.type==='poly'){finishPoly(false);return}
   if((e.key==='Delete'||e.key==='Backspace')&&picks.length){e.preventDefault();delSel();return}
   const map={v:'select',r:'rect',c:'circle',l:'line',p:'poly'};if(map[e.key.toLowerCase()]&&!e.metaKey&&!e.ctrlKey){setTool(map[e.key.toLowerCase()]);return}
