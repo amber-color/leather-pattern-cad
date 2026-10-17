@@ -15,7 +15,7 @@
   --bg:#eef0ec; --panel:#f8f9f6; --line:#d3d8cf; --fg:#1f2a24; --muted:#5f6d64;
   --accent:#b8611f; --accent-soft:#f3e1d1; --danger:#b3261e; --ok:#2f7a4b;
   --mat:#1f4a3a; --mat-minor:rgba(255,255,255,.07); --mat-major:rgba(255,255,255,.16);
-  --cut:#f4efe2; --guide:#9fc3b1; --stitch:#f0a94a; --sel:#ffb36b; --irr:#ff6f6f;
+  --cut:#f4efe2; --guide:#9fc3b1; --stitch:#f0a94a; --sel:#ffb36b; --irr:#ff6f6f; --frame:#b9a7ff;
   --ui:"IBM Plex Sans JP",system-ui,-apple-system,"Hiragino Sans",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
   color-scheme:light;
@@ -53,6 +53,11 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .top .vsep{width:1px;height:22px;background:var(--line);margin:0 6px;flex:none}
 .top .spacer{flex:1}
 .top .btn{padding:6px 10px}
+.top .btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.pdfprev{display:flex;flex-wrap:wrap;gap:8px;max-height:260px;overflow:auto;padding:8px;background:var(--bg);border:1px solid var(--line);border-radius:4px}
+.pdfprev figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:3px}
+.pdfprev svg{width:140px;height:auto;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);display:block}
+.pdfprev figcaption{font:10px var(--mono);color:var(--muted)}
 .rail{grid-row:2/4;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px;padding:8px 6px;align-items:center}
 .tool{width:40px;height:40px;border:1px solid transparent;border-radius:6px;background:none;color:var(--fg);cursor:pointer;display:grid;place-items:center;position:relative}
 .tool:hover{background:var(--bg)}
@@ -155,11 +160,13 @@ input.err{border-color:var(--danger)}
       <button class="btn" id="xSample" title="名刺入れのサンプルを開く">サンプル</button>
       <button class="btn" id="xLoad" title="保存した .json を開く">開く</button>
       <button class="btn" id="xJson" title="型紙を .json で保存">保存</button>
+      <button class="btn" id="xShare" title="型紙を埋め込んだURLをクリップボードにコピー">共有</button>
       <input type="file" id="fileIn" accept=".json,application/json" hidden>
     </div>
     <div class="spacer"></div>
     <div class="grp" role="group" aria-label="書き出し">
       <span class="lbl">書き出し</span>
+      <button class="btn" id="xFrame" aria-pressed="false" title="PDFの用紙と向きで印刷される範囲を図面に表示">印刷枠</button>
       <button class="btn primary" id="xPdf" title="実寸のPDF。用紙と向きを選んで書き出します">PDF</button>
       <button class="btn" id="xSvg" title="mm単位のSVG（裁断線・ステッチ穴・ガイドをグループ分け）">SVG</button>
       <button class="btn" id="xDxf" title="R12形式のDXF（レイヤー CUT / STITCH / GUIDE）">DXF</button>
@@ -214,7 +221,7 @@ input.err{border-color:var(--danger)}
     </section>
   </aside>
 </div>
-<div class="modal" id="pdfModal" hidden role="dialog" aria-modal="true" aria-labelledby="pdfTitle"><div class="box" style="width:min(380px,100%)">
+<div class="modal" id="pdfModal" hidden role="dialog" aria-modal="true" aria-labelledby="pdfTitle"><div class="box" style="width:min(520px,100%)">
   <strong id="pdfTitle">実寸PDFの書き出し</strong>
   <div class="opt"><label for="pdfSize">用紙</label><select class="inp" id="pdfSize">
     <option value="A4">A4（210 × 297 mm）</option><option value="A3">A3（297 × 420 mm）</option><option value="A5">A5（148 × 210 mm）</option>
@@ -223,6 +230,7 @@ input.err{border-color:var(--danger)}
   <div class="opt"><span id="pdfOrientLbl">向き</span><div class="seg" id="pdfOrient" role="radiogroup" aria-labelledby="pdfOrientLbl">
     <label><input type="radio" name="pdfo" value="auto" id="pdfoA">自動</label><label><input type="radio" name="pdfo" value="portrait" id="pdfoP">縦</label><label><input type="radio" name="pdfo" value="landscape" id="pdfoL">横</label></div></div>
   <div class="result" id="pdfInfo"></div>
+  <div class="pdfprev" id="pdfPrev" aria-label="PDFのプレビュー"></div>
   <div class="small">「自動」は枚数が少なくなる向きを選びます。印刷は「実際のサイズ（100%）」で行い、各ページ下の50mm目盛りで確認してください。</div>
   <div class="btns"><button class="btn primary" id="pdfGo">書き出す</button><button class="btn" id="pdfCancel">キャンセル</button></div>
 </div></div>
@@ -269,22 +277,47 @@ const isNum=s=>/^\s*-?\d+(\.\d+)?\s*$/.test(String(s));
 const fmt=(v,d=1)=>(Math.round(v*10**d)/10**d).toFixed(d);
 
 // ---------- state ----------
-// Sample: a bifold business-card case that can actually be built.
-// One exterior folded at the spine (背), plus two inner pockets that open toward the spine with a thumb notch.
-// The pockets are glued onto the exterior first and stitched through both layers along the exterior's holes,
-// so only the exterior carries stitch holes. Business card 91 x 55 mm; every size follows from the variables.
+// Sample: a bifold business-card case with a snap flap that can actually be built.
+// Exterior folded at the spine (背), two inner pockets opening toward the spine with a thumb notch (boolean difference),
+// a flap with a Bézier-rounded tip and snap holes, and a hexagonal logo tag. Pockets are glued on first and stitched
+// through the exterior's holes; the exterior's long edges put their irregular stitch gap at the centre, under the fold.
 const ST=(on,edges)=>({on,inset:'縫い代',pitch:'ピッチ',hole:'穴',...(edges?{edges}:{})});
+const K_=c=>`0.5523*${c}`;
+const TX=(id,name,text,x,y,size,kind='guide')=>({id,name,type:'text',kind,text,p:{x,y,size,rot:'0'},st:ST(false)});
+const DM=(id,name,x1,y1,x2,y2,off)=>({id,name,type:'dim',kind:'guide',p:{x1,y1,x2,y2,off,size:'3.5'},st:ST(false)});
 const SAMPLE={vars:[{n:'名刺W',e:'91'},{n:'名刺H',e:'55'},{n:'ゆとり',e:'3'},{n:'縫い代',e:'3'},{n:'ピッチ',e:'4'},{n:'穴',e:'1.2'},{n:'R',e:'4'},{n:'背幅',e:'8'},{n:'指',e:'22'},{n:'間',e:'12'},
-    {n:'ポケット幅',e:'名刺W+ゆとり+縫い代'},{n:'高さ',e:'名刺H+ゆとり+2*縫い代'}],
+    {n:'ポケット幅',e:'名刺W+ゆとり+縫い代'},{n:'高さ',e:'名刺H+ゆとり+2*縫い代'},{n:'外装幅',e:'2*ポケット幅+背幅'},
+    {n:'ベロ幅',e:'26'},{n:'重ね',e:'20'},{n:'ベロ長',e:'重ね+背幅+30'},{n:'ホック穴',e:'3'},{n:'下段',e:'2*(高さ+間)'}],
   shapes:[
-    {id:'s1',name:'外装',type:'rect',kind:'cut',p:{x:'0',y:'0',w:'2*ポケット幅+背幅',h:'高さ',r:'R'},st:ST(true)},
+    {id:'s1',name:'外装',type:'rect',kind:'cut',p:{x:'0',y:'0',w:'外装幅',h:'高さ',r:'R'},st:ST(true,{'0:0':{pos:'center'},'0:2':{pos:'center'}})},
     {id:'g1',name:'背',type:'rect',kind:'guide',p:{x:'ポケット幅',y:'0',w:'背幅',h:'高さ',r:'0'},st:ST(false)},
+    {id:'g2',name:'ベロ付け位置',type:'rect',kind:'guide',p:{x:'外装幅-重ね',y:'(高さ-ベロ幅)/2',w:'重ね',h:'ベロ幅',r:'0'},st:ST(false)},
+    {id:'h1',name:'ホック（外装）',type:'circle',kind:'cut',p:{cx:'ベロ長-重ね-背幅-ベロ幅/2',cy:'高さ/2',d:'ホック穴'},st:ST(false)},
     {id:'p1',name:'ポケット板（左）',type:'rect',kind:'cut',p:{x:'0',y:'高さ+間',w:'ポケット幅',h:'高さ',r:'R'},st:ST(false)},
     {id:'c1',name:'指かけ（左）',type:'circle',kind:'cut',p:{cx:'ポケット幅',cy:'高さ+間+高さ/2',d:'指'},st:ST(false)},
     {id:'b1',name:'内装ポケット（左）',type:'bool',op:'diff',ops:['p1','c1'],kind:'cut',p:{},st:ST(false)},
     {id:'p2',name:'ポケット板（右）',type:'rect',kind:'cut',p:{x:'ポケット幅+背幅',y:'高さ+間',w:'ポケット幅',h:'高さ',r:'R'},st:ST(false)},
     {id:'c2',name:'指かけ（右）',type:'circle',kind:'cut',p:{cx:'ポケット幅+背幅',cy:'高さ+間+高さ/2',d:'指'},st:ST(false)},
-    {id:'b2',name:'内装ポケット（右）',type:'bool',op:'diff',ops:['p2','c2'],kind:'cut',p:{},st:ST(false)}
+    {id:'b2',name:'内装ポケット（右）',type:'bool',op:'diff',ops:['p2','c2'],kind:'cut',p:{},st:ST(false)},
+    {id:'f1',name:'ベロ',type:'poly',kind:'cut',closed:true,p:{},st:ST(true),nodes:[
+      {x:'0',y:'下段'},
+      {x:'ベロ長-ベロ幅/2',y:'下段',ho:[K_('ベロ幅/2'),'0']},
+      {x:'ベロ長',y:'下段+ベロ幅/2',t:'smooth',hi:['0',`-${K_('ベロ幅/2')}`],ho:['0',K_('ベロ幅/2')]},
+      {x:'ベロ長-ベロ幅/2',y:'下段+ベロ幅',hi:[K_('ベロ幅/2'),'0']},
+      {x:'0',y:'下段+ベロ幅'}]},
+    {id:'h2',name:'ホック（ベロ）',type:'circle',kind:'cut',p:{cx:'ベロ長-ベロ幅/2',cy:'下段+ベロ幅/2',d:'ホック穴'},st:ST(false)},
+    {id:'t1',name:'ロゴタグ',type:'poly',kind:'cut',closed:true,p:{},st:{...ST(true),inset:'2.5'},nodes:[
+      {x:'ベロ長+間+5',y:'下段'},{x:'ベロ長+間+31',y:'下段'},{x:'ベロ長+間+36',y:'下段+11'},
+      {x:'ベロ長+間+31',y:'下段+22'},{x:'ベロ長+間+5',y:'下段+22'},{x:'ベロ長+間',y:'下段+11'}]},
+    TX('x0','タイトル','二つ折り名刺入れ（名刺 91 × 55 mm）','0','-17','5','cut'),
+    TX('x1','注記：外装','外装 ×1（銀面）','8','高さ-8','3.5'),
+    TX('x2','注記：内装','内装ポケット ×2（左右）','8','2*高さ+間-8','3.5'),
+    TX('x3','注記：ベロ','ベロ ×1','5','下段+ベロ幅/2+1.3','3.5'),
+    TX('x4','注記：刻印','刻印','ベロ長+間+13','下段+12.5','4'),
+    DM('d1','寸法：外装幅','0','0','外装幅','0','-8'),
+    DM('d2','寸法：高さ','外装幅','0','外装幅','高さ','-8'),
+    DM('d3','寸法：ポケット幅','0','2*高さ+間','ポケット幅','2*高さ+間','6'),
+    DM('d4','寸法：ベロ長','0','下段+ベロ幅','ベロ長','下段+ベロ幅','7')
   ]};
 const KEY='ppp-v1';
 let doc;try{doc=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -514,6 +547,7 @@ function render(){
     if(!faint&&!g.isText){const bb=bboxG(g);const t=el('text',{x:bb[0],y:bb[1]-5*k,'font-size':11*k,fill:on?'var(--sel)':'var(--cut)','fill-opacity':on?1:.7,'font-family':'var(--ui)','pointer-events':'none'},gOver);
       t.textContent=s.name+(mat?'（材料）':'')+(it.st?`  ${it.st.n}穴`:'')}
     if(s.id===sel&&picks.length===1)drawSel(it,k)}
+  if(UI.showFrame)drawFrame(k);
   if(draft)drawDraft(k);
   else if(tool==='dim'&&hoverSnap&&hoverSnap.hit)el('circle',{cx:hoverSnap.p[0],cy:hoverSnap.p[1],r:5*k,fill:'none',stroke:'var(--sel)','stroke-width':2,'vector-effect':'non-scaling-stroke'},gOver);
   if(drag&&drag.kind==='box'&&drag.big){const x=Math.min(drag.a[0],drag.b[0]),y=Math.min(drag.a[1],drag.b[1]);
@@ -749,6 +783,15 @@ const snap=v=>snapStep?Math.round(v/snapStep)*snapStep:Math.round(v*100)/100;
 const HINT={dim:'始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック',text:'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集',select:'クリックで選択、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで角丸矩形を描く',circle:'中心からドラッグして円を描く',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直'};
 function setTool(t){tool=t;draft=null;document.querySelectorAll('.tool[data-tool]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));svg.className.baseVal=t==='select'?'':'draw';$('sHint').textContent=HINT[t];render()}
 document.querySelectorAll('.tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
+function contentBB(){let bb=[1e9,1e9,-1e9,-1e9];for(const it of C.items){if(!it.g||it.parent)continue;const b=bboxG(it.g);
+    if(it.st)for(const[x,y]of it.st.holes){b[0]=Math.min(b[0],x);b[1]=Math.min(b[1],y);b[2]=Math.max(b[2],x);b[3]=Math.max(b[3],y)}
+    bb=[Math.min(bb[0],b[0]),Math.min(bb[1],b[1]),Math.max(bb[2],b[2]),Math.max(bb[3],b[3])]}return bb[0]>bb[2]?null:bb}
+// printable area of every page that the PDF button would produce, with the paper edge drawn faintly around it
+function drawFrame(k){const bb=contentBB();if(!bb)return;const L=pdfLayout(bb,{size:UI.pdfSize||'A4',orient:UI.pdfOrient||'auto'}),{aw,ah,cols,rows,M,pw,ph}=L;
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=bb[0]+c*aw,y=bb[1]+r*ah;
+    el('rect',{x:x-M,y:y-M,width:pw,height:ph,fill:'none',stroke:'var(--frame)','stroke-opacity':.35,'stroke-width':1,'vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver);
+    el('rect',{x,y,width:aw,height:ah,fill:'none',stroke:'var(--frame)','stroke-width':1.5,'stroke-dasharray':'8 5','vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver);
+    const t=el('text',{x:x+2*k,y:y+ah-4*k,'font-size':11*k,fill:'var(--frame)','font-family':'IBM Plex Mono, monospace','pointer-events':'none'},gOver);t.textContent=`${L.label}  ${c+1}-${r+1}`}}
 function snapCands(ex){const out=[];for(const it of C.items){const g=it.g,s=it.s;if(!g||s.id===ex||g.isText||g.isDim)continue;
     if(s.type==='rect'){const{x,y,w,h}=g;out.push([x,y],[x+w,y],[x+w,y+h],[x,y+h],[x+w/2,y],[x+w,y+h/2],[x+w/2,y+h],[x,y+h/2])}
     else if(s.type==='circle'){const r=g.d/2;out.push([g.cx,g.cy],[g.cx+r,g.cy],[g.cx-r,g.cy],[g.cx,g.cy+r],[g.cx,g.cy-r])}
@@ -1013,10 +1056,23 @@ $('mCopy').onclick=()=>{const t=$('mText');navigator.clipboard.writeText(t.value
 function pdfOpts(){return{size:$('pdfSize').value,orient:(document.querySelector('input[name=pdfo]:checked')||{}).value||'auto'}}
 function updatePdfInfo(){const o=pdfOpts(),{bb,items}=exportItems();$('pdfOrient').classList.toggle('off',o.size==='fit');
   if(!items.length){$('pdfInfo').innerHTML='<span>書き出す図形がありません</span><span></span>';$('pdfGo').disabled=true;return}$('pdfGo').disabled=false;
-  const L=pdfLayout(bb,o);$('pdfInfo').innerHTML=`<span>用紙</span><span>${L.label}</span><span>枚数</span><span>${L.cols*L.rows}枚${L.cols*L.rows>1?`（横${L.cols} × 縦${L.rows}）`:''}</span><span>型紙</span><span>${fmt(bb[2]-bb[0])} × ${fmt(bb[3]-bb[1])} mm</span>`}
+  const L=pdfLayout(bb,o);renderPdfPreview(L,items,bb);$('pdfInfo').innerHTML=`<span>用紙</span><span>${L.label}</span><span>枚数</span><span>${L.cols*L.rows}枚${L.cols*L.rows>1?`（横${L.cols} × 縦${L.rows}）`:''}</span><span>型紙</span><span>${fmt(bb[2]-bb[0])} × ${fmt(bb[3]-bb[1])} mm</span>`}
 $('xPdf').onclick=()=>{$('pdfSize').value=UI.pdfSize||'A4';(document.getElementById({auto:'pdfoA',portrait:'pdfoP',landscape:'pdfoL'}[UI.pdfOrient||'auto'])).checked=true;
   updatePdfInfo();$('pdfModal').hidden=false;$('pdfGo').focus()};
-$('pdfSize').onchange=updatePdfInfo;$('pdfOrient').addEventListener('change',updatePdfInfo);
+// the print frame follows whatever is chosen in the dialog
+const pdfChanged=()=>{const o=pdfOpts();UI.pdfSize=o.size;UI.pdfOrient=o.orient;saveUI();updatePdfInfo();render()};
+$('pdfSize').onchange=pdfChanged;$('pdfOrient').addEventListener('change',pdfChanged);
+function renderPdfPreview(L,items,bb){const{pw,ph,aw,ah,cols,rows,M}=L,max=12,shown=Math.min(cols*rows,max);let h='',n=0;
+  const art=items.map(({s,g,st})=>{if(g.isText)return`<text x="${g.x}" y="${g.y}" font-size="${g.size}" fill="${s.kind==='guide'?'#2c6fbb':'#000'}"${g.rot?` transform="rotate(${g.rot} ${g.x} ${g.y})"`:''}>${esc(g.str)}</text>`;
+    if(g.isDim){const D=g.dim;return`<path d="${D.lines.map(([a,b])=>`M${a[0]} ${a[1]}L${b[0]} ${b[1]}`).join('')}" stroke="#444" stroke-width="0.25" fill="none"/><text x="${D.text.x}" y="${D.text.y}" font-size="${D.text.size}" text-anchor="middle" fill="#444" transform="rotate(${D.text.rot} ${D.text.x} ${D.text.y})">${D.text.str}</text>`}
+    let o=`<path d="${dPaths(g.paths,g.closed)}" fill="none" stroke="${s.kind==='guide'?'#2c6fbb':'#000'}" stroke-width="0.5"${s.kind==='guide'?' stroke-dasharray="3 2"':''}/>`;
+    if(st)o+=`<path d="${st.holes.map(([x,y])=>`M${x-0.6} ${y}a0.6 0.6 0 1 0 1.2 0a0.6 0.6 0 1 0 -1.2 0`).join('')}" fill="#c0392b"/>`;return o}).join('');
+  for(let r=0;r<rows&&n<shown;r++)for(let c=0;c<cols&&n<shown;c++,n++){const ox=bb[0]+c*aw,oy=bb[1]+r*ah,id='pv'+n;
+    h+=`<figure><svg viewBox="0 0 ${pw} ${ph}" role="img" aria-label="${c+1}-${r+1} ページ"><defs><clipPath id="${id}"><rect x="${M}" y="${M}" width="${aw}" height="${ah}"/></clipPath></defs>
+      <rect x="${M}" y="${M}" width="${aw}" height="${ah}" fill="none" stroke="#bbb" stroke-width="0.6" stroke-dasharray="4 3"/>
+      <g clip-path="url(#${id})"><g transform="translate(${M-ox} ${M-oy})" font-family="sans-serif">${art}</g></g>
+      <path d="M${M} ${ph-M+2}h50" stroke="#000" stroke-width="0.6"/></svg><figcaption>${c+1}-${r+1}</figcaption></figure>`}
+  if(cols*rows>max)h+=`<figure><figcaption>ほか ${cols*rows-max} 枚</figcaption></figure>`;$('pdfPrev').innerHTML=h}
 $('pdfCancel').onclick=()=>$('pdfModal').hidden=true;
 $('pdfModal').addEventListener('click',e=>{if(e.target.id==='pdfModal')$('pdfModal').hidden=true});
 $('pdfModal').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();$('pdfModal').hidden=true}});
@@ -1029,10 +1085,27 @@ $('xJson').onclick=()=>offer('pattern.json',JSON.stringify(doc,null,2));
 $('xLoad').onclick=()=>$('fileIn').click();
 $('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.shapes||!d.vars)throw 0;pushUndo();doc=migrate(d);setSel(null);fit();toast('読み込みました')}catch(x){toast('型紙ファイルとして読めませんでした')}});e.target.value=''};
 $('xNew').onclick=()=>{pushUndo();doc={vars:structuredClone(SAMPLE.vars),shapes:[]};setSel(null);render();toast('新規にしました（⌘Zで戻せます）')};
+function setFrame(on){UI.showFrame=on;saveUI();$('xFrame').setAttribute('aria-pressed',String(on));render()}
+$('xFrame').onclick=()=>{setFrame(!UI.showFrame);if(UI.showFrame){const bb=contentBB();if(bb){const L=pdfLayout(bb,{size:UI.pdfSize||'A4',orient:UI.pdfOrient||'auto'});toast(`${L.label}・${L.cols*L.rows}枚の印刷範囲を表示しています（用紙と向きはPDFボタンで変更）`,3500)}}};
+// share: the whole pattern goes into the URL after "#p=" (compressed when the browser can), so nothing is uploaded anywhere
+const b64u=bytes=>{let b='';for(let i=0;i<bytes.length;i+=0x8000)b+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));return btoa(b).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+const unb64u=str=>{const b=atob(str.replace(/-/g,'+').replace(/_/g,'/'));const u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
+async function streamBytes(bytes,ctor,fmt){const st=new Blob([bytes]).stream().pipeThrough(new ctor(fmt));return new Uint8Array(await new Response(st).arrayBuffer())}
+async function encodeDoc(d){const raw=new TextEncoder().encode(JSON.stringify(d));
+  if(window.CompressionStream){try{return'z'+b64u(await streamBytes(raw,CompressionStream,'deflate-raw'))}catch(e){}}return'j'+b64u(raw)}
+async function decodeDoc(str){const kind=str[0],bytes=unb64u(str.slice(1));const raw=kind==='z'?await streamBytes(bytes,DecompressionStream,'deflate-raw'):bytes;return JSON.parse(new TextDecoder().decode(raw))}
+$('xShare').onclick=async()=>{let url;try{url=location.href.split('#')[0]+'#p='+await encodeDoc(doc)}catch(e){toast('共有用のURLを作れませんでした');return}
+  const kb=(url.length/1024).toFixed(1);
+  try{await navigator.clipboard.writeText(url);toast(`共有用のURLをコピーしました（${kb} KB）`)}
+  catch(e){$('mTitle').textContent='共有用のURL';$('mNote').textContent='自動でコピーできなかったので、下の文字列をコピーしてください。';$('mText').value=url;$('mSave').hidden=true;$('modal').hidden=false;$('mText').focus();$('mText').select()}};
+async function loadFromLink(){const h=location.hash;if(!h.startsWith('#p='))return false;
+  try{const d=await decodeDoc(h.slice(3));if(!d.shapes||!d.vars)throw 0;pushUndo();doc=migrate(d);setSel(null);history.replaceState(null,'',location.pathname+location.search);fit();toast('共有された型紙を開きました（⌘Zで前の作業に戻せます）',4000);return true}
+  catch(e){toast('共有リンクの型紙を読み込めませんでした');history.replaceState(null,'',location.pathname+location.search);return false}}
+addEventListener('hashchange',loadFromLink);
 $('xSample').onclick=()=>{pushUndo();doc=structuredClone(SAMPLE);setSel(null);fit();toast('サンプル（二つ折り名刺入れ）を開きました')};
 
 // ---------- boot ----------
-function boot(){if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}setTool('select');requestAnimationFrame(fit)}
+function boot(){if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}$('xFrame').setAttribute('aria-pressed',String(!!UI.showFrame));setTool('select');requestAnimationFrame(fit);loadFromLink()}
 if(document.readyState==='complete')boot();else addEventListener('load',boot);
 })();
 </script>
