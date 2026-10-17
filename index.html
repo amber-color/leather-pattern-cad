@@ -54,7 +54,27 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .top .spacer{flex:1}
 .top .btn{padding:6px 10px}
 .top .ibtn{width:40px;height:40px;padding:0;display:grid;place-items:center;border:1px solid transparent;background:none;border-radius:6px;color:var(--fg)}
-.top .ibtn:hover{background:var(--bg);border-color:transparent}
+.top .ibtn:hover,.top .ibtn[aria-expanded="true"]{background:var(--bg);border-color:transparent}
+.menuwrap{position:relative}
+.menu{position:fixed;z-index:30;min-width:240px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.22);padding:5px;display:flex;flex-direction:column}
+.menu button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:none;background:none;color:var(--fg);padding:8px 10px;border-radius:5px;cursor:pointer;font:13px var(--ui)}
+.menu button span{font-size:11px;color:var(--muted)}
+.menu button:hover,.menu button:focus-visible{background:var(--accent-soft);outline:none}
+.modal.help .box{width:min(760px,100%);max-height:86vh;padding:0;gap:0;overflow:hidden}
+.help .hhead{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line)}
+.help .hbody{overflow:auto;padding:4px 24px 24px;line-height:1.75;font-size:14px}
+.help .hbody h1{font-size:20px;margin:18px 0 6px;color:var(--accent);text-wrap:balance}
+.help .hbody h2{font-size:16px;margin:24px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.help .hbody h3{font-size:14px;margin:18px 0 4px}
+.help .hbody p{margin:6px 0}
+.help .hbody ul{margin:4px 0;padding-left:20px}
+.help .hbody li{margin:2px 0}
+.help .hbody code{font:12.5px var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:0 4px}
+.help .hbody table{border-collapse:collapse;font-size:13px;margin:8px 0;width:100%}
+.help .hbody th,.help .hbody td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+.help .hbody th{color:var(--muted);font-weight:500}
+.help .hbody a{color:var(--accent)}
+.help .tablewrap{overflow-x:auto}
 /* same look as the tool rail: 1.6px strokes on screen (22px icon drawn on a 20-unit grid) */
 .top .ibtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.45}
 .top .btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
@@ -180,10 +200,14 @@ input.err{border-color:var(--danger)}
   <header class="top">
     <div class="brand" title="式で描くレザークラフト型紙CAD"><span class="cap">P</span>arametric <span class="cap">P</span>attern <span class="cap">P</span>lotter</div>
     <div class="grp" role="group" aria-label="ファイル">
-      <button class="btn ibtn" id="xNew" title="新規：空の型紙を作る（変数は残ります）" aria-label="新規"><svg viewBox="0 0 20 20"><path d="M5 2.5h6.5L15 6v11.5H5z"/><path d="M11.5 2.5V6H15"/><path d="M10 9v6M7 12h6"/></svg></button>
-      <button class="btn ibtn" id="xSample" title="サンプル：二つ折り名刺入れの型紙を開く" aria-label="サンプル"><svg viewBox="0 0 20 20"><path d="M3 4.5h5.5a1.5 1.5 0 011.5 1.5v10a1.5 1.5 0 00-1.5-1.5H3z"/><path d="M17 4.5h-5.5A1.5 1.5 0 0010 6v10a1.5 1.5 0 011.5-1.5H17z"/></svg></button>
-      <button class="btn ibtn" id="xLoad" title="開く：保存した .json を読み込む" aria-label="開く"><svg viewBox="0 0 20 20"><path d="M2.5 15.5V5a1 1 0 011-1h4l1.5 2h6.5a1 1 0 011 1v1.5"/><path d="M2.5 15.5l2.5-6.5h12.5l-2.5 6.5z"/></svg></button>
+      <div class="menuwrap"><button class="btn ibtn" id="xNew" title="新規" aria-label="新規" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 20 20"><path d="M5 2.5h6.5L15 6v11.5H5z"/><path d="M11.5 2.5V6H15"/><path d="M10 9v6M7 12h6"/></svg></button>
+        <div class="menu" id="newMenu" role="menu" hidden>
+          <button role="menuitem" id="mNewBlank"><b>空の型紙</b><span>変数は残して、図形をすべて消します</span></button>
+          <button role="menuitem" id="mNewSample"><b>サンプル</b><span>二つ折り名刺入れ（全機能を使った例）</span></button>
+        </div></div>
+            <button class="btn ibtn" id="xLoad" title="開く：保存した .json を読み込む" aria-label="開く"><svg viewBox="0 0 20 20"><path d="M2.5 15.5V5a1 1 0 011-1h4l1.5 2h6.5a1 1 0 011 1v1.5"/><path d="M2.5 15.5l2.5-6.5h12.5l-2.5 6.5z"/></svg></button>
       <button class="btn ibtn" id="xJson" title="保存：型紙を .json で保存" aria-label="保存"><svg viewBox="0 0 20 20"><path d="M10 3v9.5M6 9l4 4 4-4"/><path d="M3.5 13.5v3h13v-3"/></svg></button>
+      <button class="btn ibtn" id="xHelp" title="使い方" aria-label="使い方"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><path d="M7.6 7.8a2.5 2.5 0 014.8.9c0 1.7-2.4 2-2.4 3.6"/><path d="M10 14.3v.1" stroke-width="2"/></svg></button>
       <button class="btn ibtn" id="xShare" title="共有：型紙を埋め込んだURLをクリップボードにコピー" aria-label="共有"><svg viewBox="0 0 20 20"><circle cx="14.5" cy="4.5" r="2.3"/><circle cx="5.5" cy="10" r="2.3"/><circle cx="14.5" cy="15.5" r="2.3"/><path d="M12.5 5.7L7.5 8.8M7.5 11.2l5 3.1"/></svg></button>
       <input type="file" id="fileIn" accept=".json,application/json" hidden>
     </div>
@@ -257,6 +281,10 @@ input.err{border-color:var(--danger)}
   <div class="pdfprev" id="pdfPrev" aria-label="PDFのプレビュー"></div>
   <div class="small">「自動」は枚数が少なくなる向きを選びます。印刷は「実際のサイズ（100%）」で行い、各ページ下の50mm目盛りで確認してください。</div>
   <div class="btns"><button class="btn primary" id="pdfGo">書き出す</button><button class="btn" id="pdfCancel">キャンセル</button></div>
+</div></div>
+<div class="modal help" id="helpModal" hidden role="dialog" aria-modal="true" aria-labelledby="helpTitle"><div class="box">
+  <div class="hhead"><strong id="helpTitle">使い方</strong><button class="vtoggle" id="helpClose" aria-label="閉じる" title="閉じる"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
+  <div class="hbody" id="helpBody"><p>読み込んでいます…</p></div>
 </div></div>
 <div class="modal" id="modal" hidden><div class="box">
   <strong id="mTitle"></strong><div class="small" id="mNote"></div>
@@ -1025,7 +1053,7 @@ svg.addEventListener('contextmenu',e=>e.preventDefault());
 svg.addEventListener('wheel',e=>{e.preventDefault();const r=svg.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;
   const f=Math.exp(-e.deltaY*(e.ctrlKey?0.01:0.0015)),ns=Math.min(60,Math.max(0.3,view.s*f));
   view.tx=px-(px-view.tx)*ns/view.s;view.ty=py-(py-view.ty)*ns/view.s;view.s=ns;applyView();render()},{passive:false});
-function fit(){const r=svg.getBoundingClientRect();let bb=[1e9,1e9,-1e9,-1e9];
+function fit(){C=compute();const r=svg.getBoundingClientRect();let bb=[1e9,1e9,-1e9,-1e9];
   for(const it of C.items)if(it.g){const b=bboxG(it.g);bb=[Math.min(bb[0],b[0]),Math.min(bb[1],b[1]),Math.max(bb[2],b[2]),Math.max(bb[3],b[3])]}
   if(bb[0]>bb[2])bb=[0,0,100,100];const w=bb[2]-bb[0],h=bb[3]-bb[1],pad=48;
   view.s=Math.max(0.3,Math.min(30,Math.min((r.width-pad*2)/w,(r.height-pad*2)/h)));
@@ -1036,7 +1064,7 @@ $('zIn').onclick=()=>zoomBy(1.25);$('zOut').onclick=()=>zoomBy(0.8);
 function undo(){if(!undoS.length)return;redoS.push(JSON.stringify(doc));doc=JSON.parse(undoS.pop());lastPanelKey=null;render()}
 function redo(){if(!redoS.length)return;undoS.push(JSON.stringify(doc));doc=JSON.parse(redoS.pop());lastPanelKey=null;render()}
 $('bUndo').onclick=undo;$('bRedo').onclick=redo;
-document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden)return;const inField=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden||!$('helpModal').hidden||!$('newMenu').hidden)return;const inField=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
   if(e.key===' '&&!inField){spaceDown=true;svg.classList.add('pan');e.preventDefault();return}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!inField){e.preventDefault();e.shiftKey?redo():undo();return}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='d'&&!inField){e.preventDefault();dup(false);return}
@@ -1177,7 +1205,35 @@ $('xDxf').onclick=()=>offer('pattern.dxf',buildDXF());
 $('xJson').onclick=()=>offer('pattern.json',JSON.stringify(doc,null,2));
 $('xLoad').onclick=()=>$('fileIn').click();
 $('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.shapes||!d.vars)throw 0;pushUndo();doc=migrate(d);setSel(null);fit();toast('読み込みました')}catch(x){toast('型紙ファイルとして読めませんでした')}});e.target.value=''};
-$('xNew').onclick=()=>{pushUndo();doc={vars:structuredClone(SAMPLE.vars),shapes:[]};setSel(null);render();toast('新規にしました（⌘Zで戻せます）')};
+function closeNewMenu(){$('newMenu').hidden=true;$('xNew').setAttribute('aria-expanded','false')}
+$('xNew').onclick=e=>{e.stopPropagation();const m=$('newMenu');if(!m.hidden){closeNewMenu();return}const r=$('xNew').getBoundingClientRect();
+  m.style.left=Math.max(8,Math.min(r.left,innerWidth-260))+'px';m.style.top=(r.bottom+6)+'px';m.hidden=false;$('xNew').setAttribute('aria-expanded','true');$('mNewBlank').focus()};
+document.addEventListener('pointerdown',e=>{if(!$('newMenu').hidden&&!e.target.closest('.menuwrap'))closeNewMenu()});
+$('newMenu').addEventListener('keydown',e=>{const it=[...$('newMenu').querySelectorAll('button')],i=it.indexOf(document.activeElement);
+  if(e.key==='Escape'){e.stopPropagation();closeNewMenu();$('xNew').focus()}else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();it[(i+(e.key==='ArrowDown'?1:it.length-1))%it.length].focus()}});
+$('mNewSample').onclick=()=>{closeNewMenu();pushUndo();doc=structuredClone(SAMPLE);setSel(null);fit();toast('サンプル（二つ折り名刺入れ）を開きました（⌘Zで戻せます）')};
+// usage guide: the repository README, rendered by a small Markdown subset (headings, lists, tables, code, bold, links)
+function mdInline(t){return esc(t).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
+  .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/(^|[\s：>])(https?:\/\/[^\s<*]+)/g,'$1<a href="$2" target="_blank" rel="noopener">$2</a>')}
+function mdToHtml(md){const L=md.replace(/\r/g,'').split('\n'),out=[];let i=0,para=[];const flush=()=>{if(para.length){out.push('<p>'+para.map(mdInline).join('<br>')+'</p>');para=[]}};
+  while(i<L.length){const l=L[i];
+    if(!l.trim()){flush();i++;continue}
+    let m=l.match(/^(#{1,3})\s+(.*)$/);if(m){flush();out.push(`<h${m[1].length}>${mdInline(m[2])}</h${m[1].length}>`);i++;continue}
+    if(/^\s*\|/.test(l)){flush();const rows=[];while(i<L.length&&/^\s*\|/.test(L[i]))rows.push(L[i++]);const cells=r=>r.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+      const head=cells(rows[0]),body=rows.slice(2).map(cells);out.push('<div class="tablewrap"><table><thead><tr>'+head.map(c=>`<th>${mdInline(c)}</th>`).join('')+'</tr></thead><tbody>'+body.map(r=>'<tr>'+r.map(c=>`<td>${mdInline(c)}</td>`).join('')+'</tr>').join('')+'</tbody></table></div>');continue}
+    if(/^\s*- /.test(l)){flush();let html='',depth=-1;while(i<L.length&&/^\s*- /.test(L[i])){const d=Math.floor(L[i].match(/^\s*/)[0].length/2),txt=L[i].replace(/^\s*- /,'');
+        if(d>depth){html+='<ul>'.repeat(d-depth);depth=d}else{html+='</li>';while(depth>d){html+='</ul></li>';depth--}}html+='<li>'+mdInline(txt);i++}
+      html+='</li>';while(depth>0){html+='</ul></li>';depth--}html+='</ul>';out.push(html);continue}
+    para.push(l);i++}
+  flush();return out.join('')}
+let helpLoaded=false;
+async function openHelp(){$('helpModal').hidden=false;$('helpClose').focus();if(helpLoaded)return;
+  try{const r=await fetch('README.md',{cache:'no-cache'});if(!r.ok)throw 0;$('helpBody').innerHTML=mdToHtml(await r.text());helpLoaded=true}
+  catch(e){$('helpBody').innerHTML='<p>使い方を読み込めませんでした。<a href="https://github.com/amber-color/leather-pattern-cad#readme" target="_blank" rel="noopener">GitHub の README</a> を開いてください。</p>'}}
+$('xHelp').onclick=openHelp;$('helpClose').onclick=()=>$('helpModal').hidden=true;
+$('helpModal').addEventListener('click',e=>{if(e.target.id==='helpModal')$('helpModal').hidden=true});
+$('helpModal').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();$('helpModal').hidden=true}});
+$('mNewBlank').onclick=()=>{closeNewMenu();pushUndo();doc={vars:structuredClone(SAMPLE.vars),shapes:[]};setSel(null);render();toast('新規にしました（⌘Zで戻せます）')};
 function setFrame(on){UI.showFrame=on;saveUI();$('xFrame').setAttribute('aria-pressed',String(on));render()}
 $('xFrame').onclick=()=>{setFrame(!UI.showFrame);if(UI.showFrame){const bb=contentBB();if(bb){const L=pdfLayout(bb,{size:UI.pdfSize||'A4',orient:UI.pdfOrient||'auto'});toast(`${L.label}・${L.cols*L.rows}枚の印刷範囲を表示しています（用紙と向きはPDFボタンで変更）`,3500)}}};
 // share: the whole pattern goes into the URL after "#p=" (compressed when the browser can), so nothing is uploaded anywhere
@@ -1195,7 +1251,6 @@ async function loadFromLink(){const h=location.hash;if(!h.startsWith('#p='))retu
   try{const d=await decodeDoc(h.slice(3));if(!d.shapes||!d.vars)throw 0;pushUndo();doc=migrate(d);setSel(null);history.replaceState(null,'',location.pathname+location.search);fit();toast('共有された型紙を開きました（⌘Zで前の作業に戻せます）',4000);return true}
   catch(e){toast('共有リンクの型紙を読み込めませんでした');history.replaceState(null,'',location.pathname+location.search);return false}}
 addEventListener('hashchange',loadFromLink);
-$('xSample').onclick=()=>{pushUndo();doc=structuredClone(SAMPLE);setSel(null);fit();toast('サンプル（二つ折り名刺入れ）を開きました')};
 
 // ---------- boot ----------
 function boot(){if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}$('xFrame').setAttribute('aria-pressed',String(!!UI.showFrame));setTool('select');requestAnimationFrame(fit);loadFromLink()}
