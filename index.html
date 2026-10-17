@@ -248,7 +248,7 @@ input.err{border-color:var(--danger)}
     <span id="sPos">x 0.0 y 0.0</span>
     <span><button class="btn" id="zOut" style="padding:0 7px" aria-label="縮小">−</button> <span id="sZoom">100%</span> <button class="btn" id="zIn" style="padding:0 7px" aria-label="拡大">＋</button></span>
     <label>スナップ <select id="snap"><option value="0">なし</option><option value="0.5">0.5</option><option value="1" selected>1</option><option value="5">5</option></select> mm</label>
-    <label class="osnap" title="図形の端点・中点・中心・交点などに吸着します（S で切り替え。Ctrl / ⌘ を押している間は一時的に無効）"><input type="checkbox" id="osnap"> Oスナップ</label>
+    <label class="osnap" title="図形の端点・中点・中心・交点などに吸着します（S で切り替え。Ctrl / ⌘ を押している間は一時的に無効）"><input type="checkbox" id="osnap"> 図形スナップ</label>
     <span class="hint" id="sHint"></span>
   </div>
 
@@ -1300,7 +1300,7 @@ document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden||!$('helpModal'
   if((e.key==='Delete'||e.key==='Backspace')&&picks.length){e.preventDefault();delSel();return}
   const map={v:'select',r:'rect',c:'circle',l:'line',p:'poly',t:'text',d:'dim'};if(map[e.key.toLowerCase()]&&!e.metaKey&&!e.ctrlKey){setTool(map[e.key.toLowerCase()]);return}
   if(e.key.toLowerCase()==='f')fit();
-  if(e.key.toLowerCase()==='s'&&!e.metaKey&&!e.ctrlKey&&!e.altKey){setOsnap(UI.osnap===false);toast(UI.osnap===false?'オブジェクトスナップ：オフ':'オブジェクトスナップ：オン',1400)}});
+  if(e.key.toLowerCase()==='s'&&!e.metaKey&&!e.ctrlKey&&!e.altKey){setOsnap(UI.osnap===false);toast(UI.osnap===false?'図形スナップ：オフ':'図形スナップ：オン',1400)}});
 function setOsnap(on){UI.osnap=on;saveUI();$('osnap').checked=on;if(!on&&setHint(null))render()}
 $('osnap').checked=UI.osnap!==false;$('osnap').onchange=e=>setOsnap(e.target.checked);
 document.addEventListener('keyup',e=>{if(e.key===' '){spaceDown=false;svg.classList.remove('pan')}});
