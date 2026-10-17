@@ -286,6 +286,8 @@ function geomBool(s,gOf){
   if(!window.ClipperLib)throw Error('演算ライブラリが読み込めていません');
   const gs=s.ops.map(id=>{const c=byId(id);if(!c)throw Error('材料が見つかりません');const g=gOf(c);if(!g.closed)throw Error(`「${c.name}」が閉じた形ではありません`);return g.paths});
   if(!gs.length)throw Error('材料がありません');
+  // normalize each operand first: shapes drawn clockwise vs counter-clockwise would otherwise cancel out under the non-zero fill rule
+  for(let i=0;i<gs.length;i++)gs[i]=clip('union',gs[i]);
   let res;
   if(s.op==='union')res=clip('union',gs.flat());
   else if(s.op==='diff')res=gs.length>1?clip('diff',gs[0],gs.slice(1).flat()):clip('union',gs[0]);
