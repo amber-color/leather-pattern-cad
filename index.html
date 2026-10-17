@@ -170,6 +170,7 @@ input.err{border-color:var(--danger)}
     <button class="tool" data-tool="rect" title="角丸矩形 (R)"><svg viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="10" rx="3"/></svg><kbd>R</kbd></button>
     <button class="tool" data-tool="circle" title="円 (C)"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.5"/></svg><kbd>C</kbd></button>
     <button class="tool" data-tool="line" title="直線・折れ線 (L)"><svg viewBox="0 0 20 20"><path d="M3 15l4-9 6 6 4-8"/></svg><kbd>L</kbd></button>
+    <button class="tool" data-tool="text" title="テキスト (T)"><svg viewBox="0 0 20 20"><path d="M4 5V3.5h12V5M10 3.5v13M7.5 16.5h5"/></svg><kbd>T</kbd></button>
     <button class="tool" data-tool="poly" title="ベジェ曲線 (P)"><svg viewBox="0 0 20 20"><path d="M3 16C5 6 11 4 17 4"/><path d="M8 7.5l6-3" stroke-width="1"/><circle cx="8" cy="7.5" r="1.3"/><circle cx="14" cy="4.5" r="1.3"/></svg><kbd>P</kbd></button>
     <div class="sep"></div>
     <button class="tool" id="bUndo" title="元に戻す (⌘Z)"><svg viewBox="0 0 20 20"><path d="M7 5L3 9l4 4M3 9h9a5 5 0 010 10h-2"/></svg></button>
@@ -319,7 +320,15 @@ const fromC=paths=>paths.filter(p=>p.length>=3).map(p=>p.map(q=>[q.X/CS,q.Y/CS])
 function clip(type,a,b){const c=new ClipperLib.Clipper(),sol=new ClipperLib.Paths(),T=ClipperLib.ClipType,F=ClipperLib.PolyFillType.pftNonZero;
   c.AddPaths(toC(a),ClipperLib.PolyType.ptSubject,true);if(b)c.AddPaths(toC(b),ClipperLib.PolyType.ptClip,true);
   c.Execute({union:T.ctUnion,diff:T.ctDifference,inter:T.ctIntersection,xor:T.ctXor}[type],sol,F,F);return fromC(sol)}
+// text: the box runs from the cap line (y - size) to below the baseline (y + 0.25 size), rotated clockwise around (x, y)
+const TEXT_FONT='"IBM Plex Sans JP","Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif';
+let measureCtx=null;
+function textWidth(str,size){try{measureCtx=measureCtx||document.createElement('canvas').getContext('2d');measureCtx.font=`100px ${TEXT_FONT}`;return measureCtx.measureText(str).width/100*size}catch(e){return str.length*size*0.6}}
+function textBox(x,y,w,size,rot){const a=rot*Math.PI/180,c=Math.cos(a),sn=Math.sin(a),R=(px,py)=>{const dx=px-x,dy=py-y;return[x+dx*c-dy*sn,y+dx*sn+dy*c]};
+  return[R(x,y-size),R(x+w,y-size),R(x+w,y+size*0.25),R(x,y+size*0.25)]}
 function geomLeaf(s,env){
+  if(s.type==='text'){const x=P(s,'x',env),y=P(s,'y',env),size=P(s,'size',env),rot=P(s,'rot',env);if(size<=0)throw Error('文字の高さは正の値に');
+    const str=s.text||'',w=Math.max(textWidth(str,size),size*0.3),box=textBox(x,y,w,size,rot);return{paths:[box],pts:box,closed:false,isText:true,x,y,size,rot,w,str}}
   if(s.type==='rect'){const x=P(s,'x',env),y=P(s,'y',env),w=P(s,'w',env),h=P(s,'h',env),r=P(s,'r',env);
     if(w<=0||h<=0)throw Error('幅と高さは正の値に');const pts=roundRectPts(x,y,w,h,r);return{paths:[pts],pts,closed:true,x,y,w,h,r:Math.max(0,Math.min(r,w/2,h/2))}}
   if(s.type==='circle'){const cx=P(s,'cx',env),cy=P(s,'cy',env),d=P(s,'d',env);if(d<=0)throw Error('直径は正の値に');
@@ -469,6 +478,9 @@ function render(){
     const faint=mat&&s.id!==sel;
     const grp=el('g',{'data-id':s.id,'pointer-events':faint?'none':'auto',opacity:faint?.35:1},gShapes);
     const d=dPaths(g.paths,g.closed);
+    if(g.isText){const t=el('text',{x:g.x,y:g.y,'font-size':g.size,'font-family':TEXT_FONT,fill:on?'var(--sel)':s.kind==='guide'?'var(--guide)':'var(--cut)',transform:g.rot?`rotate(${g.rot} ${g.x} ${g.y})`:'','pointer-events':'none'},grp);t.textContent=g.str;
+      el('path',{d:dOf(g.pts,true),fill:'transparent',stroke:on?'var(--sel)':'none','stroke-width':1,'stroke-dasharray':'3 2','vector-effect':'non-scaling-stroke'},grp);
+      if(s.id===sel&&picks.length===1)drawSel(it,k);continue}
     el('path',{d,'fill-rule':'evenodd',fill:g.closed&&!faint?'rgba(244,239,226,0.06)':'none',stroke:on?'var(--sel)':s.kind==='guide'?'var(--guide)':'var(--cut)',
       'stroke-width':on?2:1.4,'stroke-dasharray':faint?'3 3':s.kind==='guide'?'6 4':'','vector-effect':'non-scaling-stroke','stroke-linejoin':'round'},grp);
     el('path',{d,fill:'none',stroke:'transparent','stroke-width':12,'vector-effect':'non-scaling-stroke'},grp);
@@ -476,7 +488,7 @@ function render(){
       for(const q of it.st.irr)el('line',{x1:q.a[0],y1:q.a[1],x2:q.b[0],y2:q.b[1],stroke:'var(--irr)','stroke-width':3,'stroke-linecap':'round','vector-effect':'non-scaling-stroke','pointer-events':'none'},grp);
       const r=Math.max(it.st.hole/2,0.2);let hd='';for(const[x,y]of it.st.holes)hd+=`M${fmt(x-r,3)} ${fmt(y,3)}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0`;
       el('path',{d:hd,fill:'var(--stitch)','fill-opacity':.25,stroke:'var(--stitch)','stroke-width':1,'vector-effect':'non-scaling-stroke','pointer-events':'none'},grp)}
-    if(!faint){const bb=bboxG(g);const t=el('text',{x:bb[0],y:bb[1]-5*k,'font-size':11*k,fill:on?'var(--sel)':'var(--cut)','fill-opacity':on?1:.7,'font-family':'var(--ui)','pointer-events':'none'},gOver);
+    if(!faint&&!g.isText){const bb=bboxG(g);const t=el('text',{x:bb[0],y:bb[1]-5*k,'font-size':11*k,fill:on?'var(--sel)':'var(--cut)','fill-opacity':on?1:.7,'font-family':'var(--ui)','pointer-events':'none'},gOver);
       t.textContent=s.name+(mat?'（材料）':'')+(it.st?`  ${it.st.n}穴`:'')}
     if(s.id===sel&&picks.length===1)drawSel(it,k)}
   if(draft)drawDraft(k);
@@ -497,7 +509,7 @@ function drawEdges(it,k){if(!it.st)return;
       const z=7*k;el('path',{d:`M${mid[0]+dx*z} ${mid[1]+dy*z}L${mid[0]-dx*z-dy*z*.7} ${mid[1]-dy*z+dx*z*.7}L${mid[0]-dx*z+dy*z*.7} ${mid[1]-dy*z-dx*z*.7}Z`,fill:'var(--sel)','pointer-events':'none'},gOver);
       const st=e.pts[0];el('circle',{cx:st[0],cy:st[1],r:3*k,fill:'none',stroke:'var(--sel)','stroke-width':1.5,'vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver)}
     el('path',{d:dOf(e.pts,false),fill:'none',stroke:'transparent','stroke-width':10,'vector-effect':'non-scaling-stroke','data-edge':e.key,style:'cursor:pointer'},gOver)}}
-function drawSel(it,k){const s=it.s,g=it.g;drawEdges(it,k);
+function drawSel(it,k){const s=it.s,g=it.g;if(g.isText)return;drawEdges(it,k);
   if(s.type==='rect'){const{x,y,w,h}=g;dimBox(x,y,w,h,k);
     const H={nw:[x,y,'nwse'],n:[x+w/2,y,'ns'],ne:[x+w,y,'nesw'],e:[x+w,y+h/2,'ew'],se:[x+w,y+h,'nwse'],s:[x+w/2,y+h,'ns'],sw:[x,y+h,'nesw'],w:[x,y+h/2,'ew']};
     for(const d in H){const[hx,hy,c]=H[d];handle(hx,hy,k,{'data-h':'rs-'+d,style:`cursor:${c}-resize`,...(d.length===1?{rx:4*k}:{})})}}
@@ -515,8 +527,8 @@ function drawSel(it,k){const s=it.s,g=it.g;drawEdges(it,k);
 
 // ---------- panel ----------
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-const LABELS={x:'X',y:'Y',w:'幅',h:'高さ',r:'角R',cx:'中心X',cy:'中心Y',d:'直径'};
-const TYPE_LABEL=s=>({rect:'角丸矩形',circle:'円',poly:s.closed?'閉じたパス':'開いたパス',bool:'演算 · '+OPS[s.op]}[s.type]);
+const LABELS={x:'X',y:'Y',w:'幅',h:'高さ',r:'角R',cx:'中心X',cy:'中心Y',d:'直径',size:'文字の高さ',rot:'回転（度）'};
+const TYPE_LABEL=s=>({text:'テキスト',rect:'角丸矩形',circle:'円',poly:s.closed?'閉じたパス':'開いたパス',bool:'演算 · '+OPS[s.op]}[s.type]);
 function exprRow(path,label,expr,env){let v,e;try{v=evalExpr(expr,env)}catch(x){e=x.message}
   return `<div class="row"><label for="f_${path}">${label}</label><input type="text" id="f_${path}" data-path="${path}" value="${esc(expr)}" class="${e?'err':''}" spellcheck="false" autocomplete="off"><span class="val ${e?'err':''}" title="${esc(e||'')}">${e?'エラー':'= '+fmt(v)}</span></div>`}
 const irrText=irr=>{if(!irr.length)return'なし';const g={};irr.forEach(x=>{const k=fmt(x.g);g[k]=(g[k]||0)+1});return`<b style="color:var(--danger);font-weight:500">${Object.entries(g).map(([v,c])=>`${v}mm × ${c}`).join('、')}</b>`};
@@ -550,6 +562,7 @@ function renderPanel(){
       <div class="small">材料（上から順に演算。差は1番目から残りを引きます）</div>
       <div style="display:flex;flex-direction:column;gap:4px">${s.ops.map((id,i)=>{const c=byId(id);return`<div class="vrow" style="grid-template-columns:minmax(0,1fr) auto auto"><button class="btn" data-pick="${id}" style="text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i===0?'<span class="pill">本体</span> ':''}${esc(c?c.name:'?')}</button>${i>0?`<button class="btn" data-front="${id}" style="padding:3px 8px">本体にする</button>`:'<span></span>'}<button class="x" data-unuse="${id}" aria-label="材料から外す" title="材料から外す">×</button></div>`}).join('')}</div>`;
       if(it.g){const b=bboxG(it.g);h+=`<div class="result"><span>外形</span><span>${fmt(b[2]-b[0])} × ${fmt(b[3]-b[1])} mm</span><span>輪郭数</span><span>${it.g.paths.length}</span></div>`}}
+    if(s.type==='text')h+=`<div class="row"><label for="f_text">文字</label><input type="text" id="f_text" data-path="text" value="${esc(s.text||'')}" autocomplete="off"><span></span></div>`;
     for(const key in s.p)h+=exprRow('p.'+key,LABELS[key]||key,s.p[key],env);
     if(s.type==='poly'){h+=`<label class="check"><input type="checkbox" id="f_closed" data-path="closed"${s.closed?' checked':''}> 閉じた形にする</label>`;
       if(s.nodes.length>40&&showNodesFor!==s.id)h+=`<div class="small">頂点 ${s.nodes.length} 個 <button class="btn" id="bShowNodes" style="padding:2px 8px">表を表示</button></div>`;
@@ -560,7 +573,7 @@ function renderPanel(){
           return r}).join('')+`</div>`}
       h+=`<div class="small">頂点のX・Yとハンドル（頂点からの相対位置）にも式が書けます。頂点をクリックで選択（Shiftで追加）してDeleteで削除、ダブルクリックで角⇔曲線、線上をダブルクリックで頂点を追加。中に点がある頂点は式で決まっているのでドラッグでは動きません。</div>`}
     if(it.err)h+=`<div class="small" style="color:var(--danger)">${esc(it.err)}</div>`;
-    if(!it.parent){h+=`<h2 style="margin-top:6px">ステッチ穴</h2><label class="check"><input type="checkbox" id="f_st" data-path="st.on"${s.st.on?' checked':''}> 穴を並べる</label>`;
+    if(!it.parent&&s.type!=='text'){h+=`<h2 style="margin-top:6px">ステッチ穴</h2><label class="check"><input type="checkbox" id="f_st" data-path="st.on"${s.st.on?' checked':''}> 穴を並べる</label>`;
       if(s.st.on){if(it.g&&it.g.closed)h+=exprRow('st.inset','縫い代',s.st.inset,env);
         h+=exprRow('st.pitch','ピッチ',s.st.pitch,env)+exprRow('st.hole','穴径',s.st.hole,env);
         h+=segRow('st.method',METHODS,s.st.method||'auto','余りの処理','stm')+segRow('st.pos',POSES,s.st.pos||'both','余りの位置','stp');
@@ -643,9 +656,9 @@ const cur=()=>byId(sel);
 const sh=(e,d)=>!d?e:isNum(e)?num(+e+d):`(${e})${d<0?'-':'+'}${fmt(Math.abs(d),3).replace(/\.?0+$/,'')}`;
 function shiftLeaf(c,dx,dy){
   if(c.type==='poly'){for(const n of c.nodes){n.x=sh(n.x,dx);n.y=sh(n.y,dy)}return}
-  const kx=c.type==='rect'?'x':'cx',ky=c.type==='rect'?'y':'cy';
+  const kx=c.type==='circle'?'cx':'x',ky=c.type==='circle'?'cy':'y';
   c.p[kx]=sh(c.p[kx],dx);c.p[ky]=sh(c.p[ky],dy)}
-const fixedPos=c=>c.type==='poly'?c.nodes.some(n=>!isNum(n.x)||!isNum(n.y)):!(isNum(c.p[c.type==='rect'?'x':'cx'])&&isNum(c.p[c.type==='rect'?'y':'cy']));
+const fixedPos=c=>c.type==='poly'?c.nodes.some(n=>!isNum(n.x)||!isNum(n.y)):!(isNum(c.p[c.type==='circle'?'cx':'x'])&&isNum(c.p[c.type==='circle'?'cy':'y']));
 function toggleNode(s,i){const N=C.byId[s.id].g.nodes;const n=s.nodes[i];
   if(n.t==='smooth'||n.hi||n.ho){delete n.hi;delete n.ho;n.t='corner';return}
   const len=N.length,cl=s.closed,a=N[i],pr=N[(i-1+len)%len],nx=N[(i+1)%len];
@@ -707,7 +720,7 @@ const toastEl=$('toast');let toastT;
 function toast(m,ms=2600){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),ms)}
 function toMM(e){const r=svg.getBoundingClientRect();return[(e.clientX-r.left-view.tx)/view.s,(e.clientY-r.top-view.ty)/view.s]}
 const snap=v=>snapStep?Math.round(v/snapStep)*snapStep:Math.round(v*100)/100;
-const HINT={select:'クリックで選択、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで角丸矩形を描く',circle:'中心からドラッグして円を描く',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直'};
+const HINT={text:'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集',select:'クリックで選択、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで角丸矩形を描く',circle:'中心からドラッグして円を描く',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直'};
 function setTool(t){tool=t;draft=null;document.querySelectorAll('.tool[data-tool]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));svg.className.baseVal=t==='select'?'':'draw';$('sHint').textContent=HINT[t];render()}
 document.querySelectorAll('.tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
 function drawDraft(k){
@@ -733,6 +746,8 @@ svg.addEventListener('pointerdown',e=>{
   if(e.button===1||e.button===2||spaceDown){drag={kind:'pan',sx:e.clientX,sy:e.clientY,tx:view.tx,ty:view.ty};svg.classList.add('pan');return}
   const now=performance.now(),dbl=lastDown&&now-lastDown.t<380&&Math.hypot(e.clientX-lastDown.x,e.clientY-lastDown.y)<6;lastDown={t:now,x:e.clientX,y:e.clientY};
   if(dbl){lastDown=null;if(onDouble(e))return}
+  if(tool==='text'){pushUndo();const t={id:newId(),name:'テキスト',type:'text',kind:'cut',text:'テキスト',p:{x:num(sm[0]),y:num(sm[1]),size:'5',rot:'0'},st:{on:false,inset:'3',pitch:'4',hole:'1.2'}};
+    doc.shapes.push(t);setSel(t.id);setTool('select');requestAnimationFrame(()=>{const f=$('f_text');if(f){f.focus();f.select()}});return}
   if(tool==='rect'||tool==='circle'){draft={type:tool,a:sm,b:sm};return}
   if(tool==='poly'||tool==='line'){if(!draft)draft={type:'poly',nodes:[],straight:tool==='line'};const D=draft.nodes;
     if(D.length>=3||(D.length>=2&&D.some(n=>n.ho))){const f=D[0];if(Math.hypot(f.x-m[0],f.y-m[1])*view.s<9){finishPoly(true);return}}
@@ -807,6 +822,7 @@ svg.addEventListener('pointerup',e=>{svg.classList.remove('pan');
   drag=null});
 let lastDown=null;
 function onDouble(e){if(draft&&draft.type==='poly'){finishPoly(false);return true}
+  {const s=cur();if(tool==='select'&&s&&s.type==='text'&&picks.length===1){const f=$('f_text');if(f){f.focus();f.select()}return true}}
   const s=cur();if(tool!=='select'||!s||s.type!=='poly'||picks.length>1)return false;const tg=document.elementFromPoint(e.clientX,e.clientY)||e.target;const h=tg.dataset&&tg.dataset.h;
   if(h&&/^n\d/.test(h)){pushUndo();toggleNode(s,+h.slice(1));lastPanelKey=null;render();return true}
   const g=tg.closest&&tg.closest('g[data-id]');if(g&&g.dataset.id===s.id){pushUndo();if(insertNode(s,toMM(e))){lastPanelKey=null;render();toast('頂点を追加しました');return true}undoS.pop()}
@@ -835,7 +851,7 @@ document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden)return;const in
   if(e.key==='Enter'&&draft&&draft.type==='poly'){finishPoly(false);return}
   if((e.key==='Delete'||e.key==='Backspace')&&selNodes.length){e.preventDefault();delNodes();return}
   if((e.key==='Delete'||e.key==='Backspace')&&picks.length){e.preventDefault();delSel();return}
-  const map={v:'select',r:'rect',c:'circle',l:'line',p:'poly'};if(map[e.key.toLowerCase()]&&!e.metaKey&&!e.ctrlKey){setTool(map[e.key.toLowerCase()]);return}
+  const map={v:'select',r:'rect',c:'circle',l:'line',p:'poly',t:'text'};if(map[e.key.toLowerCase()]&&!e.metaKey&&!e.ctrlKey){setTool(map[e.key.toLowerCase()]);return}
   if(e.key.toLowerCase()==='f')fit()});
 document.addEventListener('keyup',e=>{if(e.key===' '){spaceDown=false;svg.classList.remove('pan')}});
 $('snap').onchange=e=>{snapStep=+e.target.value};
@@ -848,22 +864,26 @@ function exportItems(){C=compute();const items=[];
   return{items,bb}}
 function buildSVG(){const{items,bb}=exportItems();const m=5,x0=bb[0]-m,y0=bb[1]-m,w=bb[2]-bb[0]+2*m,h=bb[3]-bb[1]+2*m;
   let o=`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${fmt(w,3)}mm" height="${fmt(h,3)}mm" viewBox="${fmt(x0,3)} ${fmt(y0,3)} ${fmt(w,3)} ${fmt(h,3)}">\n`;
-  const groups={cut:'',guide:'',stitch:''};
+  const groups={cut:'',guide:'',stitch:'',text:''};
   for(const{s,g,st}of items){const id=esc(s.name);let e;
+    if(g.isText){groups.text+=`<text x="${fmt(g.x,3)}" y="${fmt(g.y,3)}" font-size="${fmt(g.size,3)}"${g.rot?` transform="rotate(${fmt(g.rot,3)} ${fmt(g.x,3)} ${fmt(g.y,3)})"`:''} fill="${s.kind==='guide'?'#2c6fbb':'#000'}">${esc(g.str)}</text>\n`;continue}
     if(s.type==='rect')e=`<rect x="${fmt(g.x,3)}" y="${fmt(g.y,3)}" width="${fmt(g.w,3)}" height="${fmt(g.h,3)}" rx="${fmt(g.r,3)}"><title>${id}</title></rect>\n`;
     else if(s.type==='circle')e=`<circle cx="${fmt(g.cx,3)}" cy="${fmt(g.cy,3)}" r="${fmt(g.d/2,3)}"><title>${id}</title></circle>\n`;
     else e=`<path fill-rule="evenodd" d="${s.type==='poly'?nodesD(g.nodes,g.closed):dPaths(g.paths,g.closed)}"><title>${id}</title></path>\n`;
     groups[s.kind==='guide'?'guide':'cut']+=e;
     if(st)for(const[x,y]of st.holes)groups.stitch+=`<circle cx="${fmt(x,3)}" cy="${fmt(y,3)}" r="${fmt(st.hole/2,3)}"/>\n`}
-  o+=`<g id="cut" fill="none" stroke="#000" stroke-width="0.25">\n${groups.cut}</g>\n<g id="stitch" fill="none" stroke="#c0392b" stroke-width="0.15">\n${groups.stitch}</g>\n<g id="guide" fill="none" stroke="#2c6fbb" stroke-width="0.2" stroke-dasharray="2 1.5">\n${groups.guide}</g>\n</svg>\n`;return o}
+  o+=`<g id="cut" fill="none" stroke="#000" stroke-width="0.25">\n${groups.cut}</g>\n<g id="stitch" fill="none" stroke="#c0392b" stroke-width="0.15">\n${groups.stitch}</g>\n<g id="guide" fill="none" stroke="#2c6fbb" stroke-width="0.2" stroke-dasharray="2 1.5">\n${groups.guide}</g>\n<g id="text" font-family="sans-serif">\n${groups.text}</g>\n</svg>\n`;return o}
 function buildDXF(){const{items}=exportItems();const L=[];const add=(...a)=>L.push(...a.map(String));const n=v=>fmt(v,4);
   add(0,'SECTION',2,'HEADER',9,'$ACADVER',1,'AC1009',9,'$INSUNITS',70,4,0,'ENDSEC');
-  add(0,'SECTION',2,'TABLES',0,'TABLE',2,'LAYER',70,3);
-  for(const[nm,c]of[['CUT',7],['STITCH',1],['GUIDE',5]])add(0,'LAYER',2,nm,70,0,62,c,6,'CONTINUOUS');
+  add(0,'SECTION',2,'TABLES',0,'TABLE',2,'LAYER',70,4);
+  for(const[nm,c]of[['CUT',7],['STITCH',1],['GUIDE',5],['TEXT',3]])add(0,'LAYER',2,nm,70,0,62,c,6,'CONTINUOUS');
   add(0,'ENDTAB',0,'ENDSEC',0,'SECTION',2,'ENTITIES');
   const poly=(layer,verts,closed)=>{add(0,'POLYLINE',8,layer,66,1,70,closed?1:0,10,0,20,0,30,0);for(const[x,y,b]of verts){add(0,'VERTEX',8,layer,10,n(x),20,n(-y),30,0);if(b)add(42,n(b))}add(0,'SEQEND',8,layer)};
   const circ=(layer,x,y,r)=>add(0,'CIRCLE',8,layer,10,n(x),20,n(-y),30,0,40,n(r));
+  // non-ASCII characters are written as \U+XXXX so Japanese survives in R12 readers
+  const dxfStr=t=>[...t].map(ch=>{const c=ch.codePointAt(0);return c<128?ch:'\\U+'+c.toString(16).toUpperCase().padStart(4,'0')}).join('');
   for(const{s,g,st}of items){const layer=s.kind==='guide'?'GUIDE':'CUT';
+    if(g.isText){add(0,'TEXT',8,'TEXT',10,n(g.x),20,n(-g.y),30,0,40,n(g.size*0.72),1,dxfStr(g.str),50,n(-g.rot));continue}
     if(s.type==='circle')circ(layer,g.cx,g.cy,g.d/2);
     else if(s.type==='rect'){const{x,y,w,h,r}=g;
       if(r<=0)poly(layer,[[x,y],[x+w,y],[x+w,y+h],[x,y+h]],true);
@@ -880,14 +900,23 @@ function pdfLayout(bb,o){const M=10,BAR=6,bw=bb[2]-bb[0]+0.01,bh=bb[3]-bb[1]+0.0
   for(const[pw,ph]of cand){const aw=pw-2*M,ah=ph-2*M-BAR,cols=Math.max(1,Math.ceil(bw/aw)),rows=Math.max(1,Math.ceil(bh/ah));
     if(!best||cols*rows<best.cols*best.rows)best={pw,ph,aw,ah,cols,rows,M}}
   best.label=`${name} ${best.pw>best.ph?'横':'縦'}`;return best}
+function textMask(str,size){const pxmm=400/25.4,px=size*pxmm,cv=document.createElement('canvas'),ctx=cv.getContext('2d');ctx.font=`${px}px ${TEXT_FONT}`;
+  const w=Math.max(1,Math.ceil(ctx.measureText(str).width)+2),h=Math.max(1,Math.ceil(px*1.25));cv.width=w;cv.height=h;ctx.font=`${px}px ${TEXT_FONT}`;ctx.fillStyle='#000';ctx.textBaseline='alphabetic';ctx.fillText(str,1,px);
+  const d=ctx.getImageData(0,0,w,h).data,rb=Math.ceil(w/8);let bin='';
+  for(let y=0;y<h;y++){const row=new Uint8Array(rb);for(let x=0;x<w;x++)if(d[(y*w+x)*4+3]>110)row[x>>3]|=0x80>>(x&7);bin+=String.fromCharCode.apply(null,row)}
+  return{w,h,bin,wmm:w/pxmm,hmm:h/pxmm}}
 function buildPDF(o){const{items,bb}=exportItems();const K=72/25.4;
-  const L=pdfLayout(bb,o);const{pw,ph,aw,ah,cols,rows,M}=L;const objs=[];const pages=[];
+  const L=pdfLayout(bb,o);const{pw,ph,aw,ah,cols,rows,M}=L;
+  const masks=new Map();let mi=0;for(const{s:sh,g}of items)if(g.isText&&g.str)masks.set(sh.id,{name:'Im'+(++mi),m:textMask(g.str,g.size)});const objs=[];const pages=[];
   const F=v=>(Math.round(v*1000)/1000).toString();
   const circ=(x,y,r)=>{const c=0.5523*r;return`${F(x+r)} ${F(y)} m ${F(x+r)} ${F(y+c)} ${F(x+c)} ${F(y+r)} ${F(x)} ${F(y+r)} c ${F(x-c)} ${F(y+r)} ${F(x-r)} ${F(y+c)} ${F(x-r)} ${F(y)} c ${F(x-r)} ${F(y-c)} ${F(x-c)} ${F(y-r)} ${F(x)} ${F(y-r)} c ${F(x+c)} ${F(y-r)} ${F(x+r)} ${F(y-c)} ${F(x+r)} ${F(y)} c S\n`};
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
     const ox=bb[0]+c*aw,oy=bb[1]+r*ah;const T=(X,Y)=>[(M+X-ox)*K,(ph-M-(Y-oy))*K];
     let s=`q ${F(M*K)} ${F((ph-M-ah)*K)} ${F(aw*K)} ${F(ah*K)} re W n\n1 J 1 j\n`;
     for(const{s:sh,g,st}of items){
+      if(g.isText){const m=masks.get(sh.id);if(!m)continue;const a=g.rot*Math.PI/180,cs=Math.cos(a),sn=Math.sin(a),Rt=(px,py)=>{const dx=px-g.x,dy=py-g.y;return T(g.x+dx*cs-dy*sn,g.y+dx*sn+dy*cs)};
+        const top=g.y-g.size,BL=Rt(g.x,top+m.m.hmm),BR=Rt(g.x+m.m.wmm,top+m.m.hmm),TL=Rt(g.x,top);
+        s+=`q ${sh.kind==='guide'?'0.25 0.45 0.75':'0 0 0'} rg ${F(BR[0]-BL[0])} ${F(BR[1]-BL[1])} ${F(TL[0]-BL[0])} ${F(TL[1]-BL[1])} ${F(BL[0])} ${F(BL[1])} cm /${m.name} Do Q\n`;continue}
       if(sh.kind==='guide')s+='0.25 0.45 0.75 RG [4 3] 0 d 0.5 w\n';else s+='0 0 0 RG [] 0 d 0.7 w\n';
       if(sh.type==='circle'){const[x,y]=T(g.cx,g.cy);s+=circ(x,y,g.d/2*K)}
       else if(sh.type==='poly'){const N=g.nodes,P=q=>{const[x,y]=T(q[0],q[1]);return F(x)+' '+F(y)};s+=P([N[0].x,N[0].y])+' m\n';
@@ -902,7 +931,8 @@ function buildPDF(o){const{items,bb}=exportItems();const K=72/25.4;
     pages.push(s)}
   const add=o=>{objs.push(o);return objs.length};
   add('<< /Type /Catalog /Pages 2 0 R >>');add('PAGES');add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
-  const kids=[];for(const s of pages){const cid=add(`<< /Length ${s.length} >>\nstream\n${s}endstream`);kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${F(pw*K)} ${F(ph*K)}] /Resources << /Font << /F1 3 0 R >> >> /Contents ${cid} 0 R >>`))}
+  let xo='';for(const v of masks.values()){const id=add(`<< /Type /XObject /Subtype /Image /Width ${v.m.w} /Height ${v.m.h} /ImageMask true /BitsPerComponent 1 /Decode [1 0] /Length ${v.m.bin.length} >>\nstream\n${v.m.bin}\nendstream`);xo+=`/${v.name} ${id} 0 R `}
+  const kids=[];for(const s of pages){const cid=add(`<< /Length ${s.length} >>\nstream\n${s}endstream`);kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${F(pw*K)} ${F(ph*K)}] /Resources << /Font << /F1 3 0 R >>${xo?` /XObject << ${xo}>>`:''} >> /Contents ${cid} 0 R >>`))}
   objs[1]=`<< /Type /Pages /Kids [${kids.map(k=>k+' 0 R').join(' ')}] /Count ${kids.length} >>`;
   let pdf='%PDF-1.4\n';const offs=[];objs.forEach((o,i)=>{offs.push(pdf.length);pdf+=`${i+1} 0 obj\n${o}\nendobj\n`});
   const x=pdf.length;pdf+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`+offs.map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('');
