@@ -13,11 +13,11 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/clipper-lib@6.4.2/clipper.js"></script>
 <style>
-/* Layout: tool rail | dark-grey drawing canvas | inspector. */
+/* Layout: tool rail | taupe drawing canvas | inspector. */
 :root{
   --bg:#eef0ec; --panel:#f8f9f6; --line:#d3d8cf; --fg:#1f2a24; --muted:#5f6d64;
   --accent:#b8611f; --accent-soft:#f3e1d1; --danger:#b3261e; --ok:#2f7a4b;
-  --mat:#2b2e31; --mat-minor:rgba(255,255,255,.07); --mat-major:rgba(255,255,255,.16);
+  --mat:#4a4039; --mat-minor:rgba(255,255,255,.07); --mat-major:rgba(255,255,255,.16);
   --cut:#f4efe2; --guide:#9fc3b1; --stitch:#f0a94a; --sel:#ffb36b; --irr:#ff6f6f; --frame:#b9a7ff; --osnap:#7fe6ff;
   --ui:"IBM Plex Sans JP",system-ui,-apple-system,"Hiragino Sans",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
@@ -26,12 +26,12 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#141916; --panel:#1b211d; --line:#2e3832; --fg:#e4e9e3; --muted:#93a198;
   --accent:#e58a45; --accent-soft:#3a2a1d; --danger:#ef7b70; --ok:#6cc08d;
-  --mat:#1d1f21; --mat-minor:rgba(255,255,255,.05); --mat-major:rgba(255,255,255,.12);
+  --mat:#352e29; --mat-minor:rgba(255,255,255,.05); --mat-major:rgba(255,255,255,.12);
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#141916; --panel:#1b211d; --line:#2e3832; --fg:#e4e9e3; --muted:#93a198;
   --accent:#e58a45; --accent-soft:#3a2a1d; --danger:#ef7b70; --ok:#6cc08d;
-  --mat:#1d1f21; --mat-minor:rgba(255,255,255,.05); --mat-major:rgba(255,255,255,.12);
+  --mat:#352e29; --mat-minor:rgba(255,255,255,.05); --mat-major:rgba(255,255,255,.12);
   color-scheme:dark}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;overflow:hidden}
