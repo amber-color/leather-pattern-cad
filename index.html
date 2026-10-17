@@ -184,25 +184,25 @@ input.err{border-color:var(--danger)}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center;z-index:20;padding:16px}
 .modal .box{background:var(--panel);border:1px solid var(--line);border-radius:8px;width:min(620px,100%);max-height:90%;display:flex;flex-direction:column;gap:10px;padding:16px;box-sizing:border-box}
 .modal textarea{width:100%;box-sizing:border-box;height:300px;font:11px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px}
+/* phones: one screen, no page scroll. Top half is the canvas; the bottom half shows the selected part's panel,
+   or the variables when nothing is selected. Each half scrolls inside itself. */
 @media (max-width:760px){
-  body{overflow:auto}
-  .app{height:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:46px auto 62vh 30px auto}
+  html,body{height:100%;overflow:hidden}
+  .app{height:100vh;height:100dvh;grid-template-columns:minmax(0,1fr);grid-template-rows:46px auto minmax(0,1fr) 30px 44vh;grid-template-rows:46px auto minmax(0,1fr) 30px 44dvh}
   .top{grid-column:1;padding-left:max(12px,env(safe-area-inset-left,0px))}
   .top .lbl,.top .spacer,.top .brand{display:none}
   .rail{grid-row:2;flex-direction:row;border-right:none;border-bottom:1px solid var(--line);overflow-x:auto;padding-left:max(8px,env(safe-area-inset-left,0px))}
   .rail .sep{width:1px;height:28px;margin:0 4px}
   .stage{grid-row:3;grid-column:1}.status{grid-column:1;grid-row:4}
-  .side{grid-column:1;border-left:none;overflow:visible;width:auto!important;transition:none!important}
+  .side,.side.parts,.side.vars{grid-row:5;grid-column:1;border-left:none!important;border-top:1px solid var(--line);width:auto!important;min-height:0;overflow:hidden;transition:none!important;padding-bottom:env(safe-area-inset-bottom,0px)}
   .side.parts:not(.open){display:none}
-  .side.parts .sec,.vfull{width:auto}
-  .vfull,.side.parts .sec{height:auto;overflow:visible}
+  .side.parts.open~.side.vars{display:none}
+  .side.parts .sec,.vfull{width:auto;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+  /* the variables can't be folded away here: they are the bottom half */
+  .side.vars .vmini,#varsToggle{display:none!important}
+  .side.vars.collapsed .vfull{opacity:1;pointer-events:auto}
   /* 16px keeps phone browsers from zooming in when a field gets focus */
   input[type=text],textarea,select,.vrow textarea,.nrow input[type=text]{font-size:16px!important}
-  .side.parts{grid-row:5;grid-column:1}.side.vars{grid-row:6;grid-column:1}
-  .app{grid-template-rows:46px auto 62vh 30px auto auto}
-  .side.vars.collapsed .vfull{display:none}
-  .side.vars.collapsed .vmini{position:static;width:auto;flex-direction:row;padding:10px 16px}
-  .vmini .vlabel{writing-mode:horizontal-tb}
   .status .hint,#sPos{display:none}
 }
 @media (prefers-reduced-motion:reduce){.toast,.side,.vfull,.vmini,.vrow{transition:none!important}.vrow .vres,.vrow .vuse{animation:none!important}}
@@ -1030,11 +1030,14 @@ const box_has_focus=()=>$('vars').contains(document.activeElement);
 // per-viewer UI settings
 let UI={};try{UI=JSON.parse(localStorage.getItem('ppp-ui')||'{}')||{}}catch(e){}
 function saveUI(){try{localStorage.setItem('ppp-ui',JSON.stringify(UI))}catch(e){}}
-function setVarsCollapsed(c){$('varsBar').classList.toggle('collapsed',c);$('varsFull').inert=c;$('varsMini').inert=!c;$('varsToggle').setAttribute('aria-expanded',String(!c));
-  UI.varsCollapsed=c;saveUI()}
+const PHONE=matchMedia('(max-width:760px)');
+// on a phone the variables fill the bottom half and never fold; the folded state is kept for wider screens
+function setVarsCollapsed(c){UI.varsCollapsed=c;saveUI();applyVarsCollapsed()}
+function applyVarsCollapsed(){const c=!!UI.varsCollapsed&&!PHONE.matches;$('varsBar').classList.toggle('collapsed',c);$('varsFull').inert=c;$('varsMini').inert=!c;$('varsToggle').setAttribute('aria-expanded',String(!c))}
+PHONE.addEventListener('change',()=>{applyVarsCollapsed();requestAnimationFrame(()=>{applyView();render()})});
 $('varsToggle').onclick=()=>setVarsCollapsed(true);
 $('varsExpand').onclick=$('varsLabel').onclick=()=>setVarsCollapsed(false);
-document.body.classList.add('noanim');if(UI.varsCollapsed)setVarsCollapsed(true);
+document.body.classList.add('noanim');applyVarsCollapsed();
 requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.remove('noanim')));
 $('addVar').onclick=()=>{pushUndo();let n='a',i=1;while(doc.vars.some(v=>v.n===n))n='a'+(i++);doc.vars.push({n,e:'10'});renderVars(false);render();$('vn'+(doc.vars.length-1)).focus()};
 const cur=()=>byId(sel);
