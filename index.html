@@ -287,7 +287,7 @@ function migrate(d){for(const s of d.shapes||[])if(s.type==='poly'&&!s.nodes){s.
 migrate(doc);
 const num=v=>String(+(+v).toFixed(3));
 let picks=[],tool='select',snapStep=1;
-let sel=null,selEdge=null;const setSel=id=>{sel=id;picks=id?[id]:[];selEdge=null};
+let sel=null,selEdge=null,selNodes=[];const setSel=id=>{sel=id;picks=id?[id]:[];selEdge=null;selNodes=[]};
 const view={tx:0,ty:0,s:3};
 let undoS=[],redoS=[];
 function pushUndo(){undoS.push(JSON.stringify(doc));if(undoS.length>100)undoS.shift();redoS=[]}
@@ -456,6 +456,7 @@ function drawGrid(){
 function render(){
   C=compute();gShapes.textContent='';gOver.textContent='';
   if(sel&&!byId(sel))setSel(null);picks=picks.filter(id=>byId(id));
+  {const sc=byId(sel);if(!sc||sc.type!=='poly'||picks.length!==1)selNodes=[];else selNodes=selNodes.filter(i=>i<sc.nodes.length)}
   if(selEdge){const si=C.byId[sel];if(selEdge.id!==sel||picks.length!==1||!si||!si.st||!si.st.edges.some(e=>e.key===selEdge.key))selEdge=null}
   const k=1/view.s;
   // materials first (faint), then top-level shapes on top
@@ -503,8 +504,9 @@ function drawSel(it,k){const s=it.s,g=it.g;drawEdges(it,k);
     N.forEach((n,i)=>{for(const hk of['hi','ho'])if(n[hk]){const hx=n.x+n[hk][0],hy=n.y+n[hk][1];
       el('line',{x1:n.x,y1:n.y,x2:hx,y2:hy,stroke:'var(--sel)','stroke-opacity':.7,'stroke-width':1,'vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver);
       el('circle',{cx:hx,cy:hy,r:3.5*k,fill:'var(--sel)',class:'h','data-h':hk+i,style:'cursor:move'},gOver)}});
-    N.forEach((n,i)=>{const sn=s.nodes[i];const fixed=!isNum(sn.x)||!isNum(sn.y);
-      handle(n.x,n.y,k,{'data-h':'n'+i,style:'cursor:move',fill:fixed?'var(--sel)':'var(--mat)',rx:n.t==='smooth'?4*k:0})});
+    N.forEach((n,i)=>{const sn=s.nodes[i];const fixed=!isNum(sn.x)||!isNum(sn.y),on=selNodes.includes(i);
+      handle(n.x,n.y,k,{'data-h':'n'+i,style:'cursor:move',fill:on?'var(--sel)':'var(--mat)',rx:n.t==='smooth'?4*k:0});
+      if(fixed&&!on)el('circle',{cx:n.x,cy:n.y,r:1.4*k,fill:'var(--sel)','pointer-events':'none'},gOver)});
     const bb=bbox(g.pts);dimText((bb[0]+bb[2])/2,bb[3]+16*k,'周長 '+fmt(plen(g.pts,g.closed)),k)}}
 
 // ---------- panel ----------
@@ -549,10 +551,10 @@ function renderPanel(){
       if(s.nodes.length>40&&showNodesFor!==s.id)h+=`<div class="small">頂点 ${s.nodes.length} 個 <button class="btn" id="bShowNodes" style="padding:2px 8px">表を表示</button></div>`;
       else{const ni=(path,v,lab)=>`<input type="text" data-path="${path}" value="${esc(v)}" aria-label="${lab}" spellcheck="false" autocomplete="off">`;
         h+=`<div class="ntab"><div class="nrow small"><span></span><span>X</span><span>Y</span><span></span><span></span></div>`+s.nodes.map((n,i)=>{
-          let r=`<div class="nrow"><span class="ni">${i+1}</span>${ni(`nodes.${i}.x`,n.x,`頂点${i+1} X`)}${ni(`nodes.${i}.y`,n.y,`頂点${i+1} Y`)}<button class="btn nt" data-ntog="${i}" title="角と曲線を切り替え">${n.t==='smooth'?'曲':'角'}</button><button class="x" data-ndel="${i}" aria-label="頂点${i+1}を削除">×</button></div>`;
+          let r=`<div class="nrow"><span class="ni"${selNodes.includes(i)?' style="color:var(--accent);font-weight:700"':''}>${i+1}</span>${ni(`nodes.${i}.x`,n.x,`頂点${i+1} X`)}${ni(`nodes.${i}.y`,n.y,`頂点${i+1} Y`)}<button class="btn nt" data-ntog="${i}" title="角と曲線を切り替え">${n.t==='smooth'?'曲':'角'}</button><button class="x" data-ndel="${i}" aria-label="頂点${i+1}を削除">×</button></div>`;
           for(const[hk,lab]of[['hi','入'],['ho','出']])if(n[hk])r+=`<div class="nrow sub"><span class="ni">${lab}</span>${ni(`nodes.${i}.${hk}.0`,n[hk][0],`頂点${i+1} ${lab}ハンドル X`)}${ni(`nodes.${i}.${hk}.1`,n[hk][1],`頂点${i+1} ${lab}ハンドル Y`)}<span></span><span></span></div>`;
           return r}).join('')+`</div>`}
-      h+=`<div class="small">頂点のX・Yとハンドル（頂点からの相対位置）にも式が書けます。頂点をダブルクリックで角⇔曲線、線上をダブルクリックで頂点を追加。塗りつぶしの頂点は式で決まっているのでドラッグでは動きません。</div>`}
+      h+=`<div class="small">頂点のX・Yとハンドル（頂点からの相対位置）にも式が書けます。頂点をクリックで選択（Shiftで追加）してDeleteで削除、ダブルクリックで角⇔曲線、線上をダブルクリックで頂点を追加。中に点がある頂点は式で決まっているのでドラッグでは動きません。</div>`}
     if(it.err)h+=`<div class="small" style="color:var(--danger)">${esc(it.err)}</div>`;
     if(!it.parent){h+=`<h2 style="margin-top:6px">ステッチ穴</h2><label class="check"><input type="checkbox" id="f_st" data-path="st.on"${s.st.on?' checked':''}> 穴を並べる</label>`;
       if(s.st.on){if(it.g&&it.g.closed)h+=exprRow('st.inset','コバ幅',s.st.inset,env);
@@ -673,6 +675,9 @@ function dup(mirror){const s=cur();if(!s)return;pushUndo();
   render()}
 function removeTree(s){const all=[s,...descendants(s)];doc.shapes=doc.shapes.filter(x=>!all.includes(x));
   for(const b of doc.shapes)if(b.type==='bool')b.ops=b.ops.filter(id=>byId(id))}
+function delNodes(){const s=cur();if(!s||s.type!=='poly')return;const min=s.closed?3:2;
+  if(s.nodes.length-selNodes.length<min){toast(`${s.closed?'閉じた形':'開いた線'}は頂点が${min}個以上必要なので、これ以上削除できません`);return}
+  pushUndo();[...selNodes].sort((a,b)=>b-a).forEach(i=>s.nodes.splice(i,1));selNodes=[];lastPanelKey=null;render()}
 function delSel(){const targets=picks.map(byId).filter(Boolean);if(!targets.length)return;pushUndo();
   for(const s of targets)if(byId(s.id))removeTree(s);
   for(const b of doc.shapes.filter(b=>b.type==='bool'&&!b.ops.length))removeTree(b);
@@ -731,13 +736,15 @@ svg.addEventListener('pointerdown',e=>{
     if(!last||last.x!==p[0]||last.y!==p[1])D.push({x:p[0],y:p[1]});
     draft.dragging=D.length-1;draft.sx=e.clientX;draft.sy=e.clientY;render();return}
   const h=e.target.dataset&&e.target.dataset.h;
-  if(h){const s=cur();pushUndo();drag={kind:'handle',h,s,m0:m,g0:C.byId[s.id]&&C.byId[s.id].g};return}
+  if(h){const s=cur();
+    if(/^n\d/.test(h)){const i=+h.slice(1);selNodes=e.shiftKey?(selNodes.includes(i)?selNodes.filter(x=>x!==i):selNodes.concat(i)):(selNodes.includes(i)?selNodes:[i]);lastPanelKey=null;render()}
+    pushUndo();drag={kind:'handle',h,s,m0:m,g0:C.byId[s.id]&&C.byId[s.id].g};return}
   const ek=e.target.dataset&&e.target.dataset.edge;if(ek&&!e.shiftKey){selEdge={id:sel,key:ek};render();return}
   const g=e.target.closest('g[data-id]');
   if(g){const id=g.dataset.id;
     if(e.shiftKey){if(C.byId[id].parent){toast('材料は演算結果ごと選んでください');return}
       picks=picks.includes(id)?picks.filter(x=>x!==id):picks.concat(id);sel=picks[0]||null;render();return}
-    if(!picks.includes(id))setSel(id);
+    if(!picks.includes(id))setSel(id);else if(selNodes.length){selNodes=[];lastPanelKey=null}
     const s=byId(id);const movers=picks.length>1?picks.map(byId).filter(Boolean):[s];
     const ls=[...new Set(movers.flatMap(leaves))];
     const locked=ls.some(fixedPos);
@@ -820,8 +827,9 @@ document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden)return;const in
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!inField){e.preventDefault();e.shiftKey?redo():undo();return}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='d'&&!inField){e.preventDefault();dup(false);return}
   if(inField){if(e.key==='Enter')document.activeElement.blur();return}
-  if(e.key==='Escape'){if(draft){draft=null;render()}else if(selEdge){selEdge=null;render()}else{setSel(null);render()}return}
+  if(e.key==='Escape'){if(draft){draft=null;render()}else if(selNodes.length){selNodes=[];lastPanelKey=null;render()}else if(selEdge){selEdge=null;render()}else{setSel(null);render()}return}
   if(e.key==='Enter'&&draft&&draft.type==='poly'){finishPoly(false);return}
+  if((e.key==='Delete'||e.key==='Backspace')&&selNodes.length){e.preventDefault();delNodes();return}
   if((e.key==='Delete'||e.key==='Backspace')&&picks.length){e.preventDefault();delSel();return}
   const map={v:'select',r:'rect',c:'circle',l:'line',p:'poly'};if(map[e.key.toLowerCase()]&&!e.metaKey&&!e.ctrlKey){setTool(map[e.key.toLowerCase()]);return}
   if(e.key.toLowerCase()==='f')fit()});
