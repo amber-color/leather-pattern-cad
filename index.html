@@ -53,6 +53,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .top .vsep{width:1px;height:22px;background:var(--line);margin:0 6px;flex:none}
 .top .spacer{flex:1}
 .top .btn{padding:6px 10px}
+.top .ibtn{width:34px;height:32px;padding:0;display:grid;place-items:center}
+.top .ibtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 .top .btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .pdfprev{display:flex;flex-wrap:wrap;gap:8px;max-height:260px;overflow:auto;padding:8px;background:var(--bg);border:1px solid var(--line);border-radius:4px}
 .pdfprev figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:3px}
@@ -86,7 +88,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .vhead{display:flex;align-items:center;gap:6px}
 .vhead h2{flex:1}
 .vbody{display:flex;flex-direction:column;gap:8px}
-.vtoggle{width:26px;height:26px;padding:0;display:grid;place-items:center;flex:none;border:none;background:none;color:var(--muted)}
+.vtoggle{width:26px;height:26px;padding:0;display:grid;place-items:center;flex:none;border:none;background:none;color:var(--muted);cursor:pointer;border-radius:4px}
+.vtoggle:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .vtoggle:hover{color:var(--accent)}
 .vtoggle svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8}
 .noanim *{transition:none!important}
@@ -173,11 +176,11 @@ input.err{border-color:var(--danger)}
   <header class="top">
     <div class="brand" title="式で描くレザークラフト型紙CAD"><span class="cap">P</span>arametric <span class="cap">P</span>attern <span class="cap">P</span>lotter</div>
     <div class="grp" role="group" aria-label="ファイル">
-      <button class="btn" id="xNew" title="空の型紙を作る（変数は残ります）">新規</button>
-      <button class="btn" id="xSample" title="名刺入れのサンプルを開く">サンプル</button>
-      <button class="btn" id="xLoad" title="保存した .json を開く">開く</button>
-      <button class="btn" id="xJson" title="型紙を .json で保存">保存</button>
-      <button class="btn" id="xShare" title="型紙を埋め込んだURLをクリップボードにコピー">共有</button>
+      <button class="btn ibtn" id="xNew" title="新規：空の型紙を作る（変数は残ります）" aria-label="新規"><svg viewBox="0 0 20 20"><path d="M5 2.5h6.5L15 6v11.5H5z"/><path d="M11.5 2.5V6H15"/><path d="M10 9v6M7 12h6"/></svg></button>
+      <button class="btn ibtn" id="xSample" title="サンプル：二つ折り名刺入れの型紙を開く" aria-label="サンプル"><svg viewBox="0 0 20 20"><path d="M3 4.5h5.5a1.5 1.5 0 011.5 1.5v10a1.5 1.5 0 00-1.5-1.5H3z"/><path d="M17 4.5h-5.5A1.5 1.5 0 0010 6v10a1.5 1.5 0 011.5-1.5H17z"/></svg></button>
+      <button class="btn ibtn" id="xLoad" title="開く：保存した .json を読み込む" aria-label="開く"><svg viewBox="0 0 20 20"><path d="M2.5 15.5V5a1 1 0 011-1h4l1.5 2h6.5a1 1 0 011 1v1.5"/><path d="M2.5 15.5l2.5-6.5h12.5l-2.5 6.5z"/></svg></button>
+      <button class="btn ibtn" id="xJson" title="保存：型紙を .json で保存" aria-label="保存"><svg viewBox="0 0 20 20"><path d="M10 3v9.5M6 9l4 4 4-4"/><path d="M3.5 13.5v3h13v-3"/></svg></button>
+      <button class="btn ibtn" id="xShare" title="共有：型紙を埋め込んだURLをクリップボードにコピー" aria-label="共有"><svg viewBox="0 0 20 20"><path d="M8.5 11.5a3 3 0 004.2 0l2.6-2.6a3 3 0 00-4.2-4.2l-1 1"/><path d="M11.5 8.5a3 3 0 00-4.2 0l-2.6 2.6a3 3 0 004.2 4.2l1-1"/></svg></button>
       <input type="file" id="fileIn" accept=".json,application/json" hidden>
     </div>
     <div class="spacer"></div>
@@ -222,14 +225,14 @@ input.err{border-color:var(--danger)}
   </aside>
   <aside class="side vars" id="varsBar" aria-label="変数">
     <div class="vmini" id="varsMini" inert>
-      <button class="btn vtoggle" id="varsExpand" aria-label="変数バーを広げる" title="変数バーを広げる"><svg viewBox="0 0 16 16"><path d="M10 3L5 8l5 5"/></svg></button>
+      <button class="vtoggle" id="varsExpand" aria-label="変数バーを広げる" title="変数バーを広げる"><svg viewBox="0 0 16 16"><path d="M10 3L5 8l5 5"/></svg></button>
       <button class="vlabel" id="varsLabel" tabindex="-1">変数</button>
     </div>
     <section class="sec vfull" id="varsFull">
       <div class="vhead">
         <h2>変数</h2>
         <button class="btn" id="addVar" style="padding:3px 8px">＋ 追加</button>
-        <button class="btn vtoggle" id="varsToggle" aria-expanded="true" title="変数バーを折りたたむ"><svg viewBox="0 0 16 16"><path d="M6 3l5 5-5 5"/></svg></button>
+        <button class="vtoggle" id="varsToggle" aria-expanded="true" title="変数バーを折りたたむ"><svg viewBox="0 0 16 16"><path d="M6 3l5 5-5 5"/></svg></button>
       </div>
       <div class="vbody">
         <div id="vars" style="display:flex;flex-direction:column;gap:5px"></div>
