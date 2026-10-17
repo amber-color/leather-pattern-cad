@@ -99,7 +99,19 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 input[type=text],select.inp{width:100%;box-sizing:border-box;font:13px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:5px 7px}
 input[type=text]:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 input.err{border-color:var(--danger)}
-.vrow{display:grid;grid-template-columns:minmax(0,1fr) 10px 76px 16px;gap:4px;align-items:center}
+.vrow{display:grid;grid-template-columns:minmax(0,1fr) 10px 76px 16px;grid-template-areas:"name eq expr x";gap:4px;align-items:center;border-radius:6px;transition:background-color .15s,padding .15s}
+.vrow .vname{grid-area:name}.vrow .eq{grid-area:eq}.vrow textarea{grid-area:expr}.vrow .x{grid-area:x}
+.vrow textarea{width:100%;box-sizing:border-box;font:13px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:5px 7px;resize:none;height:29px;overflow:hidden;white-space:nowrap;line-height:1.35;display:block}
+.vrow textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+.vrow textarea.err{border-color:var(--danger)}
+.vrow .vres,.vrow .vuse{display:none}
+.vrow.open{grid-template-columns:minmax(0,1fr) 16px;grid-template-areas:"name x" "expr expr" "res res" "use use";background:var(--accent-soft);padding:8px;margin:2px -8px}
+.vrow.open .eq{display:none}
+.vrow.open textarea{white-space:pre-wrap;word-break:break-all;overflow:hidden}
+.vrow.open .vres{display:block;grid-area:res;font:13px var(--mono);color:var(--fg);font-variant-numeric:tabular-nums;animation:vfade .18s}
+.vrow.open .vres.err{color:var(--danger);font:12px var(--ui)}
+.vrow.open .vuse{display:block;grid-area:use;font-size:11px;color:var(--muted);line-height:1.5;animation:vfade .18s}
+@keyframes vfade{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
 .vrow .eq{color:var(--muted);text-align:center;font-family:var(--mono)}
 .vrow .val{font:12px var(--mono);text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
 .edgebox{display:flex;flex-direction:column;gap:8px;border:1px solid var(--accent);border-radius:6px;padding:10px;background:var(--accent-soft)}
@@ -152,7 +164,7 @@ input.err{border-color:var(--danger)}
   .vmini .vlabel{writing-mode:horizontal-tb}
   .status .hint{display:none}
 }
-@media (prefers-reduced-motion:reduce){.toast,.side,.vfull,.vmini{transition:none!important}}
+@media (prefers-reduced-motion:reduce){.toast,.side,.vfull,.vmini,.vrow{transition:none!important}.vrow .vres,.vrow .vuse{animation:none!important}}
 </style>
 
 </head>
@@ -645,7 +657,7 @@ let lastPanelKey=null,showNodesFor=null;
 function renderPanel(){
   const pb=$('partsBar'),show=picks.length>0;if(pb.classList.contains('open')!==show){pb.classList.toggle('open',show);pb.inert=!show}
   // while the parts bar slides closed, keep its last content instead of flashing an empty state
-  if(!show){renderVars(false);return}
+  if(!show){renderVars(true);return}
   const sec=$('secProps');const it=C.byId[sel];const act=document.activeElement;const key=picks.join(',')+'|'+(selEdge?selEdge.key:'');
   if(act&&act.dataset&&act.dataset.path&&act.type==='text'&&sec.contains(act)&&lastPanelKey===key){refreshVals(sec);renderVars(true);return}
   lastPanelKey=key;
@@ -714,19 +726,26 @@ function renderPanel(){
     sec.querySelectorAll('[data-front]').forEach(b=>b.onclick=()=>{pushUndo();const id=b.dataset.front;s.ops=[id,...s.ops.filter(x=>x!==id)];lastPanelKey=null;render()});
     sec.querySelectorAll('[data-unuse]').forEach(b=>b.onclick=()=>{pushUndo();s.ops=s.ops.filter(x=>x!==b.dataset.unuse);
       if(!s.ops.length)doc.shapes=doc.shapes.filter(x=>x!==s);lastPanelKey=null;render()})}
-  renderVars(false)}
+  renderVars(true)}
 function refreshVals(sec){const env=C.env;sec.querySelectorAll('input[data-path]').forEach(inp=>{const p=inp.dataset.path;
   if(/^nodes\./.test(p)){try{inp.title='= '+fmt(evalExpr(inp.value,env),2);inp.classList.remove('err')}catch(e){inp.title=e.message;inp.classList.add('err')}return}
   if(!/^(p|st|cs)\./.test(p)||inp.type!=='text')return;
   const span=inp.nextElementSibling;if(/^st\.edges\./.test(p)&&!inp.value.trim()){const it=C.byId[sel];span.textContent='= '+fmt(p.endsWith('.pitch')?(it&&it.st?it.st.pitch:0):0);span.className='val';inp.classList.remove('err');return}
   try{const v=evalExpr(inp.value,env);span.textContent='= '+fmt(v);span.className='val';inp.classList.remove('err')}catch(e){span.textContent='エラー';span.className='val err';span.title=e.message;inp.classList.add('err')}});
   const it=C.byId[sel];if(it&&it.st){if($('stRes'))$('stRes').innerHTML=stResult(it.st);const e=selEdge&&it.st.edges.find(x=>x.key===selEdge.key);if(e&&$('edRes'))$('edRes').innerHTML=edResult(e);if(e&&$('edMsg'))$('edMsg').innerHTML=edMsg(e)}}
-function renderVars(soft){const box=$('vars');const env=C.env;
-  const mark=(inp,v)=>{const e=C.verr[v.n];inp.classList.toggle('err',!!e);inp.title=e?e:'= '+fmt(env[v.n],3).replace(/\.?0+$/,'')};
-  if(soft&&box.contains(document.activeElement)){box.querySelectorAll('.vrow').forEach((r,i)=>{const v=doc.vars[i];if(v)mark(r.querySelector('[data-vk="e"]'),v)});return}
+// variable rows: one line each; the focused row opens into a card with the full name, a wrapping expression,
+// the computed value (or the error) and where the variable is used
+const varUseText=n=>{const u=varUsers(n);if(!u.length)return'まだどこにも使われていません';return'使用中：'+u.slice(0,3).map(esc).join('、')+(u.length>3?` ほか${u.length-3}件`:'')};
+function fillVarRow(r,i){const v=doc.vars[i];if(!v)return;const e=C.verr[v.n],ta=r.querySelector('textarea'),env=C.env;
+  ta.classList.toggle('err',!!e);ta.title=e?e:'= '+fmt(env[v.n],3).replace(/\.?0+$/,'');
+  const res=r.querySelector('.vres');res.classList.toggle('err',!!e);res.textContent=e?e:'= '+fmt(env[v.n],4).replace(/\.?0+$/,'');
+  r.querySelector('.vuse').innerHTML=varUseText(v.n)}
+function fitTA(ta){ta.style.height='auto';ta.style.height=ta.scrollHeight+'px'}
+function renderVars(soft){const box=$('vars');
+  if(soft&&box.contains(document.activeElement)){box.querySelectorAll('.vrow').forEach((r,i)=>fillVarRow(r,i));return}
   if(box.contains(document.activeElement))return;
-  box.innerHTML=doc.vars.map((v,i)=>`<div class="vrow"><input type="text" aria-label="変数名" id="vn${i}" data-vi="${i}" data-vk="n" value="${esc(v.n)}"><span class="eq">=</span><input type="text" aria-label="${esc(v.n)} の値" id="ve${i}" data-vi="${i}" data-vk="e" value="${esc(v.e)}" spellcheck="false" autocomplete="off"><button class="x" data-vdel="${i}" aria-label="${esc(v.n)} を削除">×</button></div>`).join('');
-  box.querySelectorAll('.vrow').forEach((r,i)=>mark(r.querySelector('[data-vk="e"]'),doc.vars[i]))}
+  box.innerHTML=doc.vars.map((v,i)=>`<div class="vrow" data-row="${i}"><input type="text" class="vname" aria-label="変数名" id="vn${i}" data-vi="${i}" data-vk="n" value="${esc(v.n)}" spellcheck="false" autocomplete="off"><span class="eq">=</span><textarea rows="1" aria-label="${esc(v.n)} の式" id="ve${i}" data-vi="${i}" data-vk="e" spellcheck="false" autocomplete="off">${esc(v.e)}</textarea><button class="x" data-vdel="${i}" aria-label="${esc(v.n)} を削除">×</button><div class="vres" aria-live="polite"></div><div class="vuse"></div></div>`).join('');
+  box.querySelectorAll('.vrow').forEach((r,i)=>fillVarRow(r,i))}
 // every expression string in a shape, for finding where a variable is used
 function exprsOf(s){const out=[...Object.values(s.p||{})];if(s.st&&s.st.on)out.push(s.st.inset,s.st.pitch,s.st.hole);
   if(s.nodes)for(const n of s.nodes){out.push(n.x,n.y);if(n.hi)out.push(...n.hi);if(n.ho)out.push(...n.ho)}return out}
@@ -751,9 +770,16 @@ $('secProps').addEventListener('input',e=>{const t=e.target,p=t.dataset.path;if(
 function setDeep(o,p,v){const ks=p.split('.');const edge=ks[0]==='st'&&ks[1]==='edges';let t=o;
   for(const k of ks.slice(0,-1)){if(t[k]==null||typeof t[k]!=='object')t[k]={};t=t[k]}
   if(edge&&(v===''||v===false)){delete t[ks.at(-1)];const e=o.st.edges;for(const k in e)if(!Object.keys(e[k]).length)delete e[k]}else t[ks.at(-1)]=v}
-$('vars').addEventListener('focusin',()=>pushUndo());
-$('vars').addEventListener('input',e=>{const t=e.target;if(t.dataset.vi===undefined)return;doc.vars[+t.dataset.vi][t.dataset.vk]=t.value;render()});
-$('vars').addEventListener('focusout',()=>setTimeout(()=>{if(!$('vars').contains(document.activeElement))renderVars(false)},0));
+$('vars').addEventListener('focusin',e=>{pushUndo();const row=e.target.closest('.vrow');
+  $('vars').querySelectorAll('.vrow.open').forEach(r=>{if(r!==row){r.classList.remove('open');r.querySelector('textarea').style.height=''}});
+  if(row&&!row.classList.contains('open')){row.classList.add('open');fillVarRow(row,+row.dataset.row);fitTA(row.querySelector('textarea'))}});
+$('vars').addEventListener('input',e=>{const t=e.target;if(t.dataset.vi===undefined)return;
+  if(t.tagName==='TEXTAREA'&&/[\r\n]/.test(t.value)){t.value=t.value.replace(/[\r\n]+/g,' ')}
+  doc.vars[+t.dataset.vi][t.dataset.vk]=t.value;if(t.tagName==='TEXTAREA')fitTA(t);render()});
+$('vars').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.tagName==='TEXTAREA'){e.preventDefault();e.target.blur()}});
+$('vars').addEventListener('focusout',e=>setTimeout(()=>{const a=document.activeElement,row=e.target.closest('.vrow');
+  if(row&&!row.contains(a)){row.classList.remove('open');const ta=row.querySelector('textarea');if(ta)ta.style.height=''}
+  if(!$('vars').contains(a))renderVars(false)},0));
 // pointerdown + preventDefault: keeps the name/value field from blurring and rebuilding the list before the click lands
 $('vars').addEventListener('pointerdown',e=>{const d=e.target.dataset.vdel;if(d===undefined)return;e.preventDefault();const v=doc.vars[+d];
   const users=varUsers(v.n);if(users.length){toast(`「${v.n}」は ${users.join('、')} で使われているので削除できません`,5000);return}
