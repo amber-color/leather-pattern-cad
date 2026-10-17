@@ -32,9 +32,9 @@
   color-scheme:dark}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;overflow:hidden}
-.app{height:100%;display:grid;grid-template-columns:52px minmax(0,1fr) 320px;grid-template-rows:46px minmax(0,1fr) 30px;
+.app{height:100%;display:grid;grid-template-columns:52px minmax(0,1fr) auto auto;grid-template-rows:46px minmax(0,1fr) 30px;
   padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-.top{grid-column:1/4;grid-row:1;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
+.top{grid-column:1/-1;grid-row:1;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
 .top .brand{font-weight:700;font-size:16px;letter-spacing:.06em;color:var(--accent);margin-right:6px}
 .top .grp{display:flex;align-items:center;gap:6px}
 .top .lbl{font-size:11px;letter-spacing:.12em;color:var(--muted);margin-right:2px}
@@ -55,7 +55,22 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .status{grid-column:2/3;grid-row:3;display:flex;gap:16px;align-items:center;padding:0 12px;border-top:1px solid var(--line);background:var(--panel);font:12px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden}
 .status select{font:12px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px}
 .status .hint{color:var(--fg);overflow:hidden;text-overflow:ellipsis;font-family:var(--ui)}
-.side{grid-row:2/4;grid-column:3;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column}
+.side{grid-row:2/4;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;box-sizing:border-box}
+.side.parts{grid-column:3;width:300px}
+.side.vars{grid-column:4;width:268px}
+.vhead{display:flex;align-items:center;gap:6px}
+.vhead h2{flex:1}
+.vbody{display:flex;flex-direction:column;gap:8px}
+.vtoggle{width:26px;height:26px;padding:0;display:grid;place-items:center;flex:none}
+.vtoggle svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;transition:transform .15s}
+.side.vars.collapsed{width:38px;overflow:hidden}
+.side.vars.collapsed .sec{padding:10px 5px;align-items:center}
+.side.vars.collapsed .vhead{flex-direction:column}
+.side.vars.collapsed .vhead h2{writing-mode:vertical-rl;letter-spacing:.3em;cursor:pointer}
+.side.vars.collapsed .vbody,.side.vars.collapsed #addVar{display:none}
+.side.vars.collapsed .vtoggle svg{transform:rotate(180deg)}
+.side.vars.collapsed .vtoggle{order:-1}
+.side.vars.collapsed .vhead h2{flex:none;margin-top:6px}
 .sec{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
 .sec h2{margin:0;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
 .row{display:grid;grid-template-columns:64px minmax(0,1fr) 62px;gap:6px;align-items:center}
@@ -65,7 +80,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 input[type=text],select.inp{width:100%;box-sizing:border-box;font:13px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:5px 7px}
 input[type=text]:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 input.err{border-color:var(--danger)}
-.vrow{display:grid;grid-template-columns:70px 14px minmax(0,1fr) 54px 22px;gap:4px;align-items:center}
+.vrow{display:grid;grid-template-columns:62px 10px minmax(0,1fr) 46px 16px;gap:4px;align-items:center}
 .vrow .eq{color:var(--muted);text-align:center;font-family:var(--mono)}
 .vrow .val{font:12px var(--mono);text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
 .ntab{display:flex;flex-direction:column;gap:3px}
@@ -84,11 +99,6 @@ input.err{border-color:var(--danger)}
 .check{display:flex;gap:6px;align-items:center;cursor:pointer}
 .result{font:12px var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:7px 9px;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-variant-numeric:tabular-nums}
 .result span:nth-child(odd){color:var(--muted);font-family:var(--ui)}
-table.seam{width:100%;border-collapse:collapse;font-size:12px}
-table.seam td,table.seam th{padding:4px 2px;border-bottom:1px solid var(--line);text-align:left}
-table.seam th{font-weight:500;color:var(--muted);font-size:11px}
-table.seam td.n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
-table.seam tr{cursor:pointer} table.seam tr.on td{color:var(--accent)}
 .pill{display:inline-block;font:11px var(--mono);padding:0 6px;border-radius:9px;background:var(--accent-soft);color:var(--accent)}
 .empty{color:var(--muted);font-size:12px;line-height:1.6}
 .toast{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:var(--panel);color:var(--fg);border:1px solid var(--line);padding:7px 14px;border-radius:6px;font-size:12px;box-shadow:0 4px 18px rgba(0,0,0,.25);pointer-events:none;opacity:0;transition:opacity .2s}
@@ -105,10 +115,14 @@ table.seam tr{cursor:pointer} table.seam tr.on td{color:var(--accent)}
   .rail{grid-row:2;flex-direction:row;border-right:none;border-bottom:1px solid var(--line);overflow-x:auto;padding-left:max(8px,env(safe-area-inset-left,0px))}
   .rail .sep{width:1px;height:28px;margin:0 4px}
   .stage{grid-row:3;grid-column:1}.status{grid-column:1;grid-row:4}
-  .side{grid-row:5;grid-column:1;border-left:none;overflow:visible}
+  .side{grid-column:1;border-left:none;overflow:visible;width:auto!important}
+  .side.parts{grid-row:5}.side.vars{grid-row:6}
+  .app{grid-template-rows:46px auto 62vh 30px auto auto}
+  .side.vars.collapsed{height:auto}
+  .side.vars.collapsed .vhead{flex-direction:row}.side.vars.collapsed .vhead h2{writing-mode:horizontal-tb}
   .status .hint{display:none}
 }
-@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+@media (prefers-reduced-motion:reduce){.toast,.vtoggle svg{transition:none}}
 </style>
 
 </head>
@@ -157,16 +171,20 @@ table.seam tr{cursor:pointer} table.seam tr.on td{color:var(--accent)}
     <span class="hint" id="sHint"></span>
   </div>
 
-  <aside class="side">
+  <aside class="side parts" id="partsBar" aria-label="パーツ" hidden>
     <section class="sec" id="secProps"></section>
+  </aside>
+  <aside class="side vars" id="varsBar" aria-label="変数">
     <section class="sec">
-      <h2>変数 <button class="btn" id="addVar" style="padding:3px 8px">＋ 追加</button></h2>
-      <div id="vars" style="display:flex;flex-direction:column;gap:5px"></div>
-      <div class="small">寸法欄には <code>W-2*R</code> のような式が書けます。変数を変えると全パーツが追従します。</div>
-    </section>
-    <section class="sec">
-      <h2>縫い合わせチェック</h2>
-      <div id="seam"></div>
+      <div class="vhead">
+        <h2 id="varsTitle">変数</h2>
+        <button class="btn" id="addVar" style="padding:3px 8px">＋ 追加</button>
+        <button class="btn vtoggle" id="varsToggle" aria-expanded="true" title="変数バーを折りたたむ"><svg viewBox="0 0 16 16"><path d="M6 3l5 5-5 5"/></svg></button>
+      </div>
+      <div class="vbody">
+        <div id="vars" style="display:flex;flex-direction:column;gap:5px"></div>
+        <div class="small">寸法欄には <code>W-2*R</code> のような式が書けます。変数を変えると全パーツが追従します。</div>
+      </div>
     </section>
   </aside>
 </div>
@@ -401,8 +419,9 @@ const stResult=st=>{const sp=st.steps.length===1?fmt(st.steps[0],2):`${fmt(Math.
   return`<span>穴数</span><span>${st.n}</span><span>実ピッチ</span><span>${sp} mm</span><span>縫い長さ</span><span>${fmt(st.L)} mm</span>`};
 let lastPanelKey=null,showNodesFor=null;
 function renderPanel(){
+  const pb=$('partsBar'),show=picks.length>0;if(pb.hidden===show){pb.hidden=!show;requestAnimationFrame(applyView)}
   const sec=$('secProps');const it=C.byId[sel];const act=document.activeElement;const key=picks.join(',');
-  if(act&&act.dataset&&act.dataset.path&&act.type==='text'&&sec.contains(act)&&lastPanelKey===key){refreshVals(sec);renderVars(true);renderSeam();return}
+  if(act&&act.dataset&&act.dataset.path&&act.type==='text'&&sec.contains(act)&&lastPanelKey===key){refreshVals(sec);renderVars(true);return}
   lastPanelKey=key;
   if(picks.length>1){
     const list=picks.map((id,i)=>`<li>${i===0?'<span class="pill">本体</span> ':''}${esc(byId(id).name)}</li>`).join('');
@@ -450,7 +469,7 @@ function renderPanel(){
     sec.querySelectorAll('[data-front]').forEach(b=>b.onclick=()=>{pushUndo();const id=b.dataset.front;s.ops=[id,...s.ops.filter(x=>x!==id)];lastPanelKey=null;render()});
     sec.querySelectorAll('[data-unuse]').forEach(b=>b.onclick=()=>{pushUndo();s.ops=s.ops.filter(x=>x!==b.dataset.unuse);
       if(!s.ops.length)doc.shapes=doc.shapes.filter(x=>x!==s);lastPanelKey=null;render()})}
-  renderVars(false);renderSeam()}
+  renderVars(false)}
 function refreshVals(sec){const env=C.env;sec.querySelectorAll('input[data-path]').forEach(inp=>{const p=inp.dataset.path;
   if(/^nodes\./.test(p)){try{inp.title='= '+fmt(evalExpr(inp.value,env),2);inp.classList.remove('err')}catch(e){inp.title=e.message;inp.classList.add('err')}return}
   if(!/^(p|st)\./.test(p))return;
@@ -461,10 +480,6 @@ function renderVars(soft){const box=$('vars');const env=C.env;
   if(soft&&box.contains(document.activeElement)){box.querySelectorAll('.vrow').forEach((r,i)=>{const v=doc.vars[i];if(!v)return;const sp=r.querySelector('.val');const e=C.verr[v.n];sp.textContent=e?'エラー':fmt(env[v.n],2);sp.style.color=e?'var(--danger)':''});return}
   if(box.contains(document.activeElement))return;
   box.innerHTML=doc.vars.map((v,i)=>{const e=C.verr[v.n];return`<div class="vrow"><input type="text" aria-label="変数名" id="vn${i}" data-vi="${i}" data-vk="n" value="${esc(v.n)}"><span class="eq">=</span><input type="text" aria-label="${esc(v.n)} の値" id="ve${i}" data-vi="${i}" data-vk="e" value="${esc(v.e)}" spellcheck="false"><span class="val" style="${e?'color:var(--danger)':''}" title="${esc(e||'')}">${e?'エラー':fmt(env[v.n],2)}</span><button class="x" data-vdel="${i}" aria-label="${esc(v.n)} を削除">×</button></div>`}).join('')}
-function renderSeam(){const rows=C.items.filter(i=>i.st&&!i.parent);
-  if(!rows.length){$('seam').innerHTML='<p class="empty">ステッチ穴のあるパーツがありません。</p>';return}
-  const counts={};rows.forEach(i=>counts[i.st.n]=(counts[i.st.n]||0)+1);
-  $('seam').innerHTML=`<table class="seam"><tr><th>パーツ</th><th style="text-align:right">縫い長さ</th><th style="text-align:right">穴数</th></tr>${rows.map(i=>`<tr data-sel="${i.s.id}" class="${i.s.id===sel?'on':''}"><td>${esc(i.s.name)}</td><td class="n">${fmt(i.st.L)}</td><td class="n">${i.st.n}${counts[i.st.n]>1?' <span class="pill">一致</span>':''}</td></tr>`).join('')}</table><div class="small" style="margin-top:6px">縫い合わせる辺同士の穴数が同じになっているか確認できます。</div>`}
 
 // panel events
 $('secProps').addEventListener('focusin',e=>{if(e.target.dataset.path&&e.target.type==='text')pushUndo()});
@@ -476,8 +491,12 @@ $('vars').addEventListener('focusin',()=>pushUndo());
 $('vars').addEventListener('input',e=>{const t=e.target;if(t.dataset.vi===undefined)return;doc.vars[+t.dataset.vi][t.dataset.vk]=t.value;render()});
 $('vars').addEventListener('focusout',()=>setTimeout(()=>{if(!$('vars').contains(document.activeElement))renderVars(false)},0));
 $('vars').addEventListener('click',e=>{const d=e.target.dataset.vdel;if(d===undefined)return;pushUndo();doc.vars.splice(+d,1);render()});
+function setVarsCollapsed(c){const v=$('varsBar');v.classList.toggle('collapsed',c);const t=$('varsToggle');t.setAttribute('aria-expanded',String(!c));t.title=c?'変数バーを広げる':'変数バーを折りたたむ';
+  try{localStorage.setItem('kawagata-ui',JSON.stringify({varsCollapsed:c}))}catch(e){}requestAnimationFrame(applyView)}
+$('varsToggle').onclick=()=>setVarsCollapsed(!$('varsBar').classList.contains('collapsed'));
+$('varsTitle').onclick=()=>{if($('varsBar').classList.contains('collapsed'))setVarsCollapsed(false)};
+try{if(JSON.parse(localStorage.getItem('kawagata-ui')||'{}').varsCollapsed)setVarsCollapsed(true)}catch(e){}
 $('addVar').onclick=()=>{pushUndo();let n='a',i=1;while(doc.vars.some(v=>v.n===n))n='a'+(i++);doc.vars.push({n,e:'10'});renderVars(false);render();$('vn'+(doc.vars.length-1)).focus()};
-$('seam').addEventListener('click',e=>{const tr=e.target.closest('tr[data-sel]');if(tr){setSel(tr.dataset.sel);render()}});
 const cur=()=>byId(sel);
 const sh=(e,d)=>!d?e:isNum(e)?num(+e+d):`(${e})${d<0?'-':'+'}${fmt(Math.abs(d),3).replace(/\.?0+$/,'')}`;
 function shiftLeaf(c,dx,dy){
