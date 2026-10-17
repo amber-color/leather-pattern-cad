@@ -48,7 +48,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .tool kbd{position:absolute;right:2px;bottom:1px;font:9px var(--mono);color:var(--muted)}
 .tool svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6}
 .rail .sep{width:28px;height:1px;background:var(--line);margin:4px 0}
-.stage{position:relative;background:var(--mat);overflow:hidden;touch-action:none}
+.stage{position:relative;background:var(--mat);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:default}
 #cv.pan{cursor:grab} #cv.draw{cursor:crosshair}
 .stage{grid-row:2;grid-column:2}
@@ -397,7 +397,9 @@ function dimBox(x,y,w,h,k){
   el('path',{d:`M${x} ${y-14*k}H${x+w}M${x} ${y-18*k}v${8*k}M${x+w} ${y-18*k}v${8*k}M${x-14*k} ${y}V${y+h}M${x-18*k} ${y}h${8*k}M${x-18*k} ${y+h}h${8*k}`,stroke:'var(--sel)','stroke-width':1,'vector-effect':'non-scaling-stroke',fill:'none'},gOver);
   dimText(x+w/2,y-17*k,fmt(w),k);dimText(x-17*k,y+h/2,fmt(h),k,'middle',-90)}
 function drawSel(it,k){const s=it.s,g=it.g;
-  if(s.type==='rect'){const{x,y,w,h}=g;dimBox(x,y,w,h,k);handle(x+w,y+h,k,{'data-h':'size',style:'cursor:nwse-resize'})}
+  if(s.type==='rect'){const{x,y,w,h}=g;dimBox(x,y,w,h,k);
+    const H={nw:[x,y,'nwse'],n:[x+w/2,y,'ns'],ne:[x+w,y,'nesw'],e:[x+w,y+h/2,'ew'],se:[x+w,y+h,'nwse'],s:[x+w/2,y+h,'ns'],sw:[x,y+h,'nesw'],w:[x,y+h/2,'ew']};
+    for(const d in H){const[hx,hy,c]=H[d];handle(hx,hy,k,{'data-h':'rs-'+d,style:`cursor:${c}-resize`,...(d.length===1?{rx:4*k}:{})})}}
   else if(s.type==='circle'){dimText(g.cx,g.cy-g.d/2-6*k,'Ø'+fmt(g.d),k);handle(g.cx+g.d/2,g.cy,k,{'data-h':'rad',style:'cursor:ew-resize'})}
   else if(s.type==='bool'){const b=bboxG(g);dimBox(b[0],b[1],b[2]-b[0],b[3]-b[1],k);
     dimText((b[0]+b[2])/2,b[3]+16*k,'周長 '+fmt(g.paths.reduce((a,p)=>a+plen(p,true),0)),k)}
@@ -595,7 +597,7 @@ svg.addEventListener('pointerdown',e=>{
     if(!last||last.x!==p[0]||last.y!==p[1])D.push({x:p[0],y:p[1]});
     draft.dragging=D.length-1;draft.sx=e.clientX;draft.sy=e.clientY;render();return}
   const h=e.target.dataset&&e.target.dataset.h;
-  if(h){const s=cur();pushUndo();drag={kind:'handle',h,s,m0:m};return}
+  if(h){const s=cur();pushUndo();drag={kind:'handle',h,s,m0:m,g0:C.byId[s.id]&&C.byId[s.id].g};return}
   const g=e.target.closest('g[data-id]');
   if(g){const id=g.dataset.id;
     if(e.shiftKey){if(C.byId[id].parent){toast('材料は演算結果ごと選んでください');return}
@@ -631,8 +633,16 @@ svg.addEventListener('pointermove',e=>{const m=toMM(e);$('sPos').textContent=`x 
       const rx=m[0]-N.x,ry=m[1]-N.y;sn[hk]=[num(rx),num(ry)];
       if(sn.t==='smooth'&&sn[ok]&&sn[ok].every(isNum)&&!e.altKey){const l=Math.hypot(+sn[ok][0],+sn[ok][1]),r=Math.hypot(rx,ry)||1;sn[ok]=[num(-rx/r*l),num(-ry/r*l)]}
       render();return}
-    if(drag.h==='size'){if(!isNum(s.p.w)||!isNum(s.p.h)){if(!drag.warned){toast('幅・高さが式なので、パネルで編集してください');drag.warned=true}return}
-      s.p.w=String(Math.max(1,snap(m[0]-it.g.x)));s.p.h=String(Math.max(1,snap(m[1]-it.g.y)));render();return}
+    if(drag.h.startsWith('rs-')){const d=drag.h.slice(3),g0=drag.g0;if(!g0)return;
+      // keys this handle changes: a west/north edge moves the origin and the size together
+      const need=[];if(d.includes('w'))need.push('x','w');if(d.includes('e'))need.push('w');if(d.includes('n'))need.push('y','h');if(d.includes('s'))need.push('h');
+      const bad=need.filter(k=>!isNum(s.p[k]));if(bad.length){if(!drag.warned){toast(`${bad.map(k=>LABELS[k]).join('・')}が式で決まっているので、パネルで編集してください`);drag.warned=true}return}
+      const R=g0.x+g0.w,B=g0.y+g0.h;
+      if(d.includes('e'))s.p.w=num(Math.max(1,snap(m[0])-g0.x));
+      if(d.includes('w')){const nx=Math.min(snap(m[0]),R-1);s.p.x=num(nx);s.p.w=num(R-nx)}
+      if(d.includes('s'))s.p.h=num(Math.max(1,snap(m[1])-g0.y));
+      if(d.includes('n')){const ny=Math.min(snap(m[1]),B-1);s.p.y=num(ny);s.p.h=num(B-ny)}
+      render();return}
     if(drag.h==='rad'){if(!isNum(s.p.d)){if(!drag.warned){toast('直径が式なので、パネルで編集してください');drag.warned=true}return}
       s.p.d=String(Math.max(0.5,snap(2*Math.hypot(m[0]-it.g.cx,m[1]-it.g.cy))));render()}}});
 svg.addEventListener('pointerup',e=>{svg.classList.remove('pan');
