@@ -55,6 +55,11 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .top .lbl{font-size:11px;letter-spacing:.12em;color:var(--muted);margin-right:2px}
 .top .vsep{width:1px;height:22px;background:var(--line);margin:0 6px;flex:none}
 .top .spacer{flex:1}
+.top .share{margin-left:auto}
+/* the theme button shows where a click takes you: a moon in light mode, a sun in dark mode */
+#xTheme .t-sun{display:none}
+:root[data-theme="dark"] #xTheme .t-sun{display:inline}:root[data-theme="dark"] #xTheme .t-moon{display:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #xTheme .t-sun{display:inline}:root:not([data-theme="light"]) #xTheme .t-moon{display:none}}
 .top .btn{padding:6px 10px}
 .top .ibtn{width:40px;height:40px;padding:0;display:grid;place-items:center;border:1px solid transparent;background:none;border-radius:6px;color:var(--fg)}
 .top .ibtn:hover,.top .ibtn[aria-expanded="true"]{background:var(--bg);border-color:transparent}
@@ -247,9 +252,10 @@ input.err{border-color:var(--danger)}
           <button role="menuitem" id="xDxf"><b>DXF</b><span>R12形式。レイヤー CUT / STITCH / GUIDE</span></button>
         </div></div>
       <button class="btn ibtn" id="xFrame" aria-pressed="false" title="印刷枠：PDFの用紙と向きで印刷される範囲を図面に表示" aria-label="印刷枠"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v2"/><path d="M20 16v2a2 2 0 0 1 -2 2h-2"/><path d="M8 20h-2a2 2 0 0 1 -2 -2v-2"/><path d="M4 8v-2a2 2 0 0 1 2 -2h2"/></svg></button>
-      <button class="btn ibtn" id="xShare" title="共有：型紙を埋め込んだURLをクリップボードにコピー" aria-label="共有"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 6a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M8.7 10.7l6.6 -3.4"/><path d="M8.7 13.3l6.6 3.4"/></svg></button>
+      <button class="btn ibtn" id="xTheme" title="ライト / ダークを切り替え" aria-label="ライト / ダークを切り替え"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="t-moon"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454l0 .008"/></g><g class="t-sun"><path d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"/></g></svg></button>
       <input type="file" id="fileIn" accept=".json,application/json" hidden>
     </div>
+    <button class="btn ibtn share" id="xShare" title="共有：型紙を埋め込んだURLをクリップボードにコピー" aria-label="共有"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 6a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M8.7 10.7l6.6 -3.4"/><path d="M8.7 13.3l6.6 3.4"/></svg></button>
   </header>
   <nav class="rail" aria-label="ツール">
     <button class="tool" data-tool="select" title="選択・移動 (V)"><svg viewBox="0 0 20 20"><path d="M4 3l11 6-5 1.5L8 16z"/></svg><kbd>V</kbd></button>
@@ -1606,6 +1612,12 @@ $('xHelp').onclick=openHelp;$('helpClose').onclick=()=>$('helpModal').hidden=tru
 $('helpModal').addEventListener('click',e=>{if(e.target.id==='helpModal')$('helpModal').hidden=true});
 $('helpModal').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();$('helpModal').hidden=true}});
 $('mNewBlank').onclick=()=>{closeNewMenu();pushUndo();doc={vars:structuredClone(SAMPLE.vars),shapes:[]};setSel(null);render();toast('新規にしました（⌘Zで戻せます）')};
+// light / dark: follows the system until the button is used, then the choice is remembered
+const darkNow=()=>document.documentElement.dataset.theme?document.documentElement.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+function applyTheme(){if(UI.theme)document.documentElement.dataset.theme=UI.theme;else delete document.documentElement.dataset.theme;
+  $('xTheme').setAttribute('aria-label',darkNow()?'ライトにする':'ダークにする');$('xTheme').title=darkNow()?'ライトテーマにする':'ダークテーマにする'}
+$('xTheme').onclick=()=>{UI.theme=darkNow()?'light':'dark';saveUI();applyTheme();render()};
+applyTheme();
 function setFrame(on){UI.showFrame=on;saveUI();$('xFrame').setAttribute('aria-pressed',String(on));render()}
 $('xFrame').onclick=()=>{setFrame(!UI.showFrame);if(UI.showFrame){const bb=contentBB();if(bb){const L=pdfLayout(bb,{size:UI.pdfSize||'A4',orient:UI.pdfOrient||'auto'});toast(`${L.label}・${L.cols*L.rows}枚の印刷範囲を表示しています（用紙と向きはPDFボタンで変更）`,3500)}}};
 // share: the whole pattern goes into the URL after "#p=" (compressed when the browser can), so nothing is uploaded anywhere
