@@ -35,8 +35,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .app{height:100%;display:grid;grid-template-columns:52px minmax(0,1fr) auto auto;grid-template-rows:46px minmax(0,1fr) 30px;
   padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 .top{grid-column:1/-1;grid-row:1;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
-.top .brand{font-weight:700;font-size:16px;letter-spacing:.08em;color:var(--accent);margin-right:6px;display:flex;align-items:baseline;gap:8px}
-.top .brand .full{font-weight:400;font-size:12px;letter-spacing:.02em;color:var(--muted)}
+.top .brand{font-weight:500;font-size:14px;letter-spacing:.01em;color:var(--fg);margin-right:10px;white-space:nowrap}
+.top .brand .cap{font-weight:700;font-size:20px;color:var(--accent);line-height:1}
 .opt{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;align-items:center}
 .opt>label,.opt>span{font-size:12px;color:var(--muted)}
 .seg{display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
@@ -123,7 +123,7 @@ input.err{border-color:var(--danger)}
   body{overflow:auto}
   .app{height:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:46px auto 62vh 30px auto}
   .top{grid-column:1;padding-left:max(12px,env(safe-area-inset-left,0px))}
-  .top .lbl,.top .spacer,.top .brand .full{display:none}
+  .top .lbl,.top .spacer,.top .brand{display:none}
   .rail{grid-row:2;flex-direction:row;border-right:none;border-bottom:1px solid var(--line);overflow-x:auto;padding-left:max(8px,env(safe-area-inset-left,0px))}
   .rail .sep{width:1px;height:28px;margin:0 4px}
   .stage{grid-row:3;grid-column:1}.status{grid-column:1;grid-row:4}
@@ -144,7 +144,7 @@ input.err{border-color:var(--danger)}
 <body>
 <div class="app">
   <header class="top">
-    <div class="brand" title="Parametric Pattern Plotter — 式で描くレザークラフト型紙CAD">PPP<span class="full">Parametric Pattern Plotter</span></div>
+    <div class="brand" title="式で描くレザークラフト型紙CAD"><span class="cap">P</span>arametric <span class="cap">P</span>attern <span class="cap">P</span>lotter</div>
     <div class="grp" role="group" aria-label="ファイル">
       <button class="btn" id="xNew" title="空の型紙を作る（変数は残ります）">新規</button>
       <button class="btn" id="xSample" title="名刺入れのサンプルを開く">サンプル</button>
@@ -277,7 +277,7 @@ const SAMPLE={vars:[{n:'W',e:'95'},{n:'H',e:'66'},{n:'R',e:'5'},{n:'コバ',e:'3
     {id:'s4',name:'折り位置',type:'poly',kind:'guide',nodes:[{x:'0',y:'H'},{x:'W',y:'H'}],closed:false,p:{},st:{on:false,inset:'0',pitch:'ピッチ',hole:'穴'}},
     {id:'s5',name:'ホック',type:'circle',kind:'cut',p:{cx:'W/2',cy:'2*H-12',d:'8'},st:{on:false,inset:'2',pitch:'ピッチ',hole:'穴'}}
   ]};
-const KEY='kawagata-v1';
+const KEY='ppp-v1';
 let doc;try{doc=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!doc||!doc.shapes)doc=structuredClone(SAMPLE);
 function migrate(d){for(const s of d.shapes||[])if(s.type==='poly'&&!s.nodes){s.nodes=(s.pts||[]).map(([x,y])=>({x:String(x),y:String(y)}));delete s.pts}return d}
@@ -540,9 +540,9 @@ $('vars').addEventListener('pointerdown',e=>{const d=e.target.dataset.vdel;if(d=
   const users=varUsers(v.n);if(users.length){toast(`「${v.n}」は ${users.join('、')} で使われているので削除できません`,5000);return}
   pushUndo();doc.vars.splice(+d,1);if(box_has_focus())document.activeElement.blur();renderVars(false);render()});
 const box_has_focus=()=>$('vars').contains(document.activeElement);
-// per-viewer UI settings (storage keys keep the old internal name so existing drafts and settings survive the rename)
-let UI={};try{UI=JSON.parse(localStorage.getItem('kawagata-ui')||'{}')||{}}catch(e){}
-function saveUI(){try{localStorage.setItem('kawagata-ui',JSON.stringify(UI))}catch(e){}}
+// per-viewer UI settings
+let UI={};try{UI=JSON.parse(localStorage.getItem('ppp-ui')||'{}')||{}}catch(e){}
+function saveUI(){try{localStorage.setItem('ppp-ui',JSON.stringify(UI))}catch(e){}}
 function setVarsCollapsed(c){$('varsBar').classList.toggle('collapsed',c);$('varsFull').inert=c;$('varsMini').inert=!c;$('varsToggle').setAttribute('aria-expanded',String(!c));
   UI.varsCollapsed=c;saveUI()}
 $('varsToggle').onclick=()=>setVarsCollapsed(true);
