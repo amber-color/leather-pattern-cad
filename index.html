@@ -357,7 +357,8 @@ function evalExpr(src,env){
   function unary(){if(eat('-'))return -unary();if(eat('+'))return unary();return atom()}
   function atom(){const k=peek();if(!k)throw Error('式が途中で終わっています');
     if(k.k==='n'){p++;return k.v}
-    if(k.k==='ref'){p++;if(!env.$ref)throw Error('変数の式では図形を参照できません');return env.$ref(k.name,k.prop)}
+    if(k.k==='ref'){p++;if(k.name===SELF){if(!env.$self)throw Error('「自分」は図形の欄でだけ使えます');return env.$self(k.prop)}
+      if(!env.$ref)throw Error('変数の式では図形を参照できません');return env.$ref(k.name,k.prop)}
     if(k.k==='('){p++;const v=expr();if(!eat(')'))throw Error('")" が足りません');return v}
     if(k.k==='id'){p++;
       if(eat('(')){const f=FN[k.v];if(!f)throw Error(`関数 ${k.v} はありません`);const a=[];if(!eat(')')){do a.push(expr());while(eat(','));if(!eat(')'))throw Error('")" が足りません')}return f(...a)}
@@ -433,7 +434,25 @@ const leaves=s=>s.type==='bool'?descendants(s).filter(c=>c.type!=='bool'):[s];
 
 // ---------- geometry ----------
 function envOf(){const env={},errs={};for(const v of doc.vars){try{env[v.n]=evalExpr(v.e,env)}catch(e){errs[v.n]=e.message}}return{env,errs}}
-function P(shape,key,env){return evalExpr(shape.p[key],env)}
+// 自分.幅 and the like: a shape's fields can read its own other fields; each field is evaluated under a guard so a loop is an error
+const SELF='自分';
+function gEv(env,key,expr){const G=env.$guard;if(!G)return evalExpr(expr,env);if(G.has(key))throw Error('自分の値の参照が循環しています');G.add(key);try{return evalExpr(expr,env)}finally{G.delete(key)}}
+function P(shape,key,env){return gEv(env,'p.'+key,shape.p[key])}
+let LOCALBB={};
+function selfEnv(s,env){const E=Object.create(env);E.$guard=new Set();E.$self=prop=>selfProp(s,prop,E);return E}
+function selfProp(s,prop,E){const f=k=>P(s,k,E);
+  const box=(L,T,W,H)=>({左:()=>L(),右:()=>L()+W(),上:()=>T(),下:()=>T()+H(),幅:W,高さ:H,中心X:()=>L()+W()/2,中心Y:()=>T()+H()/2});
+  let o;
+  if(s.type==='rect')o={X:()=>f('x'),Y:()=>f('y'),...box(()=>f('x'),()=>f('y'),()=>f('w'),()=>f('h'))};
+  else if(s.type==='circle'){const d=()=>f('d');o={直径:d,半径:()=>d()/2,...box(()=>f('cx')-d()/2,()=>f('cy')-d()/2,d,d),中心X:()=>f('cx'),中心Y:()=>f('cy')}}
+  else if(s.type==='text'){const z=()=>f('size'),w=()=>Math.max(textWidth(s.text||'',z()),z()*0.3);o={X:()=>f('x'),Y:()=>f('y'),...box(()=>f('x'),()=>f('y')-z(),w,()=>z()*1.25)}}
+  else if(s.type==='dim')o={始点X:()=>f('x1'),始点Y:()=>f('y1'),終点X:()=>f('x2'),終点Y:()=>f('y2'),長さ:()=>Math.hypot(f('x2')-f('x1'),f('y2')-f('y1'))};
+  else if(s.type==='poly'){const pm=/^点(\d+)([XY])$/.exec(prop);
+    if(pm){const i=+pm[1]-1,n=s.nodes[i];if(!n)throw Error(`頂点${pm[1]}はありません（${s.nodes.length}個）`);return gEv(E,`n${i}.${pm[2]}`,n[pm[2]==='X'?'x':'y'])}
+    const bb=()=>{const N=evalNodes(s,E);return bbox(flatten(N,s.closed))};o=box(()=>bb()[0],()=>bb()[1],()=>bb()[2]-bb()[0],()=>bb()[3]-bb()[1])}
+  else if(s.type==='bool'){const b=LOCALBB[s.id];if(!b)throw Error('演算結果の「自分」は、角R・ステッチ穴・回転の欄でだけ使えます');o=box(()=>b[0],()=>b[1],()=>b[2]-b[0],()=>b[3]-b[1])}
+  if(!o||!(prop in o))throw Error(`「自分」に「${prop}」はありません（${o?Object.keys(o).join('・'):''}${s.type==='poly'?'・点1X…':''}）`);
+  return o[prop]()}
 // rectangle corners in drawing order (top-right, bottom-right, bottom-left, top-left); each is round (角丸), chamfer (面取り) or none
 const CORNER_NAMES=['左上','右上','右下','左下'];
 function rectCorners(x,y,w,h,cr){const D=[
@@ -482,7 +501,7 @@ function dimParts(x1,y1,x2,y2,off,size){const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,
 // The shape is computed unrotated first; the result's outline, nodes and stitch break points are then turned.
 const ROTATABLE=t=>t==='rect'||t==='poly'||t==='bool';
 function rotOf(s,env,lbb){if(!ROTATABLE(s.type)||!s.p||s.p.rot==null||String(s.p.rot).trim()==='')return null;
-  const e=(k,lab)=>{try{return evalExpr(s.p[k],env)}catch(x){throw Error(`${lab}：${x.message}`)}};
+  const e=(k,lab)=>{try{return P(s,k,env)}catch(x){throw Error(`${lab}：${x.message}`)}};
   const a=e('rot','回転');if(Math.abs(a%360)<1e-9)return null;
   const c=[s.p.rcx!=null&&String(s.p.rcx).trim()!==''?e('rcx','回転中心X'):(lbb[0]+lbb[2])/2,s.p.rcy!=null&&String(s.p.rcy).trim()!==''?e('rcy','回転中心Y'):(lbb[1]+lbb[3])/2];
   const r=a*Math.PI/180;return{a,c,cs:Math.cos(r),sn:Math.sin(r)}}
@@ -492,7 +511,7 @@ const rotV=(R,v)=>[v[0]*R.cs-v[1]*R.sn,v[0]*R.sn+v[1]*R.cs],unrotV=(R,v)=>[v[0]*
 const pivotOf=g=>g.rot?g.rot.c:[(g.lbb[0]+g.lbb[2])/2,(g.lbb[1]+g.lbb[3])/2];
 // the first time a shape is turned its pivot is written down, so later edits to its outline don't swing it around
 function fixPivot(s){if(s.p.rcx!=null&&String(s.p.rcx).trim()!=='')return;const it=C.byId[s.id];if(!it||!it.g)return;const c=pivotOf(it.g);s.p.rcx=num(c[0]);s.p.rcy=num(c[1])}
-function applyRot(s,g,env){g.lbb=bbox(g.paths.flat());const R=rotOf(s,env,g.lbb);if(!R)return g;g.rot=R;
+function applyRot(s,g,env){g.lbb=bbox(g.paths.flat());LOCALBB[s.id]=g.lbb;const R=rotOf(s,env,g.lbb);if(!R)return g;g.rot=R;
   g.paths=g.paths.map(P=>P.map(q=>rotP(R,q)));g.pts=g.paths[0];
   if(g.nodes){g.lnodes=g.nodes;g.nodes=g.nodes.map(n=>{const q=rotP(R,[n.x,n.y]),o={...n,x:q[0],y:q[1]};if(n.hi)o.hi=rotV(R,n.hi);if(n.ho)o.ho=rotV(R,n.ho);return o})}
   return g}
@@ -506,14 +525,14 @@ function geomLeaf0(s,env){
   if(s.type==='rect'){const x=P(s,'x',env),y=P(s,'y',env),w=P(s,'w',env),h=P(s,'h',env),r=P(s,'r',env);
     if(w<=0||h<=0)throw Error('幅と高さは正の値に');const lim=v=>Math.max(0,Math.min(v,w/2,h/2)),each=s.cmode==='each'&&Array.isArray(s.cs);
     const corners=[0,1,2,3].map(i=>{if(!each)return{t:s.ct||'round',r:lim(r)};const c=s.cs[i]||{},t=c.t||'round';if(t==='none')return{t,r:0};
-      let v;try{v=evalExpr(c.r,env)}catch(e){throw Error(`角（${CORNER_NAMES[i]}）：${e.message}`)}return{t,r:lim(v)}});
+      let v;try{v=gEv(env,'cs'+i,c.r)}catch(e){throw Error(`角（${CORNER_NAMES[i]}）：${e.message}`)}return{t,r:lim(v)}});
     const pts=cornerRectPts(x,y,w,h,corners);return{paths:[pts],pts,closed:true,x,y,w,h,r:lim(r),corners}}
   if(s.type==='circle'){const cx=P(s,'cx',env),cy=P(s,'cy',env),d=P(s,'d',env);if(d<=0)throw Error('直径は正の値に');
     const pts=[];for(let i=0;i<96;i++){const a=-Math.PI/2+i/96*2*Math.PI;pts.push([cx+d/2*Math.cos(a),cy+d/2*Math.sin(a)])}return{paths:[pts],pts,closed:true,cx,cy,d}}
   const N=evalNodes(s,env);if(N.length<2)throw Error('頂点が足りません');
   const pts=flatten(N,s.closed);if(s.closed&&pts.length<3)throw Error('閉じた形にするには頂点が足りません');
   return{paths:[pts],pts,closed:s.closed,nodes:N}}
-function evalNodes(s,env){return s.nodes.map((n,i)=>{const e=(k,v)=>{try{return evalExpr(v,env)}catch(x){throw Error(`頂点${i+1}の${k}：${x.message}`)}};
+function evalNodes(s,env){return s.nodes.map((n,i)=>{const e=(k,v)=>{try{return gEv(env,`n${i}.${k}`,v)}catch(x){throw Error(/^頂点\d/.test(x.message)?x.message:`頂点${i+1}の${k}：${x.message}`)}};
   const o={x:e('X',n.x),y:e('Y',n.y),t:n.t||'corner'};if(n.hi)o.hi=[e('入X',n.hi[0]),e('入Y',n.hi[1])];if(n.ho)o.ho=[e('出X',n.ho[0]),e('出Y',n.ho[1])];return o})}
 function segCtrl(N,i){const a=N[i],b=N[(i+1)%N.length],p0=[a.x,a.y],p3=[b.x,b.y];
   if(!a.ho&&!b.hi)return{line:true,p0,p3};return{p0,p1:a.ho?[a.x+a.ho[0],a.y+a.ho[1]]:p0,p2:b.hi?[b.x+b.hi[0],b.y+b.hi[1]]:p3,p3}}
@@ -658,14 +677,14 @@ const curEdge=()=>{const it=C.byId[sel];return it&&it.st&&selEdge?it.st.edges.fi
 function compute(){
   const{env,errs}=envOf();const out={env,verr:errs,items:[],byId:{}};
   const parent={};for(const s of doc.shapes)if(s.type==='bool')for(const id of s.ops)parent[id]=s.id;
-  const memo={},busy={};
+  const memo={},busy={},envs={};LOCALBB={};const sEnv=s=>envs[s.id]||(envs[s.id]=selfEnv(s,env));out.envFor=sEnv;
   const gOf=s=>{if(memo[s.id])return memo[s.id];if(busy[s.id])throw Error(s.type==='bool'?'演算か図形の参照が循環しています':'図形の参照が循環しています');busy[s.id]=1;
-    try{return memo[s.id]=s.type==='bool'?geomBool(s,gOf,env):geomLeaf(s,env)}finally{busy[s.id]=0}};
+    try{return memo[s.id]=s.type==='bool'?geomBool(s,gOf,sEnv(s)):geomLeaf(s,sEnv(s))}finally{busy[s.id]=0}};
   Object.defineProperty(env,'$ref',{enumerable:false,value:(name,prop)=>{const ts=doc.shapes.filter(x=>x.name===name);
     if(!ts.length)throw Error(`図形「${name}」が見つかりません`);if(ts.length>1)throw Error(`「${name}」という名前の図形が${ts.length}個あります`);
     let g;try{g=gOf(ts[0])}catch(e){throw Error(/循環/.test(e.message)?`図形「${name}」との参照が循環しています`:`図形「${name}」にエラーがあります`)}return shapeProp(ts[0],g,prop)}});
   for(const s of doc.shapes){const it={s,parent:parent[s.id]||null};try{it.g=gOf(s)}catch(e){it.err=e.message}
-    if(it.g&&!it.parent){try{it.st=stitch(s,it.g,env,gOf)}catch(e){it.sterr=e.message}}out.items.push(it);out.byId[s.id]=it}
+    if(it.g&&!it.parent){try{it.st=stitch(s,it.g,sEnv(s),gOf)}catch(e){it.sterr=e.message}}out.items.push(it);out.byId[s.id]=it}
   return out}
 
 // ---------- shape references ----------
@@ -858,7 +877,7 @@ function renderPanel(){
       <div class="small">元の図形は「材料」として式付きのまま残り、変数を変えると結果も作り直されます。</div>`;
     sec.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>makeBool(b.dataset.op))}
   else if(!it){sec.innerHTML=`<h2>パーツ</h2><p class="empty">パーツを選ぶと寸法を式で編集できます。背景を左ドラッグで範囲選択、Shift＋クリックで追加選択。複数選ぶと合体・差などの演算ができます。</p>`}
-  else{const s=it.s,env=C.env;let h='';
+  else{const s=it.s,env=C.envFor(s);let h='';
     if(it.parent){const p=byId(it.parent);h+=`<div class="result" style="grid-template-columns:1fr auto;align-items:center"><span style="color:var(--fg)">「${esc(p.name)}」の材料です</span><button class="btn" id="bParent" style="padding:3px 8px">← 演算に戻る</button></div>`}
     h+=`<h2>パーツ <span class="pill">${TYPE_LABEL(s)}</span></h2>
     <div class="row"><label for="f_name">名前</label><input type="text" id="f_name" data-path="name" value="${esc(s.name)}"><span></span></div>`;
@@ -904,9 +923,9 @@ function renderPanel(){
           h+=`</div>`}
         if(it.sterr)h+=`<div class="small" style="color:var(--danger)">${esc(it.sterr)}</div>`}}
     h+=`<div class="btns" style="margin-top:4px">`+(s.type==='bool'?`<button class="btn" id="bBake" title="材料と式を捨てて、今の形で固定します">確定</button><button class="btn" id="bUngroup" title="演算をやめて材料を元の図形に戻します">演算を解除</button>`:'')+
-      `<button class="btn" id="bDup">複製</button>`+(s.type==='poly'?`<button class="btn" id="bMir">左右反転コピー</button>`:'')+`<button class="btn" id="bDel">削除</button></div>`;
+      `<button class="btn" id="bDup">複製</button><button class="btn" id="bMirX" title="左右反転した形を右側に複製">左右複製</button><button class="btn" id="bMirY" title="上下反転した形を下側に複製">上下複製</button><button class="btn" id="bDel">削除</button></div>`;
     sec.innerHTML=h;
-    $('bDup').onclick=()=>dup(false);if($('bMir'))$('bMir').onclick=()=>dup(true);$('bDel').onclick=delSel;
+    $('bDup').onclick=()=>dup();$('bMirX').onclick=()=>mirrorCopy('x');$('bMirY').onclick=()=>mirrorCopy('y');$('bDel').onclick=delSel;
     if($('bParent'))$('bParent').onclick=()=>{setSel(it.parent);render()};
     if($('bBake'))$('bBake').onclick=bake;if($('bUngroup'))$('bUngroup').onclick=ungroup;
     if($('bEdgeX'))$('bEdgeX').onclick=()=>{selEdge=null;render()};
@@ -919,7 +938,7 @@ function renderPanel(){
     sec.querySelectorAll('[data-unuse]').forEach(b=>b.onclick=()=>{pushUndo();s.ops=s.ops.filter(x=>x!==b.dataset.unuse);
       if(!s.ops.length)doc.shapes=doc.shapes.filter(x=>x!==s);lastPanelKey=null;render()})}
   renderVars(true)}
-function refreshVals(sec){const env=C.env;sec.querySelectorAll('input[data-path]').forEach(inp=>{const p=inp.dataset.path;
+function refreshVals(sec){const env=sel&&byId(sel)?C.envFor(byId(sel)):C.env;sec.querySelectorAll('input[data-path]').forEach(inp=>{const p=inp.dataset.path;
   if(/^nodes\./.test(p)){try{inp.title='= '+fmt(evalExpr(inp.value,env),2);inp.classList.remove('err')}catch(e){inp.title=e.message;inp.classList.add('err')}return}
   if(!/^(p|st|cs|edge)\./.test(p)||inp.type!=='text')return;
   const span=inp.nextElementSibling;if(/^edge\./.test(p)&&!inp.value.trim()){const it=C.byId[sel];span.textContent='= '+fmt(p.endsWith('.pitch')?(it&&it.st?it.st.pitch:0):0);span.className='val';inp.classList.remove('err');return}
@@ -1032,18 +1051,32 @@ function insertNode(s,m){const g=C.byId[s.id].g,N=g.lnodes||g.nodes;if(g.rot)m=u
 function cloneTree(s,dx){const c=structuredClone(s);c.id=newId();c.name=uniqName(c.name);
   if(c.type==='bool'){c.ops=s.ops.map(id=>cloneTree(byId(id),dx));shiftPivot(c,dx,0)}else shiftLeaf(c,dx,0);
   doc.shapes.push(c);return c.id}
-function dup(mirror){const s=cur();if(!s)return;pushUndo();
+function dup(){const s=cur();if(!s)return;pushUndo();
   const it=C.byId[s.id];const bb=it&&it.g?bboxG(it.g):[0,0,0,0];const dx=bb[2]-bb[0]+10;
-  if(mirror&&s.type==='poly'){const c=structuredClone(s);c.id=newId();const ax=fmt(2*bb[2]+10,3).replace(/\.?0+$/,'');
-    const mx=e=>isNum(e)?num(+ax-(+e)):`${ax}-(${e})`,neg=e=>isNum(e)?num(-(+e)):`-(${e})`;
-    c.nodes=c.nodes.map(n=>{const o={...n,x:mx(n.x)};if(n.hi)o.hi=[neg(n.hi[0]),n.hi[1]];if(n.ho)o.ho=[neg(n.ho[0]),n.ho[1]];return o});
-    if(c.p&&c.p.rot!=null&&String(c.p.rot).trim()!==''){c.p.rot=isNum(c.p.rot)?num(-(+c.p.rot)):`-(${c.p.rot})`;if(c.p.rcx!=null)c.p.rcx=mx(c.p.rcx)}
-    c.name=uniqName(s.name+' (反転)');doc.shapes.push(c);setSel(c.id)}
-  else{const id=cloneTree(s,dx);const c=byId(id);c.name=uniqName(s.name+(mirror?' (反転)':' のコピー'),c);
-    // the copy is a new top-level shape: move it to the end so it draws on top
-    const p=parentOf(s.id);if(p){/* copying a material makes a free shape */}
-    setSel(id)}
-  render()}
+  const id=cloneTree(s,dx);const c=byId(id);c.name=uniqName(s.name+' のコピー',c);setSel(id);render()}
+// mirrored copy: flipped left-right (axis 'x') or top-bottom (axis 'y') about a line just past the shape, so it lands beside / below it.
+// Expressions stay expressions (2A − x …), so a mirrored copy keeps following the variables.
+function mirrorCopy(axis){const s=cur();if(!s)return;const it=C.byId[s.id];if(!it||!it.g){toast('エラーのある図形は反転できません');return}pushUndo();
+  const bb=bboxG(it.g),A2=num(2*((axis==='x'?bb[2]:bb[3])+5));
+  const id=mirrorTree(s,axis,A2);setSel(id);render();toast(axis==='x'?'左右反転した形を右に複製しました':'上下反転した形を下に複製しました')}
+function mirrorTree(s,axis,A2){const c=structuredClone(s);c.id=newId();c.name=uniqName(s.name+(axis==='x'?' (左右反転)':' (上下反転)'));
+  if(c.type==='bool')c.ops=s.ops.map(id=>mirrorTree(byId(id),axis,A2));
+  mirrorShape(c,axis,A2);doc.shapes.push(c);return c.id}
+function mirrorShape(c,axis,A2){const X=axis==='x',has=e=>e!=null&&String(e).trim()!=='';
+  const M=e=>combE(A2,e,-1),MW=(e,w)=>combE(M(e),w,-1);
+  const neg=e=>{if(isNum(e))return num(-(+e));const L=lin(e);if(L){L.c=-L.c;for(const k in L.t)L.t[k]=-L.t[k];return linStr(L)}return `-(${e})`};
+  const p=c.p||{};
+  if(c.type==='rect'){if(X)p.x=MW(p.x,p.w);else p.y=MW(p.y,p.h);
+    if(Array.isArray(c.cs))c.cs=(X?[1,0,3,2]:[3,2,1,0]).map(i=>c.cs[i])}
+  else if(c.type==='circle'){if(X)p.cx=M(p.cx);else p.cy=M(p.cy)}
+  else if(c.type==='poly'){const k=X?'x':'y',h=X?0:1;c.nodes=c.nodes.map(n=>{const o={...n,[k]:M(n[k])};for(const hk of['hi','ho'])if(n[hk]){o[hk]=n[hk].slice();o[hk][h]=neg(n[hk][h])}return o})}
+  else if(c.type==='text'){if(X)p.x=MW(p.x,SELF+'.幅');else p.y=combE(M(p.y),p.size,1,0.75);if(has(p.rot))p.rot=neg(p.rot)}
+  else if(c.type==='dim'){if(X){p.x1=M(p.x1);p.x2=M(p.x2)}else{p.y1=M(p.y1);p.y2=M(p.y2)}p.off=neg(p.off)}
+  if(ROTATABLE(c.type)&&has(p.rot)){p.rot=neg(p.rot);if(X&&has(p.rcx))p.rcx=M(p.rcx);if(!X&&has(p.rcy))p.rcy=M(p.rcy)}
+  // per-edge stitch settings follow the mirrored edges, whose direction is now reversed
+  const st=c.st;if(st){const sw={start:'end',end:'start'};if(sw[st.pos])st.pos=sw[st.pos];
+    if(Array.isArray(st.eo))for(const o of st.eo){if(X)o.u=+(1-o.u).toFixed(4);else o.v=+(1-o.v).toFixed(4);
+      const f=o.from,t=o.to;delete o.from;delete o.to;if(t!==undefined)o.from=t;if(f!==undefined)o.to=f;if(sw[o.pos])o.pos=sw[o.pos]}}}
 function removeTree(s){const all=[s,...descendants(s)];doc.shapes=doc.shapes.filter(x=>!all.includes(x));
   for(const b of doc.shapes)if(b.type==='bool')b.ops=b.ops.filter(id=>byId(id))}
 function delNodes(){const s=cur();if(!s||s.type!=='poly')return;const min=s.closed?3:2;
