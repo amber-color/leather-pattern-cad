@@ -77,6 +77,8 @@ html.theme-fade,html.theme-fade *{transition:background-color .45s ease,color .4
 .help .hbody h2{font-size:16px;margin:24px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--line)}
 .help .hbody h3{font-size:14px;margin:18px 0 4px}
 .help .hbody p{margin:6px 0}
+.mvlist{display:flex;flex-direction:column;gap:3px;font:12px var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;max-height:180px;overflow:auto}
+.mvlist b{font:500 12px var(--ui);color:var(--fg);margin-top:4px}.mvlist b:first-child{margin-top:0}.mvlist span{color:var(--muted);overflow-wrap:anywhere}
 .help .hbody .shot{margin:10px 0 14px}.help .hbody .shot img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:6px}
 .help .hbody ul{margin:4px 0;padding-left:20px}
 .help .hbody li{margin:2px 0}
@@ -329,6 +331,13 @@ input.err{border-color:var(--danger)}
   <div class="hhead"><strong id="helpTitle">使い方</strong><button class="vtoggle" id="helpClose" aria-label="閉じる" title="閉じる"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
   <div class="hbody" id="helpBody"><p>読み込んでいます…</p></div>
 </div></div>
+<div class="modal" id="mvModal" hidden role="dialog" aria-modal="true" aria-labelledby="mvTitle"><div class="box" style="width:min(460px,100%)">
+  <strong id="mvTitle">式で位置が決まっているパーツを動かしますか？</strong>
+  <div class="small">動かした分だけ、式の後ろに数値が足されます。変数との関係が変わるので、意図した移動か確かめてください。</div>
+  <div class="mvlist" id="mvList"></div>
+  <label class="check"><input type="checkbox" id="mvSkip"> 次から確認しない</label>
+  <div class="btns"><button class="btn primary" id="mvOk">動かす</button><button class="btn" id="mvUndo">元に戻す</button></div>
+</div></div>
 <div class="modal" id="modal" hidden><div class="box">
   <strong id="mTitle"></strong><div class="small" id="mNote"></div>
   <textarea id="mText" readonly></textarea>
@@ -431,6 +440,8 @@ const EN_EXACT={
   'PDFのプレビュー':'PDF preview','実寸PDFの書き出し':'Full-size PDF','用紙':'Paper','レター（216 × 279 mm）':'Letter (216 × 279 mm)','図形に合わせる（1枚）':'Fit to the shapes (1 page)','向き':'Layout','縦':'Portrait','横':'Landscape',
   '「自動」は枚数が少なくなる向きを選びます。印刷は「実際のサイズ（100%）」で行い、各ページ下の50mm目盛りで確認してください。':'“Auto” picks the orientation with fewer pages. Print at “Actual size (100%)” and check the 50 mm scale at the bottom of each page.',
   '書き出す':'Export','キャンセル':'Cancel','読み込んでいます…':'Loading…','コピー':'Copy','テキストで保存':'Save as text','閉じる':'Close','枚数':'Pages','型紙':'Pattern','書き出す図形がありません':'Nothing to export','レター':'Letter',
+  '式で位置が決まっているパーツを動かしますか？':'Move a part whose position is set by an expression?','動かした分だけ、式の後ろに数値が足されます。変数との関係が変わるので、意図した移動か確かめてください。':'The distance moved is added to the end of the expression, which changes how it relates to the variables. Check that the move is intended.',
+  '次から確認しない':'Don’t ask again','動かす':'Move','元に戻す':'Undo','移動を取り消しました':'Move undone',
   '共有用のURL':'Share URL','自動でコピーできなかったので、下の文字列をコピーしてください。':'Copying automatically didn’t work; copy the text below.',
   '使い方を読み込めませんでした。':'The guide could not be loaded.','GitHub の README':'the README on GitHub','を開いてください。':'Please open it there.',
   // canvas
@@ -461,6 +472,7 @@ const EN_PAT=[
   ['{0} 横  {1}','{0} landscape  {1}',{0:'T'}],['{0} 縦  {1}','{0} portrait  {1}',{0:'T'}],['{0} 横','{0} landscape',{0:'T'}],['{0} 縦','{0} portrait',{0:'T'}],['図形に合わせる（{0} × {1} mm）  {2}','Fit to the shapes ({0} × {1} mm)  {2}'],['図形に合わせる（{0} × {1} mm）','Fit to the shapes ({0} × {1} mm)'],
   ['{0}枚（横{1} × 縦{2}）','{0} pages ({1} across × {2} down)'],['{0}枚','{0} page(s)'],['{0}-{1} ページ','Page {0}-{1}'],['ほか {0} 枚','{0} more'],
   ['演算 · {0}','Operation · {0}',{0:'T'}],['{0}個を選択中','{0} selected'],['「{0}」の材料です','A material of “{0}”'],['頂点 {0} 個','{0} nodes'],['頂点{0} {1}ハンドル X','Node {0} {1}-handle X',{1:'T'}],['頂点{0} {1}ハンドル Y','Node {0} {1}-handle Y',{1:'T'}],
+  ['{0}：{1} → {2}','{0}: {1} → {2}',{0:'T'}],['ほか {0} 件','{0} more'],['ほか {0} 個のパーツ','{0} more parts'],
   ['頂点{0} X','Node {0} X'],['頂点{0} Y','Node {0} Y'],['頂点{0}を削除','Delete node {0}'],['{0}の種類','{0} type',{0:'T'}],['{0}の大きさ','{0} size',{0:'T'}],
   ['どの辺にも当てはまらなくなった辺ごとの設定が {0} 件あります（図形の形が大きく変わったため）。','{0} per-edge setting(s) no longer match any edge (the shape changed a lot).'],
   ['辺 {0}（輪郭 {1}）','Edge {0} (contour {1})'],['辺 {0}','Edge {0}'],['長さ {0} mm。角がないので一周を1辺として扱います。矢印の向きが始点→終点です。','Length {0} mm. With no corners, the whole loop is one edge. The arrow points from start to end.'],
@@ -1561,7 +1573,24 @@ svg.addEventListener('pointerup',e=>{if(e.pointerType==='touch'&&touchUp(e)){ren
     else{const r=Math.hypot(d.b.x-d.a.x,d.b.y-d.a.y);if(r>=0.5){pushUndo();const s={id:newId(),name:uniqName(nm('穴・円')),type:'circle',kind:'cut',p:{cx:exOf(d.a),cy:eyOf(d.a),d:String(+(2*r).toFixed(2))},st:{on:false,inset:'2',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
     render()}
   if(drag&&drag.kind==='move'&&!drag.moved&&drag.click)clickPick(drag.click);
+  if(drag&&drag.kind==='move'&&drag.moved&&!UI.noMoveConfirm){const ch=exprMoves(drag);if(ch.length)askMove(ch)}
   drag=null});
+// ---- confirm a drag that rewrote expression positions
+// position fields whose old value was an expression (not a plain number) and that the move changed
+function exprMoves(d){const out=[];
+  d.ls.forEach((c,i)=>{const o=d.orig[i],rows=[];const f=(lab,a,b)=>{if(a!==b&&!isNum(a))rows.push([lab,a,b])};
+    if(c.type==='poly')c.nodes.forEach((n,j)=>{const on=o.nodes[j];if(!on)return;f(`頂点${j+1} X`,on.x,n.x);f(`頂点${j+1} Y`,on.y,n.y)});
+    else for(const k of['x','y','cx','cy','x1','y1','x2','y2','rcx','rcy'])if(o.p&&k in o.p)f(LABELS[k]||k,o.p[k],c.p[k]);
+    if(rows.length)out.push({name:c.name,rows})});
+  return out}
+function askMove(ch){const box=$('mvList');let h='';
+  for(const c of ch.slice(0,4)){h+=`<b>${esc(c.name)}</b>`;for(const[l,a,b]of c.rows.slice(0,4))h+=`<span>${esc(l)}：${esc(a)} → ${esc(b)}</span>`;if(c.rows.length>4)h+=`<span>ほか ${c.rows.length-4} 件</span>`}
+  if(ch.length>4)h+=`<b>ほか ${ch.length-4} 個のパーツ</b>`;
+  box.innerHTML=h;$('mvSkip').checked=false;$('mvModal').hidden=false;$('mvOk').focus()}
+function closeMove(keep){$('mvModal').hidden=true;if($('mvSkip').checked){UI.noMoveConfirm=true;saveUI()}
+  if(!keep&&undoS.length){redoS=[];doc=JSON.parse(undoS.pop());lastPanelKey=null;render();toast('移動を取り消しました')}}
+$('mvOk').onclick=()=>closeMove(true);$('mvUndo').onclick=()=>closeMove(false);
+$('mvModal').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeMove(false)}});
 // shapes under the cursor, the likeliest pick first: ones whose outline was hit (front to back), then the rest from small to large
 function hitList(e){const seen=new Map();
   for(const el of document.elementsFromPoint(e.clientX,e.clientY)){const g=el.closest&&el.closest('g[data-id]');if(!g||!gShapes.contains(g))continue;
@@ -1596,7 +1625,7 @@ $('zIn').onclick=()=>zoomBy(1.25);$('zOut').onclick=()=>zoomBy(0.8);
 function undo(){if(!undoS.length)return;redoS.push(JSON.stringify(doc));doc=JSON.parse(undoS.pop());lastPanelKey=null;render()}
 function redo(){if(!redoS.length)return;undoS.push(JSON.stringify(doc));doc=JSON.parse(redoS.pop());lastPanelKey=null;render()}
 $('bUndo').onclick=undo;$('bRedo').onclick=redo;
-document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden||!$('helpModal').hidden||anyMenuOpen())return;const inField=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden||!$('helpModal').hidden||!$('mvModal').hidden||anyMenuOpen())return;const inField=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
   if(e.key===' '&&!inField){spaceDown=true;svg.classList.add('pan');e.preventDefault();return}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!inField){e.preventDefault();e.shiftKey?redo():undo();return}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='d'&&!inField){e.preventDefault();dup(false);return}
