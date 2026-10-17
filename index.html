@@ -39,7 +39,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
   padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 .top{grid-column:1/-1;grid-row:1;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
 .top .brand{font-weight:500;font-size:14px;letter-spacing:.01em;color:var(--accent);margin-right:10px;white-space:nowrap}
-.top .brand .cap{font-weight:700;font-size:20px;color:var(--accent);line-height:1}
+.top .brand img{display:block;width:30px;height:30px}
 .opt{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;align-items:center}
 .opt>label,.opt>span{font-size:12px;color:var(--muted)}
 .seg{display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
@@ -204,7 +204,7 @@ input.err{border-color:var(--danger)}
 <body>
 <div class="app">
   <header class="top">
-    <div class="brand" title="式で描くレザークラフト型紙CAD"><span class="cap">P</span>arametric <span class="cap">P</span>attern <span class="cap">P</span>lotter</div>
+    <div class="brand" title="Parametric Pattern Plotter — 式で描くレザークラフト型紙CAD"><img src="favicon.svg" alt="Parametric Pattern Plotter" width="30" height="30"></div>
     <div class="grp" role="group" aria-label="ファイル">
       <div class="menuwrap"><button class="btn ibtn" id="xNew" title="新規" aria-label="新規" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 20 20"><path d="M5 2.5h6.5L15 6v11.5H5z"/><path d="M11.5 2.5V6H15"/></svg></button>
         <div class="menu" id="newMenu" role="menu" hidden>
