@@ -1216,7 +1216,9 @@ const exOf=q=>q.ex||num(q.x),eyOf=q=>q.ey||num(q.y);
 let snapHint=null;
 function setHint(q){const k=q&&q.kind!=='grid'?q:null;const same=(a,b)=>!a&&!b||a&&b&&a.kind===b.kind&&Math.abs(a.x-b.x)<1e-6&&Math.abs(a.y-b.y)<1e-6;
   const ch=!same(snapHint,k);snapHint=k;return ch}
-function drawHint(k){const q=snapHint;if(!q)return;const z=6*k,A={fill:'none',stroke:'var(--osnap)','stroke-width':1.6,'vector-effect':'non-scaling-stroke','pointer-events':'none'};
+let dimHint=null;
+function drawHint(k){if(dimHint){const[a,b]=dimHint;dimText((a.x+b.x)/2,(a.y+b.y)/2-6*k,fmt(Math.hypot(b.x-a.x,b.y-a.y)),k)}
+  const q=snapHint;if(!q)return;const z=6*k,A={fill:'none',stroke:'var(--osnap)','stroke-width':1.6,'vector-effect':'non-scaling-stroke','pointer-events':'none'};
   for(const g of q.guides||[])el('line',{x1:g[0],y1:g[1],x2:q.x,y2:q.y,stroke:'var(--osnap)','stroke-width':1,'stroke-dasharray':'2 3','vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver);
   const{x,y}=q;
   if(q.kind==='end')el('rect',{x:x-z,y:y-z,width:2*z,height:2*z,...A},gOver);
@@ -1346,7 +1348,14 @@ svg.addEventListener('pointermove',e=>{const m=toMM(e);$('sPos').textContent=`x 
       const warn=t=>{if(!drag.warned){toast(t);drag.warned=true}};
       if(nd){const n0=drag.nodes0||(drag.nodes0=structuredClone(s.nodes)),okx=dragEditable(n0[i].x),oky=dragEditable(n0[i].y);
         if(!okx&&!oky)return warn('この頂点は変数の式で決まっているので、パネルで編集してください');
-        const q=snapAt(m,e,drag.ctx),RT=it.g.rot;setHint(q);
+        let q=snapAt(m,e,drag.ctx);const RT=it.g.rot,G0=drag.g0&&drag.g0.nodes,last=s.nodes.length-1;
+        // Shift on an end of an open path: slide along the end segment's line (lengthen / shorten it)
+        if(e.shiftKey&&!s.closed&&G0&&(i===0||i===last)&&G0.length>1){const A=G0[i===0?1:last-1],B=G0[i],ux=B.x-A.x,uy=B.y-A.y,L0=Math.hypot(ux,uy);
+          if(L0>1e-6){const dx=ux/L0,dy=uy/L0,hit=q.kind!=='grid',t0=((hit?q.x:m[0])-A.x)*dx+((hit?q.y:m[1])-A.y)*dy,t=Math.max(0.5,hit?t0:snap(t0));
+            q={x:A.x+dx*t,y:A.y+dy*t,kind:hit?q.kind:'grid'}}}
+        setHint(q.kind==='grid'?null:q);
+        if(e.shiftKey&&!s.closed&&(i===0||i===last)&&q.ex===undefined){const l=RT?unrotP(RT,[q.x,q.y]):[q.x,q.y];if(okx)sn.x=num(l[0]);if(oky)sn.y=num(l[1]);
+          dimHint=[G0[i===0?1:last-1],q];render();return}
         if(RT){const l=unrotP(RT,[q.x,q.y]);if(okx)sn.x=num(l[0]);if(oky)sn.y=num(l[1])}else{if(okx)sn.x=exOf(q);if(oky)sn.y=eyOf(q)}render();return}
       const hk=drag.h.slice(0,2),ok=hk==='hi'?'ho':'hi';if(!sn[hk].every(isNum))return warn('このハンドルは式で決まっているので、パネルで編集してください');
       const v=it.g.rot?unrotV(it.g.rot,[m[0]-N.x,m[1]-N.y]):[m[0]-N.x,m[1]-N.y],rx=v[0],ry=v[1];sn[hk]=[num(rx),num(ry)];
@@ -1369,7 +1378,7 @@ svg.addEventListener('pointermove',e=>{const m=toMM(e);$('sPos').textContent=`x 
     if(drag.h==='rad'){if(!isNum(s.p.d)){if(!drag.warned){toast('直径が式なので、パネルで編集してください');drag.warned=true}return}
       const q=snapAt(m,e,drag.ctx),r=Math.hypot(q.x-it.g.cx,q.y-it.g.cy);setHint(q);s.p.d=q.kind==='grid'?String(Math.max(0.5,snap(2*Math.hypot(m[0]-it.g.cx,m[1]-it.g.cy)))):num(Math.max(0.5,2*r));render()}}});
 svg.addEventListener('pointerleave',()=>{if(!drag&&setHint(null))render()});
-svg.addEventListener('pointerup',e=>{svg.classList.remove('pan');if(!draft||draft.type!=='poly')setHint(null);
+svg.addEventListener('pointerup',e=>{svg.classList.remove('pan');dimHint=null;if(!draft||draft.type!=='poly')setHint(null);
   if(draft&&draft.type==='poly'){draft.dragging=null;render()}
   if(drag&&drag.kind==='box'){const d=drag;drag=null;
     if(!d.big){if(!d.add)setSel(null);render();return}
