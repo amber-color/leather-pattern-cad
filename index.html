@@ -59,7 +59,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .top .ibtn{width:40px;height:40px;padding:0;display:grid;place-items:center;border:1px solid transparent;background:none;border-radius:6px;color:var(--fg)}
 .top .ibtn:hover,.top .ibtn[aria-expanded="true"]{background:var(--bg);border-color:transparent}
 .menuwrap{position:relative}
-.menu{position:fixed;z-index:30;min-width:240px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.22);padding:5px;display:flex;flex-direction:column}
+.menu{position:fixed;z-index:30;min-width:240px;max-width:calc(100vw - 16px);background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.22);padding:5px;display:flex;flex-direction:column}
 .menu button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:none;background:none;color:var(--fg);padding:8px 10px;border-radius:5px;cursor:pointer;font:13px var(--ui)}
 .menu button span{font-size:11px;color:var(--muted)}
 .menu button:hover,.menu button:focus-visible{background:var(--accent-soft);outline:none}
@@ -79,7 +79,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .help .hbody a{color:var(--accent)}
 .help .tablewrap{overflow-x:auto}
 /* same look as the tool rail: 1.6px strokes on screen (22px icon drawn on a 20-unit grid) */
-.top .ibtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.45}
+.top .ibtn svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.top #xHelp svg{stroke-width:.875}
 .top .btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .pdfprev{display:flex;flex-wrap:wrap;gap:8px;max-height:260px;overflow:auto;padding:8px;background:var(--bg);border:1px solid var(--line);border-radius:4px}
 .pdfprev figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:3px}
@@ -206,24 +207,23 @@ input.err{border-color:var(--danger)}
   <header class="top">
     <div class="brand" title="Parametric Pattern Plotter — 式で描くレザークラフト型紙CAD"><img src="favicon.svg" alt="Parametric Pattern Plotter" width="30" height="30"></div>
     <div class="grp" role="group" aria-label="ファイル">
-      <div class="menuwrap"><button class="btn ibtn" id="xNew" title="新規" aria-label="新規" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 20 20"><path d="M5 2.5h6.5L15 6v11.5H5z"/><path d="M11.5 2.5V6H15"/></svg></button>
+      <div class="menuwrap"><button class="btn ibtn" id="xNew" title="新規" aria-label="新規" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2"/></svg></button>
         <div class="menu" id="newMenu" role="menu" hidden>
           <button role="menuitem" id="mNewBlank"><b>空の型紙</b><span>変数は残して、図形をすべて消します</span></button>
           <button role="menuitem" id="mNewSample"><b>サンプル</b><span>二つ折り名刺入れ（全機能を使った例）</span></button>
         </div></div>
-            <button class="btn ibtn" id="xLoad" title="開く：保存した .json を読み込む" aria-label="開く"><svg viewBox="0 0 20 20"><path d="M2.5 15.5V5a1 1 0 011-1h4l1.5 2h6.5a1 1 0 011 1v1.5"/><path d="M2.5 15.5l2.5-6.5h12.5l-2.5 6.5z"/></svg></button>
-      <button class="btn ibtn" id="xJson" title="保存：型紙を .json で保存" aria-label="保存"><svg viewBox="0 0 20 20"><path d="M10 3v9.5M6 9l4 4 4-4"/><path d="M3.5 13.5v3h13v-3"/></svg></button>
-      <button class="btn ibtn" id="xHelp" title="使い方" aria-label="使い方"><svg viewBox="0 0 20 20"><g fill="currentColor" stroke="none"><circle cx="10.2" cy="3.9" r="1.65"/><path d="M7.2 8L11.3 7.3V15.5Q11.3 16.1 11.9 16.1H13.2V17.3H6.9V16.1H8.2Q8.8 16.1 8.8 15.5V9.8Q8.8 9.2 8.2 9.2H7.2Z"/></g></svg></button>
-      <button class="btn ibtn" id="xShare" title="共有：型紙を埋め込んだURLをクリップボードにコピー" aria-label="共有"><svg viewBox="0 0 20 20"><circle cx="14.5" cy="4.5" r="2.3"/><circle cx="5.5" cy="10" r="2.3"/><circle cx="14.5" cy="15.5" r="2.3"/><path d="M12.5 5.7L7.5 8.8M7.5 11.2l5 3.1"/></svg></button>
+      <button class="btn ibtn" id="xLoad" title="開く：保存した .json を読み込む" aria-label="開く"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19l2.757 -7.351a1 1 0 0 1 .936 -.649h12.307a1 1 0 0 1 .986 1.164l-.996 5.211a2 2 0 0 1 -1.964 1.625h-14.026a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2h4l3 3h7a2 2 0 0 1 2 2v2"/></svg></button>
+      <button class="btn ibtn" id="xJson" title="保存：型紙を .json で保存" aria-label="保存"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2"/><path d="M10 14a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M14 4l0 4l-6 0l0 -4"/></svg></button>
+      <button class="btn ibtn" id="xHelp" title="使い方" aria-label="使い方"><svg viewBox="6 6 12 12" aria-hidden="true"><path d="M12 9h.01"/><path d="M11 12h1v4h1"/></svg></button>
+      <div class="menuwrap"><button class="btn ibtn" id="xExport" title="書き出し（PDF・SVG・DXF）" aria-label="書き出し" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M11.5 21h-4.5a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v5m-5 6h7m-3 -3l3 3l-3 3"/></svg></button>
+        <div class="menu" id="exportMenu" role="menu" hidden>
+          <button role="menuitem" id="xPdf"><b>PDF</b><span>実寸で印刷。用紙と向きを選んで書き出します</span></button>
+          <button role="menuitem" id="xSvg"><b>SVG</b><span>mm単位。裁断線・ステッチ穴・ガイドをグループ分け</span></button>
+          <button role="menuitem" id="xDxf"><b>DXF</b><span>R12形式。レイヤー CUT / STITCH / GUIDE</span></button>
+        </div></div>
+      <button class="btn ibtn" id="xFrame" aria-pressed="false" title="印刷枠：PDFの用紙と向きで印刷される範囲を図面に表示" aria-label="印刷枠"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2"/><path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4"/><path d="M7 15a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2l0 -4"/></svg></button>
+      <button class="btn ibtn" id="xShare" title="共有：型紙を埋め込んだURLをクリップボードにコピー" aria-label="共有"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 6a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M8.7 10.7l6.6 -3.4"/><path d="M8.7 13.3l6.6 3.4"/></svg></button>
       <input type="file" id="fileIn" accept=".json,application/json" hidden>
-    </div>
-    <div class="spacer"></div>
-    <div class="grp" role="group" aria-label="書き出し">
-      <span class="lbl">書き出し</span>
-      <button class="btn" id="xFrame" aria-pressed="false" title="PDFの用紙と向きで印刷される範囲を図面に表示">印刷枠</button>
-      <button class="btn primary" id="xPdf" title="実寸のPDF。用紙と向きを選んで書き出します">PDF</button>
-      <button class="btn" id="xSvg" title="mm単位のSVG（裁断線・ステッチ穴・ガイドをグループ分け）">SVG</button>
-      <button class="btn" id="xDxf" title="R12形式のDXF（レイヤー CUT / STITCH / GUIDE）">DXF</button>
     </div>
   </header>
   <nav class="rail" aria-label="ツール">
@@ -1330,7 +1330,7 @@ $('zIn').onclick=()=>zoomBy(1.25);$('zOut').onclick=()=>zoomBy(0.8);
 function undo(){if(!undoS.length)return;redoS.push(JSON.stringify(doc));doc=JSON.parse(undoS.pop());lastPanelKey=null;render()}
 function redo(){if(!redoS.length)return;undoS.push(JSON.stringify(doc));doc=JSON.parse(redoS.pop());lastPanelKey=null;render()}
 $('bUndo').onclick=undo;$('bRedo').onclick=redo;
-document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden||!$('helpModal').hidden||!$('newMenu').hidden)return;const inField=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden||!$('helpModal').hidden||anyMenuOpen())return;const inField=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
   if(e.key===' '&&!inField){spaceDown=true;svg.classList.add('pan');e.preventDefault();return}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!inField){e.preventDefault();e.shiftKey?redo():undo();return}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='d'&&!inField){e.preventDefault();dup(false);return}
@@ -1475,12 +1475,17 @@ $('xDxf').onclick=()=>offer('pattern.dxf',buildDXF());
 $('xJson').onclick=()=>offer('pattern.json',JSON.stringify(doc,null,2));
 $('xLoad').onclick=()=>$('fileIn').click();
 $('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.shapes||!d.vars)throw 0;pushUndo();doc=migrate(d);setSel(null);fit();toast('読み込みました')}catch(x){toast('型紙ファイルとして読めませんでした')}});e.target.value=''};
-function closeNewMenu(){$('newMenu').hidden=true;$('xNew').setAttribute('aria-expanded','false')}
-$('xNew').onclick=e=>{e.stopPropagation();const m=$('newMenu');if(!m.hidden){closeNewMenu();return}const r=$('xNew').getBoundingClientRect();
-  m.style.left=Math.max(8,Math.min(r.left,innerWidth-260))+'px';m.style.top=(r.bottom+6)+'px';m.hidden=false;$('xNew').setAttribute('aria-expanded','true');$('mNewBlank').focus()};
-document.addEventListener('pointerdown',e=>{if(!$('newMenu').hidden&&!e.target.closest('.menuwrap'))closeNewMenu()});
-$('newMenu').addEventListener('keydown',e=>{const it=[...$('newMenu').querySelectorAll('button')],i=it.indexOf(document.activeElement);
-  if(e.key==='Escape'){e.stopPropagation();closeNewMenu();$('xNew').focus()}else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();it[(i+(e.key==='ArrowDown'?1:it.length-1))%it.length].focus()}});
+// dropdown menus under the top bar icons (新規, 書き出し)
+const MENUS=[['xNew','newMenu'],['xExport','exportMenu']];
+function closeMenus(){for(const[b,m]of MENUS){$(m).hidden=true;$(b).setAttribute('aria-expanded','false')}}
+const closeNewMenu=closeMenus,anyMenuOpen=()=>MENUS.some(([,m])=>!$(m).hidden);
+for(const[bid,mid]of MENUS){const b=$(bid),m=$(mid);
+  b.onclick=e=>{e.stopPropagation();const was=!m.hidden;closeMenus();if(was)return;const r=b.getBoundingClientRect();
+    m.style.top=(r.bottom+6)+'px';m.hidden=false;m.style.left=Math.max(8,Math.min(r.left,innerWidth-m.offsetWidth-8))+'px';b.setAttribute('aria-expanded','true');m.querySelector('button').focus()};
+  m.addEventListener('keydown',e=>{const it=[...m.querySelectorAll('button')],i=it.indexOf(document.activeElement);
+    if(e.key==='Escape'){e.stopPropagation();closeMenus();b.focus()}else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();it[(i+(e.key==='ArrowDown'?1:it.length-1))%it.length].focus()}});
+  m.addEventListener('click',e=>{if(e.target.closest('button'))closeMenus()},true)}
+document.addEventListener('pointerdown',e=>{if(anyMenuOpen()&&!e.target.closest('.menuwrap'))closeMenus()});
 $('mNewSample').onclick=()=>{closeNewMenu();pushUndo();doc=structuredClone(SAMPLE);setSel(null);fit();toast('サンプル（二つ折り名刺入れ）を開きました（⌘Zで戻せます）')};
 // usage guide: the repository README, rendered by a small Markdown subset (headings, lists, tables, code, bold, links)
 function mdInline(t){return esc(t).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
