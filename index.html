@@ -445,6 +445,15 @@ function gapPlan(L,p,method,pos){let n=Math.floor(L/p+1e-9),r=L-n*p;
   if(spec.length===2)return[spec[0],...full,spec[1]];
   if(pos==='start')return[spec[0],...full];if(pos==='end')return[...full,spec[0]];
   const h=Math.floor(full.length/2);return[...full.slice(0,h),spec[0],...full.slice(h)]}
+// the part of a polyline between arc lengths a and b
+function slicePoly(P,a,b){const out=[];let acc=0;
+  for(let i=0;i<P.length-1;i++){const A=P[i],B=P[i+1],l=dist(A,B),s0=acc,s1=acc+l;acc=s1;if(s1<a||s0>b||!l)continue;
+    const at=t=>[A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t];if(!out.length)out.push(at(Math.max(0,(a-s0)/l)));
+    if(s1<=b)out.push(B.slice());else{out.push(at((b-s0)/l));break}}
+  return out.length>1?out:[P[0],P[0]]}
+// arc length along a polyline of the point nearest to m
+function arcPos(P,m){let acc=0,best={d:1e18,s:0};for(let i=0;i<P.length-1;i++){const A=P[i],B=P[i+1],vx=B[0]-A[0],vy=B[1]-A[1],l2=vx*vx+vy*vy,l=Math.sqrt(l2);
+    const t=l2?Math.max(0,Math.min(1,((m[0]-A[0])*vx+(m[1]-A[1])*vy)/l2)):0,d=Math.hypot(A[0]+vx*t-m[0],A[1]+vy*t-m[1]);if(d<best.d)best={d,s:acc+l*t};acc+=l}return best.s}
 function edgeHoles(pts,L,e){const gaps=gapPlan(L,e.p,e.method,e.pos),d=[];let acc=0;for(let i=0;i<gaps.length-1;i++){acc+=gaps[i];d.push(acc)}
   const interior=sampleAlong(pts,false,d),all=[pts[0],...interior,pts.at(-1)],irr=[];
   gaps.forEach((g,i)=>{if(Math.abs(g-e.p)>EPS)irr.push({a:all[i],b:all[i+1],g})});return{interior,irr}}
@@ -486,11 +495,18 @@ function stitch(s,g,env,gOf){
     const ons=segs.map((sg,i)=>{const key=c+':'+i,ov=(st.edges||{})[key]||{},on=!ov.off;let p=pitch;
       if(ov.pitch!==undefined&&String(ov.pitch).trim()!==''){p=evalExpr(ov.pitch,env);if(p<=0)throw Error(`辺${i+1}のピッチは正の値に`)}
       const e={key,c,i,pts:sg.pts,L:plen(sg.pts,false),p,on,loop:!!sg.loop,method:ov.method||st.method||'auto',pos:ov.pos||st.pos||'both',ov,n:0,irr:[]};
-      if(on){const h=edgeHoles(sg.pts,e.L,e);e.irr=h.irr;e.n=h.interior.length;out.holes.push(...h.interior);out.irr.push(...h.irr);out.L+=e.L}
-      out.edges.push(e);return on});
+      // stitched range: skip "from" mm after the start and "to" mm before the end; a range end gets its own hole (縫い止まり)
+      const rv=k=>ov[k]!==undefined&&String(ov[k]).trim()!==''?Math.max(0,evalExpr(ov[k],env)):0;e.ra=rv('from');e.rb=rv('to');
+      let fl={s:false,e:false};
+      if(on){const len=e.L-e.ra-e.rb;
+        if(len<=EPS)e.short=true;
+        else{const sub=e.ra||e.rb?slicePoly(sg.pts,e.ra,e.L-e.rb):sg.pts;e.sub=sub;const h=edgeHoles(sub,len,e);e.irr=h.irr;e.n=h.interior.length;
+          out.holes.push(...h.interior);out.irr.push(...h.irr);out.L+=len;
+          if(e.ra>0)out.holes.push(sub[0].slice());if(e.rb>0)out.holes.push(sub.at(-1).slice());fl={s:e.ra===0,e:e.rb===0}}}
+      out.edges.push(e);return fl});
     // a corner gets a hole when either edge next to it is stitched
-    if(g.closed){if(!cs.length){if(ons[0])out.holes.push(path[0].slice())}else segs.forEach((sg,i)=>{if(ons[i]||ons[(i-1+segs.length)%segs.length])out.holes.push(sg.pts[0].slice())})}
-    else{segs.forEach((sg,i)=>{if(ons[i]||(i>0&&ons[i-1]))out.holes.push(sg.pts[0].slice())});if(ons.at(-1))out.holes.push(segs.at(-1).pts.at(-1).slice())}});
+    if(g.closed){if(!cs.length){if(ons[0].s||ons[0].e)out.holes.push(path[0].slice())}else segs.forEach((sg,i)=>{if(ons[i].s||ons[(i-1+segs.length)%segs.length].e)out.holes.push(sg.pts[0].slice())})}
+    else{segs.forEach((sg,i)=>{if(ons[i].s||(i>0&&ons[i-1].e))out.holes.push(sg.pts[0].slice())});if(ons.at(-1).e)out.holes.push(segs.at(-1).pts.at(-1).slice())}});
   out.n=out.holes.length;return out}
 function compute(){
   const{env,errs}=envOf();const out={env,verr:errs,items:[],byId:{}};
@@ -542,7 +558,8 @@ function render(){
     el('path',{d,'fill-rule':'evenodd',fill:g.closed&&!faint?'rgba(244,239,226,0.06)':'none',stroke:on?'var(--sel)':s.kind==='guide'?'var(--guide)':'var(--cut)',
       'stroke-width':on?2:1.4,'stroke-dasharray':faint?'3 3':s.kind==='guide'?'6 4':'','vector-effect':'non-scaling-stroke','stroke-linejoin':'round'},grp);
     el('path',{d,fill:'none',stroke:'transparent','stroke-width':12,'vector-effect':'non-scaling-stroke'},grp);
-    if(it.st){for(const e of it.st.edges)el('path',{d:dOf(e.pts,false),fill:'none',stroke:e.on?'var(--stitch)':'var(--guide)','stroke-opacity':e.on?.35:.3,'stroke-width':1,'stroke-dasharray':e.on?'2 3':'1 4','vector-effect':'non-scaling-stroke','pointer-events':'none'},grp);
+    if(it.st){for(const e of it.st.edges){el('path',{d:dOf(e.pts,false),fill:'none',stroke:'var(--guide)','stroke-opacity':.3,'stroke-width':1,'stroke-dasharray':'1 4','vector-effect':'non-scaling-stroke','pointer-events':'none'},grp);
+        if(e.on&&e.sub)el('path',{d:dOf(e.sub,false),fill:'none',stroke:'var(--stitch)','stroke-opacity':.45,'stroke-width':1,'stroke-dasharray':'2 3','vector-effect':'non-scaling-stroke','pointer-events':'none'},grp)}
       for(const q of it.st.irr)el('line',{x1:q.a[0],y1:q.a[1],x2:q.b[0],y2:q.b[1],stroke:'var(--irr)','stroke-width':3,'stroke-linecap':'round','vector-effect':'non-scaling-stroke','pointer-events':'none'},grp);
       const r=Math.max(it.st.hole/2,0.2);let hd='';for(const[x,y]of it.st.holes)hd+=`M${fmt(x-r,3)} ${fmt(y,3)}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0`;
       el('path',{d:hd,fill:'var(--stitch)','fill-opacity':.25,stroke:'var(--stitch)','stroke-width':1,'vector-effect':'non-scaling-stroke','pointer-events':'none'},grp)}
@@ -563,12 +580,17 @@ function dimBox(x,y,w,h,k){
   el('path',{d:`M${x} ${y-14*k}H${x+w}M${x} ${y-18*k}v${8*k}M${x+w} ${y-18*k}v${8*k}M${x-14*k} ${y}V${y+h}M${x-18*k} ${y}h${8*k}M${x-18*k} ${y+h}h${8*k}`,stroke:'var(--sel)','stroke-width':1,'vector-effect':'non-scaling-stroke',fill:'none'},gOver);
   dimText(x+w/2,y-17*k,fmt(w),k);dimText(x-17*k,y+h/2,fmt(h),k,'middle',-90)}
 function drawEdges(it,k){if(!it.st)return;
+  for(const e of it.st.edges)el('path',{d:dOf(e.pts,false),fill:'none',stroke:'transparent','stroke-width':10,'vector-effect':'non-scaling-stroke','data-edge':e.key,style:'cursor:pointer'},gOver);
   for(const e of it.st.edges){const on=selEdge&&selEdge.key===e.key;
     if(on){el('path',{d:dOf(e.pts,false),fill:'none',stroke:'var(--sel)','stroke-width':4,'stroke-opacity':.85,'stroke-linecap':'round','vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver);
       const mid=sampleAlong(e.pts,false,[e.L/2])[0],ah=sampleAlong(e.pts,false,[Math.min(e.L,e.L/2+0.01)])[0];let dx=ah[0]-mid[0],dy=ah[1]-mid[1];const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;
       const z=7*k;el('path',{d:`M${mid[0]+dx*z} ${mid[1]+dy*z}L${mid[0]-dx*z-dy*z*.7} ${mid[1]-dy*z+dx*z*.7}L${mid[0]-dx*z+dy*z*.7} ${mid[1]-dy*z-dx*z*.7}Z`,fill:'var(--sel)','pointer-events':'none'},gOver);
-      const st=e.pts[0];el('circle',{cx:st[0],cy:st[1],r:3*k,fill:'none',stroke:'var(--sel)','stroke-width':1.5,'vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver)}
-    el('path',{d:dOf(e.pts,false),fill:'none',stroke:'transparent','stroke-width':10,'vector-effect':'non-scaling-stroke','data-edge':e.key,style:'cursor:pointer'},gOver)}}
+      const st=e.pts[0];el('circle',{cx:st[0],cy:st[1],r:3*k,fill:'none',stroke:'var(--sel)','stroke-width':1.5,'vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver);
+      if(e.on){const ends=e.sub?[e.sub[0],e.sub.at(-1)]:[sampleAlong(e.pts,false,[Math.min(e.ra,e.L)])[0],sampleAlong(e.pts,false,[Math.max(0,e.L-e.rb)])[0]];
+        if(e.sub)el('path',{d:dOf(e.sub,false),fill:'none',stroke:'var(--stitch)','stroke-width':4,'stroke-linecap':'round','vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver);
+        el('rect',{x:ends[0][0]-4.5*k,y:ends[0][1]-4.5*k,width:9*k,height:9*k,rx:4.5*k,fill:'var(--panel)',stroke:'var(--stitch)','stroke-width':2,'vector-effect':'non-scaling-stroke','data-h':'ra',style:'cursor:grab',class:'h'},gOver);
+        el('rect',{x:ends[1][0]-4.5*k,y:ends[1][1]-4.5*k,width:9*k,height:9*k,rx:4.5*k,fill:'var(--panel)',stroke:'var(--stitch)','stroke-width':2,'vector-effect':'non-scaling-stroke','data-h':'rb',style:'cursor:grab',class:'h'},gOver)}}
+  }}
 function drawSel(it,k){const s=it.s,g=it.g;if(g.isText)return;drawEdges(it,k);
   if(s.type==='rect'){const{x,y,w,h}=g;dimBox(x,y,w,h,k);
     const H={nw:[x,y,'nwse'],n:[x+w/2,y,'ns'],ne:[x+w,y,'nesw'],e:[x+w,y+h/2,'ew'],se:[x+w,y+h,'nwse'],s:[x+w/2,y+h,'ns'],sw:[x,y+h,'nesw'],w:[x,y+h/2,'ew']};
@@ -593,7 +615,8 @@ function exprRow(path,label,expr,env){let v,e;try{v=evalExpr(expr,env)}catch(x){
   return `<div class="row"><label for="f_${path}">${label}</label><input type="text" id="f_${path}" data-path="${path}" value="${esc(expr)}" class="${e?'err':''}" spellcheck="false" autocomplete="off"><span class="val ${e?'err':''}" title="${esc(e||'')}">${e?'エラー':'= '+fmt(v)}</span></div>`}
 const irrText=irr=>{if(!irr.length)return'なし';const g={};irr.forEach(x=>{const k=fmt(x.g);g[k]=(g[k]||0)+1});return`<b style="color:var(--danger);font-weight:500">${Object.entries(g).map(([v,c])=>`${v}mm × ${c}`).join('、')}</b>`};
 const stResult=st=>`<span>穴数</span><span>${st.n}</span><span>縫い長さ</span><span>${fmt(st.L)} mm</span><span>縫う辺</span><span>${st.edges.filter(e=>e.on).length} / ${st.edges.length}</span><span>不揃い</span><span>${irrText(st.irr)}</span>`;
-const edResult=e=>`<span>穴</span><span>${e.n}個（両端の角を除く）</span><span>不揃い</span><span>${irrText(e.irr)}</span>`;
+const edMsg=e=>e.short?`<b style="color:var(--danger);font-weight:500">縫う範囲がありません。始点から・終点からの合計を辺の長さ（${fmt(e.L)} mm）より小さくしてください。</b>`:`この間の ${fmt(e.L-e.ra-e.rb)} mm を縫います（辺の長さ ${fmt(e.L)} mm）。範囲の端には縫い止まりの穴が入ります。キャンバスの丸いハンドルでも調整できます。`;
+const edResult=e=>`<span>穴</span><span>${e.n}個（両端を除く）</span><span>不揃い</span><span>${irrText(e.irr)}</span>`;
 const METHODS=[['auto','自動'],['tighten','詰める'],['loosen','空ける']],POSES=[['both','両端'],['start','始点'],['center','中央'],['end','終点']];
 const segRow=(path,opts,val,label,name)=>`<div class="row" style="grid-template-columns:72px minmax(0,1fr)"><label>${label}</label><div class="seg" role="radiogroup" aria-label="${label}">${opts.map(([v,t])=>`<label><input type="radio" name="${name}" data-path="${path}" value="${v}"${val===v?' checked':''}>${t}</label>`).join('')}</div></div>`;
 let lastPanelKey=null,showNodesFor=null;
@@ -643,6 +666,8 @@ function renderPanel(){
         if(e){const kp=`st.edges.${e.key}`;h+=`<div class="edgebox"><h2>辺 ${e.i+1}${it.st.edges.some(x=>x.c>0)?`（輪郭 ${e.c+1}）`:''}<button class="x" id="bEdgeX" aria-label="辺の選択を解除" title="辺の選択を解除">×</button></h2>
           <div class="small">長さ ${fmt(e.L)} mm${e.loop?'。角がないので一周を1辺として扱います':''}。矢印の向きが始点→終点です。</div>
           <label class="check"><input type="checkbox" data-path="edge.on"${e.on?' checked':''}> この辺を縫う</label>`;
+          const rr=(k,lab,v)=>`<div class="row"><label for="f_e${k}">${lab}</label><input type="text" id="f_e${k}" data-path="${kp}.${k}" value="${esc(e.ov[k]||'')}" placeholder="0" spellcheck="false" autocomplete="off"><span class="val">= ${fmt(v)}</span></div>`;
+          if(e.on)h+=rr('from','始点から',e.ra)+rr('to','終点から',e.rb)+`<div class="small" id="edMsg">${edMsg(e)}</div>`;
           if(e.on)h+=`<div class="row"><label for="f_ep">ピッチ</label><input type="text" id="f_ep" data-path="${kp}.pitch" value="${esc(e.ov.pitch||'')}" placeholder="既定" spellcheck="false" autocomplete="off"><span class="val">= ${fmt(e.p)}</span></div>`+
             segRow(`${kp}.method`,[['','既定'],...METHODS],e.ov.method||'','余りの処理','edm')+segRow(`${kp}.pos`,[['','既定'],...POSES],e.ov.pos||'','余りの位置','edp')+`<div class="result" id="edRes">${edResult(e)}</div>`;
           h+=`</div>`}
@@ -665,9 +690,9 @@ function renderPanel(){
 function refreshVals(sec){const env=C.env;sec.querySelectorAll('input[data-path]').forEach(inp=>{const p=inp.dataset.path;
   if(/^nodes\./.test(p)){try{inp.title='= '+fmt(evalExpr(inp.value,env),2);inp.classList.remove('err')}catch(e){inp.title=e.message;inp.classList.add('err')}return}
   if(!/^(p|st)\./.test(p)||inp.type!=='text')return;
-  const span=inp.nextElementSibling;if(/^st\.edges\./.test(p)&&!inp.value.trim()){const it=C.byId[sel];span.textContent='= '+fmt(it&&it.st?it.st.pitch:0);span.className='val';inp.classList.remove('err');return}
+  const span=inp.nextElementSibling;if(/^st\.edges\./.test(p)&&!inp.value.trim()){const it=C.byId[sel];span.textContent='= '+fmt(p.endsWith('.pitch')?(it&&it.st?it.st.pitch:0):0);span.className='val';inp.classList.remove('err');return}
   try{const v=evalExpr(inp.value,env);span.textContent='= '+fmt(v);span.className='val';inp.classList.remove('err')}catch(e){span.textContent='エラー';span.className='val err';span.title=e.message;inp.classList.add('err')}});
-  const it=C.byId[sel];if(it&&it.st){if($('stRes'))$('stRes').innerHTML=stResult(it.st);const e=selEdge&&it.st.edges.find(x=>x.key===selEdge.key);if(e&&$('edRes'))$('edRes').innerHTML=edResult(e)}}
+  const it=C.byId[sel];if(it&&it.st){if($('stRes'))$('stRes').innerHTML=stResult(it.st);const e=selEdge&&it.st.edges.find(x=>x.key===selEdge.key);if(e&&$('edRes'))$('edRes').innerHTML=edResult(e);if(e&&$('edMsg'))$('edMsg').innerHTML=edMsg(e)}}
 function renderVars(soft){const box=$('vars');const env=C.env;
   const mark=(inp,v)=>{const e=C.verr[v.n];inp.classList.toggle('err',!!e);inp.title=e?e:'= '+fmt(env[v.n],3).replace(/\.?0+$/,'')};
   if(soft&&box.contains(document.activeElement)){box.querySelectorAll('.vrow').forEach((r,i)=>{const v=doc.vars[i];if(v)mark(r.querySelector('[data-vk="e"]'),v)});return}
@@ -883,6 +908,10 @@ svg.addEventListener('pointermove',e=>{const m=toMM(e);$('sPos').textContent=`x 
     drag.ls.forEach((c,i)=>{const o=drag.orig[i];if(c.type==='poly')c.nodes=structuredClone(o.nodes);else c.p=structuredClone(o.p);shiftLeaf(c,dx,dy)});
     render();return}
   if(drag.kind==='handle'){const s=drag.s,it=C.byId[s.id];if(!it||!it.g)return;
+    if(drag.h==='ra'||drag.h==='rb'){const e=it.st&&selEdge&&it.st.edges.find(x=>x.key===selEdge.key);if(!e)return;const k=drag.h==='ra'?'from':'to',cur=e.ov[k];
+      if(cur!==undefined&&String(cur).trim()!==''&&!isNum(cur)){if(!drag.warned){toast('縫う範囲が式で決まっているので、パネルで編集してください');drag.warned=true}return}
+      const sp=arcPos(e.pts,m),other=k==='from'?e.rb:e.ra;let v=Math.max(0,snap(k==='from'?sp:e.L-sp));v=Math.min(v,Math.max(0,e.L-other-1));
+      setDeep(s,`st.edges.${e.key}.${k}`,v>0?num(v):'');lastPanelKey=null;render();return}
     if(s.type==='dim'){const g=it.g,warn=t=>{if(!drag.warned){toast(t);drag.warned=true}};
       if(drag.h==='do'){if(!isNum(s.p.off))return warn('離れが式で決まっているので、パネルで編集してください');
         const dx=g.x2-g.x1,dy=g.y2-g.y1,L=Math.hypot(dx,dy);s.p.off=num(snap(((m[0]-g.x1)*-dy+(m[1]-g.y1)*dx)/L));render();return}
