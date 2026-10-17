@@ -80,7 +80,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 input[type=text],select.inp{width:100%;box-sizing:border-box;font:13px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:5px 7px}
 input[type=text]:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 input.err{border-color:var(--danger)}
-.vrow{display:grid;grid-template-columns:62px 10px minmax(0,1fr) 46px 16px;gap:4px;align-items:center}
+.vrow{display:grid;grid-template-columns:minmax(0,1fr) 10px 76px 16px;gap:4px;align-items:center}
 .vrow .eq{color:var(--muted);text-align:center;font-family:var(--mono)}
 .vrow .val{font:12px var(--mono);text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
 .ntab{display:flex;flex-direction:column;gap:3px}
@@ -101,7 +101,7 @@ input.err{border-color:var(--danger)}
 .result span:nth-child(odd){color:var(--muted);font-family:var(--ui)}
 .pill{display:inline-block;font:11px var(--mono);padding:0 6px;border-radius:9px;background:var(--accent-soft);color:var(--accent)}
 .empty{color:var(--muted);font-size:12px;line-height:1.6}
-.toast{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:var(--panel);color:var(--fg);border:1px solid var(--line);padding:7px 14px;border-radius:6px;font-size:12px;box-shadow:0 4px 18px rgba(0,0,0,.25);pointer-events:none;opacity:0;transition:opacity .2s}
+.toast{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);max-width:min(560px,calc(100% - 32px));white-space:normal;text-align:center;line-height:1.5;box-sizing:border-box;background:var(--panel);color:var(--fg);border:1px solid var(--line);padding:7px 14px;border-radius:6px;font-size:12px;box-shadow:0 4px 18px rgba(0,0,0,.25);pointer-events:none;opacity:0;transition:opacity .2s}
 .toast.show{opacity:1}
 [hidden]{display:none!important}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center;z-index:20;padding:16px}
@@ -479,9 +479,19 @@ function refreshVals(sec){const env=C.env;sec.querySelectorAll('input[data-path]
   const it=C.byId[sel];const r=sec.querySelector('.result:not([style])');
   if(r&&it&&it.st)r.innerHTML=stResult(it.st)}
 function renderVars(soft){const box=$('vars');const env=C.env;
-  if(soft&&box.contains(document.activeElement)){box.querySelectorAll('.vrow').forEach((r,i)=>{const v=doc.vars[i];if(!v)return;const sp=r.querySelector('.val');const e=C.verr[v.n];sp.textContent=e?'エラー':fmt(env[v.n],2);sp.style.color=e?'var(--danger)':''});return}
+  const mark=(inp,v)=>{const e=C.verr[v.n];inp.classList.toggle('err',!!e);inp.title=e?e:'= '+fmt(env[v.n],3).replace(/\.?0+$/,'')};
+  if(soft&&box.contains(document.activeElement)){box.querySelectorAll('.vrow').forEach((r,i)=>{const v=doc.vars[i];if(v)mark(r.querySelector('[data-vk="e"]'),v)});return}
   if(box.contains(document.activeElement))return;
-  box.innerHTML=doc.vars.map((v,i)=>{const e=C.verr[v.n];return`<div class="vrow"><input type="text" aria-label="変数名" id="vn${i}" data-vi="${i}" data-vk="n" value="${esc(v.n)}"><span class="eq">=</span><input type="text" aria-label="${esc(v.n)} の値" id="ve${i}" data-vi="${i}" data-vk="e" value="${esc(v.e)}" spellcheck="false"><span class="val" style="${e?'color:var(--danger)':''}" title="${esc(e||'')}">${e?'エラー':fmt(env[v.n],2)}</span><button class="x" data-vdel="${i}" aria-label="${esc(v.n)} を削除">×</button></div>`}).join('')}
+  box.innerHTML=doc.vars.map((v,i)=>`<div class="vrow"><input type="text" aria-label="変数名" id="vn${i}" data-vi="${i}" data-vk="n" value="${esc(v.n)}"><span class="eq">=</span><input type="text" aria-label="${esc(v.n)} の値" id="ve${i}" data-vi="${i}" data-vk="e" value="${esc(v.e)}" spellcheck="false" autocomplete="off"><button class="x" data-vdel="${i}" aria-label="${esc(v.n)} を削除">×</button></div>`).join('');
+  box.querySelectorAll('.vrow').forEach((r,i)=>mark(r.querySelector('[data-vk="e"]'),doc.vars[i]))}
+// every expression string in a shape, for finding where a variable is used
+function exprsOf(s){const out=[...Object.values(s.p||{})];if(s.st&&s.st.on)out.push(s.st.inset,s.st.pitch,s.st.hole);
+  if(s.nodes)for(const n of s.nodes){out.push(n.x,n.y);if(n.hi)out.push(...n.hi);if(n.ho)out.push(...n.ho)}return out}
+function usesVar(expr,name){try{return tokenize(String(expr)).some(t=>t.k==='id'&&t.v===name)}catch(e){return String(expr).includes(name)}}
+function varUsers(name){
+  const shapes=doc.shapes.filter(s=>exprsOf(s).some(e=>usesVar(e,name))).map(s=>{const p=parentOf(s.id);return p?`${s.name}（${p.name}の材料）`:s.name});
+  const vars=doc.vars.filter(v=>v.n!==name&&usesVar(v.e,name)).map(v=>`変数 ${v.n}`);
+  return shapes.concat(vars)}
 
 // panel events
 $('secProps').addEventListener('focusin',e=>{if(e.target.dataset.path&&e.target.type==='text')pushUndo()});
@@ -492,7 +502,11 @@ $('secProps').addEventListener('input',e=>{const t=e.target,p=t.dataset.path;if(
 $('vars').addEventListener('focusin',()=>pushUndo());
 $('vars').addEventListener('input',e=>{const t=e.target;if(t.dataset.vi===undefined)return;doc.vars[+t.dataset.vi][t.dataset.vk]=t.value;render()});
 $('vars').addEventListener('focusout',()=>setTimeout(()=>{if(!$('vars').contains(document.activeElement))renderVars(false)},0));
-$('vars').addEventListener('click',e=>{const d=e.target.dataset.vdel;if(d===undefined)return;pushUndo();doc.vars.splice(+d,1);render()});
+// pointerdown + preventDefault: keeps the name/value field from blurring and rebuilding the list before the click lands
+$('vars').addEventListener('pointerdown',e=>{const d=e.target.dataset.vdel;if(d===undefined)return;e.preventDefault();const v=doc.vars[+d];
+  const users=varUsers(v.n);if(users.length){toast(`「${v.n}」は ${users.join('、')} で使われているので削除できません`,5000);return}
+  pushUndo();doc.vars.splice(+d,1);if(box_has_focus())document.activeElement.blur();renderVars(false);render()});
+const box_has_focus=()=>$('vars').contains(document.activeElement);
 function setVarsCollapsed(c){const v=$('varsBar');v.classList.toggle('collapsed',c);const t=$('varsToggle');t.setAttribute('aria-expanded',String(!c));t.title=c?'変数バーを広げる':'変数バーを折りたたむ';
   try{localStorage.setItem('kawagata-ui',JSON.stringify({varsCollapsed:c}))}catch(e){}requestAnimationFrame(applyView)}
 $('varsToggle').onclick=()=>setVarsCollapsed(!$('varsBar').classList.contains('collapsed'));
@@ -561,7 +575,7 @@ function bake(){const s=cur();const it=C.byId[sel];if(!s||s.type!=='bool'||!it.g
 // ---------- interaction ----------
 let draft=null,drag=null,spaceDown=false;
 const toastEl=$('toast');let toastT;
-function toast(m){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),2600)}
+function toast(m,ms=2600){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),ms)}
 function toMM(e){const r=svg.getBoundingClientRect();return[(e.clientX-r.left-view.tx)/view.s,(e.clientY-r.top-view.ty)/view.s]}
 const snap=v=>snapStep?Math.round(v/snapStep)*snapStep:Math.round(v*100)/100;
 const HINT={select:'クリックで選択、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで角丸矩形を描く',circle:'中心からドラッグして円を描く',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直'};
