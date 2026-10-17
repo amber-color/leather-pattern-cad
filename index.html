@@ -184,7 +184,7 @@ input.err{border-color:var(--danger)}
   .side.parts:not(.open){display:none}
   .side.parts .sec,.vfull{width:auto}
   .vfull,.side.parts .sec{height:auto;overflow:visible}
-  .side.parts{grid-row:5}.side.vars{grid-row:6}
+  .side.parts{grid-row:5;grid-column:1}.side.vars{grid-row:6;grid-column:1}
   .app{grid-template-rows:46px auto 62vh 30px auto auto}
   .side.vars.collapsed .vfull{display:none}
   .side.vars.collapsed .vmini{position:static;width:auto;flex-direction:row;padding:10px 16px}
@@ -200,7 +200,7 @@ input.err{border-color:var(--danger)}
   <header class="top">
     <div class="brand" title="式で描くレザークラフト型紙CAD"><span class="cap">P</span>arametric <span class="cap">P</span>attern <span class="cap">P</span>lotter</div>
     <div class="grp" role="group" aria-label="ファイル">
-      <div class="menuwrap"><button class="btn ibtn" id="xNew" title="新規" aria-label="新規" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 20 20"><path d="M5 2.5h6.5L15 6v11.5H5z"/><path d="M11.5 2.5V6H15"/><path d="M10 9v6M7 12h6"/></svg></button>
+      <div class="menuwrap"><button class="btn ibtn" id="xNew" title="新規" aria-label="新規" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 20 20"><path d="M5 2.5h6.5L15 6v11.5H5z"/><path d="M11.5 2.5V6H15"/></svg></button>
         <div class="menu" id="newMenu" role="menu" hidden>
           <button role="menuitem" id="mNewBlank"><b>空の型紙</b><span>変数は残して、図形をすべて消します</span></button>
           <button role="menuitem" id="mNewSample"><b>サンプル</b><span>二つ折り名刺入れ（全機能を使った例）</span></button>
