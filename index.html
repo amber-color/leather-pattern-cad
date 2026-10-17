@@ -59,9 +59,9 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .side.parts{grid-column:3;width:0;border-left-width:0;overflow:hidden auto;visibility:hidden;transition:width .24s cubic-bezier(.2,.7,.2,1),border-left-width .24s,visibility 0s .24s}
 .side.parts.open{width:300px;border-left-width:1px;visibility:visible;transition:width .24s cubic-bezier(.2,.7,.2,1),border-left-width .24s,visibility 0s}
 .side.parts .sec{width:300px;flex:none;box-sizing:border-box}
-.side.vars{grid-column:4;width:268px;position:relative;overflow:hidden auto;transition:width .24s cubic-bezier(.2,.7,.2,1)}
+.side.vars{grid-column:4;width:228px;position:relative;overflow:hidden auto;transition:width .24s cubic-bezier(.2,.7,.2,1)}
 .side.vars.collapsed{width:38px;overflow:hidden}
-.vfull{width:268px;flex:none;box-sizing:border-box;transition:opacity .16s}
+.vfull{width:228px;flex:none;box-sizing:border-box;transition:opacity .16s}
 .vmini{position:absolute;top:0;left:0;bottom:0;width:38px;display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:10px;box-sizing:border-box;opacity:0;pointer-events:none;transition:opacity .16s}
 .vmini .vlabel{writing-mode:vertical-rl;letter-spacing:.3em;font-size:11px;color:var(--muted);cursor:pointer;border:none;background:none;padding:2px 0}
 .side.vars.collapsed .vfull{opacity:0;pointer-events:none}
