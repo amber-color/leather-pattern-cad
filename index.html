@@ -1769,7 +1769,7 @@ function mdToHtml(md){const L=md.replace(/\r/g,'').split('\n'),out=[];let i=0,pa
 let helpLoaded=false;
 async function openHelp(){$('helpModal').hidden=false;$('helpClose').focus();if(helpLoaded)return;
   try{const r=await fetch('README.md',{cache:'no-cache'});if(!r.ok)throw 0;$('helpBody').innerHTML=mdToHtml(await r.text());helpLoaded=true}
-  catch(e){$('helpBody').innerHTML='<p>使い方を読み込めませんでした。<a href="https://github.com/amber-color/leather-pattern-cad#readme" target="_blank" rel="noopener">GitHub の README</a> を開いてください。</p>'}}
+  catch(e){$('helpBody').innerHTML='<p>使い方を読み込めませんでした。<a href="https://github.com/amber-color/parametric-pattern-plotter#readme" target="_blank" rel="noopener">GitHub の README</a> を開いてください。</p>'}}
 $('xHelp').onclick=openHelp;$('helpClose').onclick=()=>$('helpModal').hidden=true;
 $('helpModal').addEventListener('click',e=>{if(e.target.id==='helpModal')$('helpModal').hidden=true});
 $('helpModal').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();$('helpModal').hidden=true}});

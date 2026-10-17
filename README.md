@@ -3,7 +3,7 @@
 式で描くレザークラフト型紙CAD。寸法を変数と式で書けるパラメトリックな2D CADです。
 `index.html` を1つ開くだけで動きます（インストール不要）。
 
-**▶ ブラウザで使う：https://amber-color.github.io/leather-pattern-cad/**
+**▶ ブラウザで使う：https://amber-color.github.io/parametric-pattern-plotter/**
 
 ## できること
 
