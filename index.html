@@ -267,20 +267,22 @@ const isNum=s=>/^\s*-?\d+(\.\d+)?\s*$/.test(String(s));
 const fmt=(v,d=1)=>(Math.round(v*10**d)/10**d).toFixed(d);
 
 // ---------- state ----------
-const SAMPLE={vars:[{n:'W',e:'95'},{n:'H',e:'66'},{n:'R',e:'5'},{n:'縫い代',e:'3'},{n:'ピッチ',e:'4'},{n:'穴',e:'1.2'},{n:'間',e:'15'},{n:'指',e:'24'},{n:'ベロ幅',e:'30'},{n:'ベロ長',e:'45'}],
+// Sample: a bifold business-card case that can actually be built.
+// One exterior folded at the spine (背), plus two inner pockets that open toward the spine with a thumb notch.
+// The pockets are glued onto the exterior first and stitched through both layers along the exterior's holes,
+// so only the exterior carries stitch holes. Business card 91 x 55 mm; every size follows from the variables.
+const ST=(on,edges)=>({on,inset:'縫い代',pitch:'ピッチ',hole:'穴',...(edges?{edges}:{})});
+const SAMPLE={vars:[{n:'名刺W',e:'91'},{n:'名刺H',e:'55'},{n:'ゆとり',e:'3'},{n:'縫い代',e:'3'},{n:'ピッチ',e:'4'},{n:'穴',e:'1.2'},{n:'R',e:'4'},{n:'背幅',e:'8'},{n:'指',e:'22'},{n:'間',e:'12'},
+    {n:'ポケット幅',e:'名刺W+ゆとり+縫い代'},{n:'高さ',e:'名刺H+ゆとり+2*縫い代'}],
   shapes:[
-    {id:'s1',name:'外装',type:'rect',kind:'cut',p:{x:'0',y:'0',w:'W',h:'2*H',r:'R'},st:{on:true,inset:'縫い代',pitch:'ピッチ',hole:'穴'}},
-    {id:'s2',name:'ポケット板',type:'rect',kind:'cut',p:{x:'W+間',y:'0',w:'W',h:'H',r:'R'},st:{on:false,inset:'縫い代',pitch:'ピッチ',hole:'穴'}},
-    {id:'s6',name:'親指カット',type:'circle',kind:'cut',p:{cx:'W+間+W/2',cy:'0',d:'指'},st:{on:false,inset:'縫い代',pitch:'ピッチ',hole:'穴'}},
-    {id:'s7',name:'内ポケット',type:'bool',op:'diff',ops:['s2','s6'],kind:'cut',p:{},st:{on:true,inset:'縫い代',pitch:'ピッチ',hole:'穴'}},
-    {id:'s3',name:'マチ',type:'poly',kind:'cut',nodes:[{x:'110',y:'80'},{x:'150',y:'80'},{x:'140',y:'128'},{x:'120',y:'128'}],closed:true,p:{},st:{on:true,inset:'縫い代',pitch:'ピッチ',hole:'穴'}},
-    {id:'s8',name:'ベロ',type:'poly',kind:'cut',closed:true,p:{},st:{on:true,inset:'縫い代',pitch:'ピッチ',hole:'穴'},nodes:[
-      {x:'W+間+50',y:'80'},{x:'W+間+50+ベロ幅',y:'80'},
-      {x:'W+間+50+ベロ幅',y:'80+ベロ長-ベロ幅/2',ho:['0','0.5523*ベロ幅/2']},
-      {x:'W+間+50+ベロ幅/2',y:'80+ベロ長',t:'smooth',hi:['0.5523*ベロ幅/2','0'],ho:['-0.5523*ベロ幅/2','0']},
-      {x:'W+間+50',y:'80+ベロ長-ベロ幅/2',hi:['0','0.5523*ベロ幅/2']}]},
-    {id:'s4',name:'折り位置',type:'poly',kind:'guide',nodes:[{x:'0',y:'H'},{x:'W',y:'H'}],closed:false,p:{},st:{on:false,inset:'0',pitch:'ピッチ',hole:'穴'}},
-    {id:'s5',name:'ホック',type:'circle',kind:'cut',p:{cx:'W/2',cy:'2*H-12',d:'8'},st:{on:false,inset:'2',pitch:'ピッチ',hole:'穴'}}
+    {id:'s1',name:'外装',type:'rect',kind:'cut',p:{x:'0',y:'0',w:'2*ポケット幅+背幅',h:'高さ',r:'R'},st:ST(true)},
+    {id:'g1',name:'背',type:'rect',kind:'guide',p:{x:'ポケット幅',y:'0',w:'背幅',h:'高さ',r:'0'},st:ST(false)},
+    {id:'p1',name:'ポケット板（左）',type:'rect',kind:'cut',p:{x:'0',y:'高さ+間',w:'ポケット幅',h:'高さ',r:'R'},st:ST(false)},
+    {id:'c1',name:'指かけ（左）',type:'circle',kind:'cut',p:{cx:'ポケット幅',cy:'高さ+間+高さ/2',d:'指'},st:ST(false)},
+    {id:'b1',name:'内装ポケット（左）',type:'bool',op:'diff',ops:['p1','c1'],kind:'cut',p:{},st:ST(false)},
+    {id:'p2',name:'ポケット板（右）',type:'rect',kind:'cut',p:{x:'ポケット幅+背幅',y:'高さ+間',w:'ポケット幅',h:'高さ',r:'R'},st:ST(false)},
+    {id:'c2',name:'指かけ（右）',type:'circle',kind:'cut',p:{cx:'ポケット幅+背幅',cy:'高さ+間+高さ/2',d:'指'},st:ST(false)},
+    {id:'b2',name:'内装ポケット（右）',type:'bool',op:'diff',ops:['p2','c2'],kind:'cut',p:{},st:ST(false)}
   ]};
 const KEY='ppp-v1';
 let doc;try{doc=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -932,7 +934,7 @@ $('xJson').onclick=()=>offer('pattern.json',JSON.stringify(doc,null,2));
 $('xLoad').onclick=()=>$('fileIn').click();
 $('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.shapes||!d.vars)throw 0;pushUndo();doc=migrate(d);setSel(null);fit();toast('読み込みました')}catch(x){toast('型紙ファイルとして読めませんでした')}});e.target.value=''};
 $('xNew').onclick=()=>{pushUndo();doc={vars:structuredClone(SAMPLE.vars),shapes:[]};setSel(null);render();toast('新規にしました（⌘Zで戻せます）')};
-$('xSample').onclick=()=>{pushUndo();doc=structuredClone(SAMPLE);setSel(null);fit();toast('サンプル（名刺入れ）を開きました')};
+$('xSample').onclick=()=>{pushUndo();doc=structuredClone(SAMPLE);setSel(null);fit();toast('サンプル（二つ折り名刺入れ）を開きました')};
 
 // ---------- boot ----------
 function boot(){if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}setTool('select');requestAnimationFrame(fit)}
