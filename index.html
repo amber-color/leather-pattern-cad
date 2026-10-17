@@ -279,15 +279,17 @@ const fmt=(v,d=1)=>(Math.round(v*10**d)/10**d).toFixed(d);
 // ---------- state ----------
 // Sample: a bifold business-card case with a snap flap that can actually be built.
 // Exterior folded at the spine (背), two inner pockets opening toward the spine with a thumb notch (boolean difference),
-// a flap with a Bézier-rounded tip and snap holes, and a hexagonal logo tag. Pockets are glued on first and stitched
-// through the exterior's holes; the exterior's long edges put their irregular stitch gap at the centre, under the fold.
+// a flap with a Bézier-rounded tip and snap holes, and a hexagonal logo tag. The exterior's long edges put their irregular
+// stitch gap at the centre, under the fold; the pockets anchor their holes at the outer corners (remainder at the opening),
+// so they line up with the exterior's holes. ポケット幅 is rounded up so the pocket's stitched edge (corner to corner,
+// 角補正 being where a rounded corner's midpoint sits on the stitch line) is a whole number of pitches. Flap and tag sit in a column on the right so it all fits one A4 landscape page.
 const ST=(on,edges)=>({on,inset:'縫い代',pitch:'ピッチ',hole:'穴',...(edges?{edges}:{})});
 const K_=c=>`0.5523*${c}`;
 const TX=(id,name,text,x,y,size,kind='guide')=>({id,name,type:'text',kind,text,p:{x,y,size,rot:'0'},st:ST(false)});
 const DM=(id,name,x1,y1,x2,y2,off)=>({id,name,type:'dim',kind:'guide',p:{x1,y1,x2,y2,off,size:'3.5'},st:ST(false)});
 const SAMPLE={vars:[{n:'名刺W',e:'91'},{n:'名刺H',e:'55'},{n:'ゆとり',e:'3'},{n:'縫い代',e:'3'},{n:'ピッチ',e:'4'},{n:'穴',e:'1.2'},{n:'R',e:'4'},{n:'背幅',e:'8'},{n:'指',e:'22'},{n:'間',e:'12'},
-    {n:'ポケット幅',e:'名刺W+ゆとり+縫い代'},{n:'高さ',e:'名刺H+ゆとり+2*縫い代'},{n:'外装幅',e:'2*ポケット幅+背幅'},
-    {n:'ベロ幅',e:'26'},{n:'重ね',e:'20'},{n:'ベロ長',e:'重ね+背幅+30'},{n:'ホック穴',e:'3'},{n:'下段',e:'2*(高さ+間)'}],
+    {n:'角補正',e:'縫い代+(R-縫い代)*(1-sqrt(0.5))'},{n:'ポケット幅',e:'ceil((名刺W+ゆとり+縫い代-2*角補正)/ピッチ)*ピッチ+2*角補正'},{n:'高さ',e:'名刺H+ゆとり+2*縫い代'},{n:'外装幅',e:'2*ポケット幅+背幅'},
+    {n:'ベロ幅',e:'26'},{n:'重ね',e:'20'},{n:'ベロ長',e:'重ね+背幅+30'},{n:'ホック穴',e:'3'},{n:'右列',e:'外装幅+間'},{n:'タグ上',e:'ベロ幅+間+9'}],
   shapes:[
     {id:'s1',name:'外装',type:'rect',kind:'cut',p:{x:'0',y:'0',w:'外装幅',h:'高さ',r:'R'},st:ST(true,{'0:0':{pos:'center'},'0:2':{pos:'center'}})},
     {id:'g1',name:'背',type:'rect',kind:'guide',p:{x:'ポケット幅',y:'0',w:'背幅',h:'高さ',r:'0'},st:ST(false)},
@@ -295,29 +297,29 @@ const SAMPLE={vars:[{n:'名刺W',e:'91'},{n:'名刺H',e:'55'},{n:'ゆとり',e:'
     {id:'h1',name:'ホック（外装）',type:'circle',kind:'cut',p:{cx:'ベロ長-重ね-背幅-ベロ幅/2',cy:'高さ/2',d:'ホック穴'},st:ST(false)},
     {id:'p1',name:'ポケット板（左）',type:'rect',kind:'cut',p:{x:'0',y:'高さ+間',w:'ポケット幅',h:'高さ',r:'R'},st:ST(false)},
     {id:'c1',name:'指かけ（左）',type:'circle',kind:'cut',p:{cx:'ポケット幅',cy:'高さ+間+高さ/2',d:'指'},st:ST(false)},
-    {id:'b1',name:'内装ポケット（左）',type:'bool',op:'diff',ops:['p1','c1'],kind:'cut',p:{},st:ST(false)},
+    {id:'b1',name:'内装ポケット（左）',type:'bool',op:'diff',ops:['p1','c1'],kind:'cut',p:{},st:ST(true,{'0:0':{pos:'end'},'0:1':{off:true},'0:2':{off:true},'0:3':{off:true},'0:4':{pos:'start'}})},
     {id:'p2',name:'ポケット板（右）',type:'rect',kind:'cut',p:{x:'ポケット幅+背幅',y:'高さ+間',w:'ポケット幅',h:'高さ',r:'R'},st:ST(false)},
     {id:'c2',name:'指かけ（右）',type:'circle',kind:'cut',p:{cx:'ポケット幅+背幅',cy:'高さ+間+高さ/2',d:'指'},st:ST(false)},
-    {id:'b2',name:'内装ポケット（右）',type:'bool',op:'diff',ops:['p2','c2'],kind:'cut',p:{},st:ST(false)},
+    {id:'b2',name:'内装ポケット（右）',type:'bool',op:'diff',ops:['p2','c2'],kind:'cut',p:{},st:ST(true,{'0:0':{pos:'start'},'0:2':{pos:'end'},'0:3':{off:true},'0:4':{off:true},'0:5':{off:true}})},
     {id:'f1',name:'ベロ',type:'poly',kind:'cut',closed:true,p:{},st:ST(true),nodes:[
-      {x:'0',y:'下段'},
-      {x:'ベロ長-ベロ幅/2',y:'下段',ho:[K_('ベロ幅/2'),'0']},
-      {x:'ベロ長',y:'下段+ベロ幅/2',t:'smooth',hi:['0',`-${K_('ベロ幅/2')}`],ho:['0',K_('ベロ幅/2')]},
-      {x:'ベロ長-ベロ幅/2',y:'下段+ベロ幅',hi:[K_('ベロ幅/2'),'0']},
-      {x:'0',y:'下段+ベロ幅'}]},
-    {id:'h2',name:'ホック（ベロ）',type:'circle',kind:'cut',p:{cx:'ベロ長-ベロ幅/2',cy:'下段+ベロ幅/2',d:'ホック穴'},st:ST(false)},
+      {x:'右列',y:'0'},
+      {x:'右列+ベロ長-ベロ幅/2',y:'0',ho:[K_('ベロ幅/2'),'0']},
+      {x:'右列+ベロ長',y:'ベロ幅/2',t:'smooth',hi:['0',`-${K_('ベロ幅/2')}`],ho:['0',K_('ベロ幅/2')]},
+      {x:'右列+ベロ長-ベロ幅/2',y:'ベロ幅',hi:[K_('ベロ幅/2'),'0']},
+      {x:'右列',y:'ベロ幅'}]},
+    {id:'h2',name:'ホック（ベロ）',type:'circle',kind:'cut',p:{cx:'右列+ベロ長-ベロ幅/2',cy:'ベロ幅/2',d:'ホック穴'},st:ST(false)},
     {id:'t1',name:'ロゴタグ',type:'poly',kind:'cut',closed:true,p:{},st:{...ST(true),inset:'2.5'},nodes:[
-      {x:'ベロ長+間+5',y:'下段'},{x:'ベロ長+間+31',y:'下段'},{x:'ベロ長+間+36',y:'下段+11'},
-      {x:'ベロ長+間+31',y:'下段+22'},{x:'ベロ長+間+5',y:'下段+22'},{x:'ベロ長+間',y:'下段+11'}]},
+      {x:'右列+5',y:'タグ上'},{x:'右列+31',y:'タグ上'},{x:'右列+36',y:'タグ上+11'},
+      {x:'右列+31',y:'タグ上+22'},{x:'右列+5',y:'タグ上+22'},{x:'右列',y:'タグ上+11'}]},
     TX('x0','タイトル','二つ折り名刺入れ（名刺 91 × 55 mm）','0','-17','5','cut'),
     TX('x1','注記：外装','外装 ×1（銀面）','8','高さ-8','3.5'),
     TX('x2','注記：内装','内装ポケット ×2（左右）','8','2*高さ+間-8','3.5'),
-    TX('x3','注記：ベロ','ベロ ×1','5','下段+ベロ幅/2+1.3','3.5'),
-    TX('x4','注記：刻印','刻印','ベロ長+間+13','下段+12.5','4'),
+    TX('x3','注記：ベロ','ベロ ×1','右列+5','ベロ幅/2+1.3','3.5'),
+    TX('x4','注記：刻印','刻印','右列+13','タグ上+12.5','4'),
     DM('d1','寸法：外装幅','0','0','外装幅','0','-8'),
-    DM('d2','寸法：高さ','外装幅','0','外装幅','高さ','-8'),
+    DM('d2','寸法：高さ','ポケット幅+背幅/2','0','ポケット幅+背幅/2','高さ','0'),
     DM('d3','寸法：ポケット幅','0','2*高さ+間','ポケット幅','2*高さ+間','6'),
-    DM('d4','寸法：ベロ長','0','下段+ベロ幅','ベロ長','下段+ベロ幅','7')
+    DM('d4','寸法：ベロ長','右列','ベロ幅','右列+ベロ長','ベロ幅','7')
   ]};
 const KEY='ppp-v1';
 let doc;try{doc=JSON.parse(localStorage.getItem(KEY))}catch(e){}
