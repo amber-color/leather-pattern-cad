@@ -135,7 +135,8 @@ table.seam tr{cursor:pointer} table.seam tr.on td{color:var(--accent)}
     <button class="tool" data-tool="select" title="選択・移動 (V)"><svg viewBox="0 0 20 20"><path d="M4 3l11 6-5 1.5L8 16z"/></svg><kbd>V</kbd></button>
     <button class="tool" data-tool="rect" title="角丸矩形 (R)"><svg viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="10" rx="3"/></svg><kbd>R</kbd></button>
     <button class="tool" data-tool="circle" title="円 (C)"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.5"/></svg><kbd>C</kbd></button>
-    <button class="tool" data-tool="poly" title="パス：折れ線・ベジェ曲線 (P)"><svg viewBox="0 0 20 20"><path d="M3 16C5 6 11 4 17 4"/><path d="M8 7.5l6-3" stroke-width="1"/><circle cx="8" cy="7.5" r="1.3"/><circle cx="14" cy="4.5" r="1.3"/></svg><kbd>P</kbd></button>
+    <button class="tool" data-tool="line" title="直線・折れ線 (L)"><svg viewBox="0 0 20 20"><path d="M3 15l4-9 6 6 4-8"/></svg><kbd>L</kbd></button>
+    <button class="tool" data-tool="poly" title="ベジェ曲線 (P)"><svg viewBox="0 0 20 20"><path d="M3 16C5 6 11 4 17 4"/><path d="M8 7.5l6-3" stroke-width="1"/><circle cx="8" cy="7.5" r="1.3"/><circle cx="14" cy="4.5" r="1.3"/></svg><kbd>P</kbd></button>
     <div class="sep"></div>
     <button class="tool" id="bUndo" title="元に戻す (⌘Z)"><svg viewBox="0 0 20 20"><path d="M7 5L3 9l4 4M3 9h9a5 5 0 010 10h-2"/></svg></button>
     <button class="tool" id="bRedo" title="やり直し (⇧⌘Z)"><svg viewBox="0 0 20 20"><path d="M13 5l4 4-4 4M17 9H8a5 5 0 000 10h2"/></svg></button>
@@ -542,7 +543,7 @@ const toastEl=$('toast');let toastT;
 function toast(m){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),2600)}
 function toMM(e){const r=svg.getBoundingClientRect();return[(e.clientX-r.left-view.tx)/view.s,(e.clientY-r.top-view.ty)/view.s]}
 const snap=v=>snapStep?Math.round(v/snapStep)*snapStep:Math.round(v*100)/100;
-const HINT={select:'クリックで選択、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで角丸矩形を描く',circle:'中心からドラッグして円を描く',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直'};
+const HINT={select:'クリックで選択、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで角丸矩形を描く',circle:'中心からドラッグして円を描く',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直'};
 function setTool(t){tool=t;draft=null;document.querySelectorAll('.tool[data-tool]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));svg.className.baseVal=t==='select'?'':'draw';$('sHint').textContent=HINT[t];render()}
 document.querySelectorAll('.tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
 function drawDraft(k){
@@ -569,7 +570,7 @@ svg.addEventListener('pointerdown',e=>{
   const now=performance.now(),dbl=lastDown&&now-lastDown.t<380&&Math.hypot(e.clientX-lastDown.x,e.clientY-lastDown.y)<6;lastDown={t:now,x:e.clientX,y:e.clientY};
   if(dbl){lastDown=null;if(onDouble(e))return}
   if(tool==='rect'||tool==='circle'){draft={type:tool,a:sm,b:sm};return}
-  if(tool==='poly'){if(!draft)draft={type:'poly',nodes:[]};const D=draft.nodes;
+  if(tool==='poly'||tool==='line'){if(!draft)draft={type:'poly',nodes:[],straight:tool==='line'};const D=draft.nodes;
     if(D.length>=3||(D.length>=2&&D.some(n=>n.ho))){const f=D[0];if(Math.hypot(f.x-m[0],f.y-m[1])*view.s<9){finishPoly(true);return}}
     const p=draft.hover||sm;const last=D.at(-1);
     if(!last||last.x!==p[0]||last.y!==p[1])D.push({x:p[0],y:p[1]});
@@ -589,7 +590,7 @@ svg.addEventListener('pointerdown',e=>{
   drag={kind:'box',a:m,b:m,sx:e.clientX,sy:e.clientY,add:e.shiftKey,base:picks.slice()}});
 svg.addEventListener('pointermove',e=>{const m=toMM(e);$('sPos').textContent=`x ${fmt(m[0])}  y ${fmt(m[1])}`;
   if(draft&&draft.type==='poly'){
-    if(draft.dragging!=null){if(Math.hypot(e.clientX-draft.sx,e.clientY-draft.sy)>4){const n=draft.nodes[draft.dragging];
+    if(draft.dragging!=null&&!draft.straight){if(Math.hypot(e.clientX-draft.sx,e.clientY-draft.sy)>4){const n=draft.nodes[draft.dragging];
       const hx=Math.round((m[0]-n.x)*100)/100,hy=Math.round((m[1]-n.y)*100)/100;n.ho=[hx,hy];n.hi=[-hx,-hy];render()}return}
     let p=[snap(m[0]),snap(m[1])];const last=draft.nodes.at(-1);
     if(last&&e.shiftKey){if(Math.abs(p[0]-last.x)>Math.abs(p[1]-last.y))p[1]=last.y;else p[0]=last.x}draft.hover=p;render();return}
@@ -658,7 +659,7 @@ document.addEventListener('keydown',e=>{const inField=/INPUT|TEXTAREA|SELECT/.te
   if(e.key==='Escape'){if(draft){draft=null;render()}else{setSel(null);render()}return}
   if(e.key==='Enter'&&draft&&draft.type==='poly'){finishPoly(false);return}
   if((e.key==='Delete'||e.key==='Backspace')&&picks.length){e.preventDefault();delSel();return}
-  const map={v:'select',r:'rect',c:'circle',p:'poly'};if(map[e.key.toLowerCase()]&&!e.metaKey&&!e.ctrlKey){setTool(map[e.key.toLowerCase()]);return}
+  const map={v:'select',r:'rect',c:'circle',l:'line',p:'poly'};if(map[e.key.toLowerCase()]&&!e.metaKey&&!e.ctrlKey){setTool(map[e.key.toLowerCase()]);return}
   if(e.key.toLowerCase()==='f')fit()});
 document.addEventListener('keyup',e=>{if(e.key===' '){spaceDown=false;svg.classList.remove('pan')}});
 $('snap').onchange=e=>{snapStep=+e.target.value};
