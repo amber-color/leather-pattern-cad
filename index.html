@@ -806,7 +806,7 @@ function renderPanel(){
     sec.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>makeBool(b.dataset.op))}
   else if(!it){sec.innerHTML=`<h2>パーツ</h2><p class="empty">パーツを選ぶと寸法を式で編集できます。背景を左ドラッグで範囲選択、Shift＋クリックで追加選択。複数選ぶと合体・差などの演算ができます。</p>`}
   else{const s=it.s,env=C.env;let h='';
-    if(it.parent){const p=byId(it.parent);h+=`<div class="result" style="grid-template-columns:1fr auto;align-items:center"><span style="color:var(--fg)">「${esc(p.name)}」の材料です</span><button class="btn" id="bParent" style="padding:3px 8px">結果を選ぶ</button></div>`}
+    if(it.parent){const p=byId(it.parent);h+=`<div class="result" style="grid-template-columns:1fr auto;align-items:center"><span style="color:var(--fg)">「${esc(p.name)}」の材料です</span><button class="btn" id="bParent" style="padding:3px 8px">← 演算に戻る</button></div>`}
     h+=`<h2>パーツ <span class="pill">${TYPE_LABEL(s)}</span></h2>
     <div class="row"><label for="f_name">名前</label><input type="text" id="f_name" data-path="name" value="${esc(s.name)}"><span></span></div>`;
     if(!it.parent&&s.type!=='dim')h+=`<div class="row"><label for="f_kind">線種</label><select class="inp" id="f_kind" data-path="kind"><option value="cut"${s.kind==='cut'?' selected':''}>裁断線</option><option value="guide"${s.kind==='guide'?' selected':''}>ガイド</option></select><span></span></div>`;
