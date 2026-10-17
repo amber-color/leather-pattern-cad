@@ -68,6 +68,12 @@ input.err{border-color:var(--danger)}
 .vrow{display:grid;grid-template-columns:70px 14px minmax(0,1fr) 54px 22px;gap:4px;align-items:center}
 .vrow .eq{color:var(--muted);text-align:center;font-family:var(--mono)}
 .vrow .val{font:12px var(--mono);text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.ntab{display:flex;flex-direction:column;gap:3px}
+.nrow{display:grid;grid-template-columns:22px minmax(0,1fr) minmax(0,1fr) 30px 18px;gap:4px;align-items:center}
+.nrow input[type=text]{font-size:12px;padding:4px 6px}
+.nrow .ni{font:11px var(--mono);color:var(--muted);text-align:right}
+.nrow.sub .ni{color:var(--accent)}
+.nrow .nt{padding:3px 0;font-size:11px}
 .x{border:none;background:none;color:var(--muted);cursor:pointer;font-size:15px;padding:0}
 .x:hover{color:var(--danger)}
 .btn{font:500 12px var(--ui);padding:7px 10px;border-radius:5px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
@@ -129,7 +135,7 @@ table.seam tr{cursor:pointer} table.seam tr.on td{color:var(--accent)}
     <button class="tool" data-tool="select" title="選択・移動 (V)"><svg viewBox="0 0 20 20"><path d="M4 3l11 6-5 1.5L8 16z"/></svg><kbd>V</kbd></button>
     <button class="tool" data-tool="rect" title="角丸矩形 (R)"><svg viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="10" rx="3"/></svg><kbd>R</kbd></button>
     <button class="tool" data-tool="circle" title="円 (C)"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.5"/></svg><kbd>C</kbd></button>
-    <button class="tool" data-tool="poly" title="折れ線 (P)"><svg viewBox="0 0 20 20"><path d="M3 15l4-9 6 6 4-8"/></svg><kbd>P</kbd></button>
+    <button class="tool" data-tool="poly" title="パス：折れ線・ベジェ曲線 (P)"><svg viewBox="0 0 20 20"><path d="M3 16C5 6 11 4 17 4"/><path d="M8 7.5l6-3" stroke-width="1"/><circle cx="8" cy="7.5" r="1.3"/><circle cx="14" cy="4.5" r="1.3"/></svg><kbd>P</kbd></button>
     <div class="sep"></div>
     <button class="tool" id="bUndo" title="元に戻す (⌘Z)"><svg viewBox="0 0 20 20"><path d="M7 5L3 9l4 4M3 9h9a5 5 0 010 10h-2"/></svg></button>
     <button class="tool" id="bRedo" title="やり直し (⇧⌘Z)"><svg viewBox="0 0 20 20"><path d="M13 5l4 4-4 4M17 9H8a5 5 0 000 10h2"/></svg></button>
@@ -206,19 +212,27 @@ const isNum=s=>/^\s*-?\d+(\.\d+)?\s*$/.test(String(s));
 const fmt=(v,d=1)=>(Math.round(v*10**d)/10**d).toFixed(d);
 
 // ---------- state ----------
-const SAMPLE={vars:[{n:'W',e:'95'},{n:'H',e:'66'},{n:'R',e:'5'},{n:'コバ',e:'3'},{n:'ピッチ',e:'4'},{n:'穴',e:'1.2'},{n:'間',e:'15'},{n:'指',e:'24'}],
+const SAMPLE={vars:[{n:'W',e:'95'},{n:'H',e:'66'},{n:'R',e:'5'},{n:'コバ',e:'3'},{n:'ピッチ',e:'4'},{n:'穴',e:'1.2'},{n:'間',e:'15'},{n:'指',e:'24'},{n:'ベロ幅',e:'30'},{n:'ベロ長',e:'45'}],
   shapes:[
     {id:'s1',name:'外装',type:'rect',kind:'cut',p:{x:'0',y:'0',w:'W',h:'2*H',r:'R'},st:{on:true,inset:'コバ',pitch:'ピッチ',hole:'穴'}},
     {id:'s2',name:'ポケット板',type:'rect',kind:'cut',p:{x:'W+間',y:'0',w:'W',h:'H',r:'R'},st:{on:false,inset:'コバ',pitch:'ピッチ',hole:'穴'}},
     {id:'s6',name:'親指カット',type:'circle',kind:'cut',p:{cx:'W+間+W/2',cy:'0',d:'指'},st:{on:false,inset:'コバ',pitch:'ピッチ',hole:'穴'}},
     {id:'s7',name:'内ポケット',type:'bool',op:'diff',ops:['s2','s6'],kind:'cut',p:{},st:{on:true,inset:'コバ',pitch:'ピッチ',hole:'穴'}},
-    {id:'s3',name:'マチ',type:'poly',kind:'cut',pts:[[110,80],[150,80],[140,128],[120,128]],closed:true,p:{},st:{on:true,inset:'コバ',pitch:'ピッチ',hole:'穴'}},
-    {id:'s4',name:'折り位置',type:'poly',kind:'guide',pts:[[0,66],[95,66]],closed:false,p:{},st:{on:false,inset:'0',pitch:'ピッチ',hole:'穴'}},
+    {id:'s3',name:'マチ',type:'poly',kind:'cut',nodes:[{x:'110',y:'80'},{x:'150',y:'80'},{x:'140',y:'128'},{x:'120',y:'128'}],closed:true,p:{},st:{on:true,inset:'コバ',pitch:'ピッチ',hole:'穴'}},
+    {id:'s8',name:'ベロ',type:'poly',kind:'cut',closed:true,p:{},st:{on:true,inset:'コバ',pitch:'ピッチ',hole:'穴'},nodes:[
+      {x:'W+間+50',y:'80'},{x:'W+間+50+ベロ幅',y:'80'},
+      {x:'W+間+50+ベロ幅',y:'80+ベロ長-ベロ幅/2',ho:['0','0.5523*ベロ幅/2']},
+      {x:'W+間+50+ベロ幅/2',y:'80+ベロ長',t:'smooth',hi:['0.5523*ベロ幅/2','0'],ho:['-0.5523*ベロ幅/2','0']},
+      {x:'W+間+50',y:'80+ベロ長-ベロ幅/2',hi:['0','0.5523*ベロ幅/2']}]},
+    {id:'s4',name:'折り位置',type:'poly',kind:'guide',nodes:[{x:'0',y:'H'},{x:'W',y:'H'}],closed:false,p:{},st:{on:false,inset:'0',pitch:'ピッチ',hole:'穴'}},
     {id:'s5',name:'ホック',type:'circle',kind:'cut',p:{cx:'W/2',cy:'2*H-12',d:'8'},st:{on:false,inset:'2',pitch:'ピッチ',hole:'穴'}}
   ]};
 const KEY='kawagata-v1';
 let doc;try{doc=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!doc||!doc.shapes)doc=structuredClone(SAMPLE);
+function migrate(d){for(const s of d.shapes||[])if(s.type==='poly'&&!s.nodes){s.nodes=(s.pts||[]).map(([x,y])=>({x:String(x),y:String(y)}));delete s.pts}return d}
+migrate(doc);
+const num=v=>String(+(+v).toFixed(3));
 let picks=[],tool='select',snapStep=1;
 let sel=null;const setSel=id=>{sel=id;picks=id?[id]:[]};
 const view={tx:0,ty:0,s:3};
@@ -253,7 +267,21 @@ function geomLeaf(s,env){
     if(w<=0||h<=0)throw Error('幅と高さは正の値に');const pts=roundRectPts(x,y,w,h,r);return{paths:[pts],pts,closed:true,x,y,w,h,r:Math.max(0,Math.min(r,w/2,h/2))}}
   if(s.type==='circle'){const cx=P(s,'cx',env),cy=P(s,'cy',env),d=P(s,'d',env);if(d<=0)throw Error('直径は正の値に');
     const pts=[];for(let i=0;i<96;i++){const a=-Math.PI/2+i/96*2*Math.PI;pts.push([cx+d/2*Math.cos(a),cy+d/2*Math.sin(a)])}return{paths:[pts],pts,closed:true,cx,cy,d}}
-  const pts=s.pts.map(p=>[...p]);return{paths:[pts],pts,closed:s.closed}}
+  const N=evalNodes(s,env);if(N.length<2)throw Error('頂点が足りません');
+  const pts=flatten(N,s.closed);if(s.closed&&pts.length<3)throw Error('閉じた形にするには頂点が足りません');
+  return{paths:[pts],pts,closed:s.closed,nodes:N}}
+function evalNodes(s,env){return s.nodes.map((n,i)=>{const e=(k,v)=>{try{return evalExpr(v,env)}catch(x){throw Error(`頂点${i+1}の${k}：${x.message}`)}};
+  const o={x:e('X',n.x),y:e('Y',n.y),t:n.t||'corner'};if(n.hi)o.hi=[e('入X',n.hi[0]),e('入Y',n.hi[1])];if(n.ho)o.ho=[e('出X',n.ho[0]),e('出Y',n.ho[1])];return o})}
+function segCtrl(N,i){const a=N[i],b=N[(i+1)%N.length],p0=[a.x,a.y],p3=[b.x,b.y];
+  if(!a.ho&&!b.hi)return{line:true,p0,p3};return{p0,p1:a.ho?[a.x+a.ho[0],a.y+a.ho[1]]:p0,p2:b.hi?[b.x+b.hi[0],b.y+b.hi[1]]:p3,p3}}
+function bez(c,t){const u=1-t,A=u*u*u,B=3*u*u*t,Cc=3*u*t*t,D=t*t*t;return[A*c.p0[0]+B*c.p1[0]+Cc*c.p2[0]+D*c.p3[0],A*c.p0[1]+B*c.p1[1]+Cc*c.p2[1]+D*c.p3[1]]}
+const dist=(a,b)=>Math.hypot(b[0]-a[0],b[1]-a[1]);
+function flatten(N,closed){const pts=[[N[0].x,N[0].y]];const segs=closed?N.length:N.length-1;
+  for(let i=0;i<segs;i++){const c=segCtrl(N,i);if(c.line){pts.push(c.p3.slice());continue}
+    const n=Math.max(6,Math.ceil((dist(c.p0,c.p1)+dist(c.p1,c.p2)+dist(c.p2,c.p3))/0.8));for(let j=1;j<=n;j++)pts.push(bez(c,j/n))}
+  if(closed&&pts.length>1)pts.pop();return pts}
+function nodesD(N,closed,f=v=>fmt(v,3)){const P=q=>f(q[0])+' '+f(q[1]);let d='M'+P([N[0].x,N[0].y]);
+  for(let i=0;i<(closed?N.length:N.length-1);i++){const c=segCtrl(N,i);d+=c.line?'L'+P(c.p3):'C'+P(c.p1)+' '+P(c.p2)+' '+P(c.p3)}return d+(closed?'Z':'')}
 function geomBool(s,gOf){
   if(!window.ClipperLib)throw Error('演算ライブラリが読み込めていません');
   const gs=s.ops.map(id=>{const c=byId(id);if(!c)throw Error('材料が見つかりません');const g=gOf(c);if(!g.closed)throw Error(`「${c.name}」が閉じた形ではありません`);return g.paths});
@@ -352,18 +380,23 @@ function drawSel(it,k){const s=it.s,g=it.g;
   else if(s.type==='circle'){dimText(g.cx,g.cy-g.d/2-6*k,'Ø'+fmt(g.d),k);handle(g.cx+g.d/2,g.cy,k,{'data-h':'rad',style:'cursor:ew-resize'})}
   else if(s.type==='bool'){const b=bboxG(g);dimBox(b[0],b[1],b[2]-b[0],b[3]-b[1],k);
     dimText((b[0]+b[2])/2,b[3]+16*k,'周長 '+fmt(g.paths.reduce((a,p)=>a+plen(p,true),0)),k)}
-  else{g.pts.forEach((p,i)=>handle(p[0],p[1],k,{'data-h':'v'+i,style:'cursor:move'}));
+  else{const N=g.nodes;
+    N.forEach((n,i)=>{for(const hk of['hi','ho'])if(n[hk]){const hx=n.x+n[hk][0],hy=n.y+n[hk][1];
+      el('line',{x1:n.x,y1:n.y,x2:hx,y2:hy,stroke:'var(--sel)','stroke-opacity':.7,'stroke-width':1,'vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver);
+      el('circle',{cx:hx,cy:hy,r:3.5*k,fill:'var(--sel)',class:'h','data-h':hk+i,style:'cursor:move'},gOver)}});
+    N.forEach((n,i)=>{const sn=s.nodes[i];const fixed=!isNum(sn.x)||!isNum(sn.y);
+      handle(n.x,n.y,k,{'data-h':'n'+i,style:'cursor:move',fill:fixed?'var(--sel)':'var(--mat)',rx:n.t==='smooth'?4*k:0})});
     const bb=bbox(g.pts);dimText((bb[0]+bb[2])/2,bb[3]+16*k,'周長 '+fmt(plen(g.pts,g.closed)),k)}}
 
 // ---------- panel ----------
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 const LABELS={x:'X',y:'Y',w:'幅',h:'高さ',r:'角R',cx:'中心X',cy:'中心Y',d:'直径'};
-const TYPE_LABEL=s=>({rect:'角丸矩形',circle:'円',poly:s.closed?'多角形':'折れ線',bool:'演算 · '+OPS[s.op]}[s.type]);
+const TYPE_LABEL=s=>({rect:'角丸矩形',circle:'円',poly:s.closed?'閉じたパス':'開いたパス',bool:'演算 · '+OPS[s.op]}[s.type]);
 function exprRow(path,label,expr,env){let v,e;try{v=evalExpr(expr,env)}catch(x){e=x.message}
   return `<div class="row"><label for="f_${path}">${label}</label><input type="text" id="f_${path}" data-path="${path}" value="${esc(expr)}" class="${e?'err':''}" spellcheck="false" autocomplete="off"><span class="val ${e?'err':''}" title="${esc(e||'')}">${e?'エラー':'= '+fmt(v)}</span></div>`}
 const stResult=st=>{const sp=st.steps.length===1?fmt(st.steps[0],2):`${fmt(Math.min(...st.steps),2)}–${fmt(Math.max(...st.steps),2)}`;
   return`<span>穴数</span><span>${st.n}</span><span>実ピッチ</span><span>${sp} mm</span><span>縫い長さ</span><span>${fmt(st.L)} mm</span>`};
-let lastPanelKey=null;
+let lastPanelKey=null,showNodesFor=null;
 function renderPanel(){
   const sec=$('secProps');const it=C.byId[sel];const act=document.activeElement;const key=picks.join(',');
   if(act&&act.dataset&&act.dataset.path&&act.type==='text'&&sec.contains(act)&&lastPanelKey===key){refreshVals(sec);renderVars(true);renderSeam();return}
@@ -387,7 +420,14 @@ function renderPanel(){
       <div style="display:flex;flex-direction:column;gap:4px">${s.ops.map((id,i)=>{const c=byId(id);return`<div class="vrow" style="grid-template-columns:minmax(0,1fr) auto auto"><button class="btn" data-pick="${id}" style="text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i===0?'<span class="pill">本体</span> ':''}${esc(c?c.name:'?')}</button>${i>0?`<button class="btn" data-front="${id}" style="padding:3px 8px">本体にする</button>`:'<span></span>'}<button class="x" data-unuse="${id}" aria-label="材料から外す" title="材料から外す">×</button></div>`}).join('')}</div>`;
       if(it.g){const b=bboxG(it.g);h+=`<div class="result"><span>外形</span><span>${fmt(b[2]-b[0])} × ${fmt(b[3]-b[1])} mm</span><span>輪郭数</span><span>${it.g.paths.length}</span></div>`}}
     for(const key in s.p)h+=exprRow('p.'+key,LABELS[key]||key,s.p[key],env);
-    if(s.type==='poly'){h+=`<label class="check"><input type="checkbox" id="f_closed" data-path="closed"${s.closed?' checked':''}> 閉じた形にする</label><div class="small">頂点 ${s.pts.length} 個。選択中は頂点をドラッグで移動できます。</div>`}
+    if(s.type==='poly'){h+=`<label class="check"><input type="checkbox" id="f_closed" data-path="closed"${s.closed?' checked':''}> 閉じた形にする</label>`;
+      if(s.nodes.length>40&&showNodesFor!==s.id)h+=`<div class="small">頂点 ${s.nodes.length} 個 <button class="btn" id="bShowNodes" style="padding:2px 8px">表を表示</button></div>`;
+      else{const ni=(path,v,lab)=>`<input type="text" data-path="${path}" value="${esc(v)}" aria-label="${lab}" spellcheck="false" autocomplete="off">`;
+        h+=`<div class="ntab"><div class="nrow small"><span></span><span>X</span><span>Y</span><span></span><span></span></div>`+s.nodes.map((n,i)=>{
+          let r=`<div class="nrow"><span class="ni">${i+1}</span>${ni(`nodes.${i}.x`,n.x,`頂点${i+1} X`)}${ni(`nodes.${i}.y`,n.y,`頂点${i+1} Y`)}<button class="btn nt" data-ntog="${i}" title="角と曲線を切り替え">${n.t==='smooth'?'曲':'角'}</button><button class="x" data-ndel="${i}" aria-label="頂点${i+1}を削除">×</button></div>`;
+          for(const[hk,lab]of[['hi','入'],['ho','出']])if(n[hk])r+=`<div class="nrow sub"><span class="ni">${lab}</span>${ni(`nodes.${i}.${hk}.0`,n[hk][0],`頂点${i+1} ${lab}ハンドル X`)}${ni(`nodes.${i}.${hk}.1`,n[hk][1],`頂点${i+1} ${lab}ハンドル Y`)}<span></span><span></span></div>`;
+          return r}).join('')+`</div>`}
+      h+=`<div class="small">頂点のX・Yとハンドル（頂点からの相対位置）にも式が書けます。頂点をダブルクリックで角⇔曲線、線上をダブルクリックで頂点を追加。塗りつぶしの頂点は式で決まっているのでドラッグでは動きません。</div>`}
     if(it.err)h+=`<div class="small" style="color:var(--danger)">${esc(it.err)}</div>`;
     if(!it.parent){h+=`<h2 style="margin-top:6px">ステッチ穴</h2><label class="check"><input type="checkbox" id="f_st" data-path="st.on"${s.st.on?' checked':''}> 穴を並べる</label>`;
       if(s.st.on){if(it.g&&it.g.closed)h+=exprRow('st.inset','コバ幅',s.st.inset,env);
@@ -400,12 +440,17 @@ function renderPanel(){
     $('bDup').onclick=()=>dup(false);if($('bMir'))$('bMir').onclick=()=>dup(true);$('bDel').onclick=delSel;
     if($('bParent'))$('bParent').onclick=()=>{setSel(it.parent);render()};
     if($('bBake'))$('bBake').onclick=bake;if($('bUngroup'))$('bUngroup').onclick=ungroup;
+    if($('bShowNodes'))$('bShowNodes').onclick=()=>{showNodesFor=s.id;lastPanelKey=null;render()};
+    sec.querySelectorAll('[data-ntog]').forEach(b=>b.onclick=()=>{pushUndo();toggleNode(s,+b.dataset.ntog);lastPanelKey=null;render()});
+    sec.querySelectorAll('[data-ndel]').forEach(b=>b.onclick=()=>{if(s.nodes.length<=2){toast('頂点は2個以上必要です');return}pushUndo();s.nodes.splice(+b.dataset.ndel,1);lastPanelKey=null;render()});
     sec.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{setSel(b.dataset.pick);render()});
     sec.querySelectorAll('[data-front]').forEach(b=>b.onclick=()=>{pushUndo();const id=b.dataset.front;s.ops=[id,...s.ops.filter(x=>x!==id)];lastPanelKey=null;render()});
     sec.querySelectorAll('[data-unuse]').forEach(b=>b.onclick=()=>{pushUndo();s.ops=s.ops.filter(x=>x!==b.dataset.unuse);
       if(!s.ops.length)doc.shapes=doc.shapes.filter(x=>x!==s);lastPanelKey=null;render()})}
   renderVars(false);renderSeam()}
-function refreshVals(sec){const env=C.env;sec.querySelectorAll('input[data-path]').forEach(inp=>{const p=inp.dataset.path;if(!/^(p|st)\./.test(p))return;
+function refreshVals(sec){const env=C.env;sec.querySelectorAll('input[data-path]').forEach(inp=>{const p=inp.dataset.path;
+  if(/^nodes\./.test(p)){try{inp.title='= '+fmt(evalExpr(inp.value,env),2);inp.classList.remove('err')}catch(e){inp.title=e.message;inp.classList.add('err')}return}
+  if(!/^(p|st)\./.test(p))return;
   const span=inp.nextElementSibling;try{const v=evalExpr(inp.value,env);span.textContent='= '+fmt(v);span.className='val';inp.classList.remove('err')}catch(e){span.textContent='エラー';span.className='val err';span.title=e.message;inp.classList.add('err')}});
   const it=C.byId[sel];const r=sec.querySelector('.result:not([style])');
   if(r&&it&&it.st)r.innerHTML=stResult(it.st)}
@@ -423,7 +468,7 @@ $('secProps').addEventListener('focusin',e=>{if(e.target.dataset.path&&e.target.
 $('secProps').addEventListener('input',e=>{const t=e.target,p=t.dataset.path;if(!p)return;const s=cur();if(!s)return;
   if(t.type==='checkbox'){pushUndo();if(p==='closed')s.closed=t.checked;else if(p==='st.on')s.st.on=t.checked;lastPanelKey=null;render();return}
   if(t.tagName==='SELECT'){pushUndo();s[p]=t.value;lastPanelKey=null;render();return}
-  if(p==='name')s.name=t.value;else{const[a,b]=p.split('.');s[a][b]=t.value}render()});
+  const ks=p.split('.');let o=s;for(const k of ks.slice(0,-1))o=o[k];o[ks.at(-1)]=t.value;render()});
 $('vars').addEventListener('focusin',()=>pushUndo());
 $('vars').addEventListener('input',e=>{const t=e.target;if(t.dataset.vi===undefined)return;doc.vars[+t.dataset.vi][t.dataset.vk]=t.value;render()});
 $('vars').addEventListener('focusout',()=>setTimeout(()=>{if(!$('vars').contains(document.activeElement))renderVars(false)},0));
@@ -431,17 +476,38 @@ $('vars').addEventListener('click',e=>{const d=e.target.dataset.vdel;if(d===unde
 $('addVar').onclick=()=>{pushUndo();let n='a',i=1;while(doc.vars.some(v=>v.n===n))n='a'+(i++);doc.vars.push({n,e:'10'});renderVars(false);render();$('vn'+(doc.vars.length-1)).focus()};
 $('seam').addEventListener('click',e=>{const tr=e.target.closest('tr[data-sel]');if(tr){setSel(tr.dataset.sel);render()}});
 const cur=()=>byId(sel);
+const sh=(e,d)=>!d?e:isNum(e)?num(+e+d):`(${e})${d<0?'-':'+'}${fmt(Math.abs(d),3).replace(/\.?0+$/,'')}`;
 function shiftLeaf(c,dx,dy){
-  if(c.type==='poly'){c.pts=c.pts.map(([x,y])=>[+(x+dx).toFixed(3),+(y+dy).toFixed(3)]);return}
+  if(c.type==='poly'){for(const n of c.nodes){n.x=sh(n.x,dx);n.y=sh(n.y,dy)}return}
   const kx=c.type==='rect'?'x':'cx',ky=c.type==='rect'?'y':'cy';
-  const sh=(e,d)=>!d?e:isNum(e)?String(+(+e+d).toFixed(3)):`(${e})${d<0?'-':'+'}${fmt(Math.abs(d),3).replace(/\.?0+$/,'')}`;
   c.p[kx]=sh(c.p[kx],dx);c.p[ky]=sh(c.p[ky],dy)}
+const fixedPos=c=>c.type==='poly'?c.nodes.some(n=>!isNum(n.x)||!isNum(n.y)):!(isNum(c.p[c.type==='rect'?'x':'cx'])&&isNum(c.p[c.type==='rect'?'y':'cy']));
+function toggleNode(s,i){const N=C.byId[s.id].g.nodes;const n=s.nodes[i];
+  if(n.t==='smooth'||n.hi||n.ho){delete n.hi;delete n.ho;n.t='corner';return}
+  const len=N.length,cl=s.closed,a=N[i],pr=N[(i-1+len)%len],nx=N[(i+1)%len];
+  const hasP=cl||i>0,hasN=cl||i<len-1;const P=hasP?pr:a,Q=hasN?nx:a;
+  let dx=Q.x-P.x,dy=Q.y-P.y;const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;
+  const lp=hasP?Math.hypot(a.x-pr.x,a.y-pr.y)/3:0,ln=hasN?Math.hypot(nx.x-a.x,nx.y-a.y)/3:0;
+  if(hasP)n.hi=[num(-dx*lp),num(-dy*lp)];if(hasN)n.ho=[num(dx*ln),num(dy*ln)];n.t='smooth'}
+function insertNode(s,m){const N=C.byId[s.id].g.nodes;let best={d:1e18};
+  for(let i=0;i<(s.closed?N.length:N.length-1);i++){const c=segCtrl(N,i);
+    for(let j=0;j<=60;j++){const t=j/60,q=c.line?[c.p0[0]+(c.p3[0]-c.p0[0])*t,c.p0[1]+(c.p3[1]-c.p0[1])*t]:bez(c,t);const d=dist(q,m);if(d<best.d)best={d,i,t,c,q}}}
+  if(best.i===undefined||best.t<0.01||best.t>0.99)return false;
+  const{i,t,c}=best,j=(i+1)%N.length;
+  if(c.line){s.nodes.splice(i+1,0,{x:num(best.q[0]),y:num(best.q[1])});return true}
+  const L=(a,b)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];const p01=L(c.p0,c.p1),p12=L(c.p1,c.p2),p23=L(c.p2,c.p3),p012=L(p01,p12),p123=L(p12,p23),M=L(p012,p123);
+  const rel=(a,b)=>[num(a[0]-b[0]),num(a[1]-b[1])];
+  s.nodes[i].ho=rel(p01,c.p0);s.nodes[j].hi=rel(p23,c.p3);
+  s.nodes.splice(i+1,0,{x:num(M[0]),y:num(M[1]),t:'smooth',hi:rel(p012,M),ho:rel(p123,M)});return true}
 function cloneTree(s,dx){const c=structuredClone(s);c.id=newId();
   if(c.type==='bool')c.ops=s.ops.map(id=>cloneTree(byId(id),dx));else shiftLeaf(c,dx,0);
   doc.shapes.push(c);return c.id}
 function dup(mirror){const s=cur();if(!s)return;pushUndo();
   const it=C.byId[s.id];const bb=it&&it.g?bboxG(it.g):[0,0,0,0];const dx=bb[2]-bb[0]+10;
-  if(mirror&&s.type==='poly'){const c=structuredClone(s);c.id=newId();c.pts=c.pts.map(([x,y])=>[2*bb[2]+10-x,y]);c.name=s.name+' (反転)';doc.shapes.push(c);setSel(c.id)}
+  if(mirror&&s.type==='poly'){const c=structuredClone(s);c.id=newId();const ax=fmt(2*bb[2]+10,3).replace(/\.?0+$/,'');
+    const mx=e=>isNum(e)?num(+ax-(+e)):`${ax}-(${e})`,neg=e=>isNum(e)?num(-(+e)):`-(${e})`;
+    c.nodes=c.nodes.map(n=>{const o={...n,x:mx(n.x)};if(n.hi)o.hi=[neg(n.hi[0]),n.hi[1]];if(n.ho)o.ho=[neg(n.ho[0]),n.ho[1]];return o});
+    c.name=s.name+' (反転)';doc.shapes.push(c);setSel(c.id)}
   else{const id=cloneTree(s,dx);const c=byId(id);c.name=s.name+(mirror?' (反転)':' のコピー');
     // the copy is a new top-level shape: move it to the end so it draws on top
     const p=parentOf(s.id);if(p){/* copying a material makes a free shape */}
@@ -464,7 +530,7 @@ function makeBool(op){const ss=picks.map(byId);
 function ungroup(){const s=cur();if(!s||s.type!=='bool')return;pushUndo();const kids=s.ops.slice();
   doc.shapes=doc.shapes.filter(x=>x!==s);picks=kids.filter(id=>byId(id));sel=picks[0]||null;render()}
 function bake(){const s=cur();const it=C.byId[sel];if(!s||s.type!=='bool'||!it.g)return;pushUndo();
-  const idx=doc.shapes.indexOf(s);const news=it.g.paths.map((p,i)=>({id:i?newId():s.id,name:s.name+(i?` (${i+1})`:''),type:'poly',kind:s.kind,pts:p.map(([x,y])=>[+x.toFixed(3),+y.toFixed(3)]),closed:true,p:{},st:i?{...structuredClone(s.st),on:false}:structuredClone(s.st)}));
+  const idx=doc.shapes.indexOf(s);const news=it.g.paths.map((p,i)=>({id:i?newId():s.id,name:s.name+(i?` (${i+1})`:''),type:'poly',kind:s.kind,nodes:p.map(([x,y])=>({x:num(x),y:num(y)})),closed:true,p:{},st:i?{...structuredClone(s.st),on:false}:structuredClone(s.st)}));
   const kids=descendants(s);doc.shapes=doc.shapes.filter(x=>!kids.includes(x));
   doc.shapes.splice(doc.shapes.indexOf(s),1,...news);setSel(s.id);render();toast('確定しました。式は消え、座標が固定されています')}
 
@@ -474,30 +540,38 @@ const toastEl=$('toast');let toastT;
 function toast(m){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),2600)}
 function toMM(e){const r=svg.getBoundingClientRect();return[(e.clientX-r.left-view.tx)/view.s,(e.clientY-r.top-view.ty)/view.s]}
 const snap=v=>snapStep?Math.round(v/snapStep)*snapStep:Math.round(v*100)/100;
-const HINT={select:'クリックで選択、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで角丸矩形を描く',circle:'中心からドラッグして円を描く',poly:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直'};
+const HINT={select:'クリックで選択、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで角丸矩形を描く',circle:'中心からドラッグして円を描く',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直'};
 function setTool(t){tool=t;draft=null;document.querySelectorAll('.tool[data-tool]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));svg.className.baseVal=t==='select'?'':'draw';$('sHint').textContent=HINT[t];render()}
 document.querySelectorAll('.tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
 function drawDraft(k){
-  if(draft.type==='poly'){const pts=draft.pts.concat(draft.hover?[draft.hover]:[]);
-    el('path',{d:dOf(pts,false),fill:'none',stroke:'var(--sel)','stroke-width':1.5,'vector-effect':'non-scaling-stroke'},gOver);
-    if(draft.pts[0])el('circle',{cx:draft.pts[0][0],cy:draft.pts[0][1],r:5*k,fill:'none',stroke:'var(--sel)','vector-effect':'non-scaling-stroke'},gOver);
-    if(draft.hover&&draft.pts.length){const a=draft.pts.at(-1),b=draft.hover;dimText((a[0]+b[0])/2,(a[1]+b[1])/2-6*k,fmt(Math.hypot(b[0]-a[0],b[1]-a[1])),k)}}
+  if(draft.type==='poly'){const D=draft.nodes,N=D.concat(draft.hover&&draft.dragging==null?[{x:draft.hover[0],y:draft.hover[1]}]:[]);
+    if(N.length>1)el('path',{d:nodesD(N,false),fill:'none',stroke:'var(--sel)','stroke-width':1.5,'vector-effect':'non-scaling-stroke'},gOver);
+    if(D[0])el('circle',{cx:D[0].x,cy:D[0].y,r:5*k,fill:'none',stroke:'var(--sel)','vector-effect':'non-scaling-stroke'},gOver);
+    for(const n of D){handle(n.x,n.y,k,{'pointer-events':'none',rx:n.ho?4*k:0});for(const hk of['hi','ho'])if(n.ho&&n[hk]){const hx=n.x+n[hk][0],hy=n.y+n[hk][1];
+      el('line',{x1:n.x,y1:n.y,x2:hx,y2:hy,stroke:'var(--sel)','stroke-width':1,'vector-effect':'non-scaling-stroke'},gOver);el('circle',{cx:hx,cy:hy,r:3*k,fill:'var(--sel)'},gOver)}}
+    if(draft.hover&&D.length&&draft.dragging==null){const a=D.at(-1),b=draft.hover;dimText((a.x+b[0])/2,(a.y+b[1])/2-6*k,fmt(Math.hypot(b[0]-a.x,b[1]-a.y)),k)}}
   else if(draft.type==='rect'){const[x0,y0]=draft.a,[x1,y1]=draft.b;const x=Math.min(x0,x1),y=Math.min(y0,y1),w=Math.abs(x1-x0),h=Math.abs(y1-y0);
     el('rect',{x,y,width:w,height:h,fill:'none',stroke:'var(--sel)','stroke-width':1.5,'vector-effect':'non-scaling-stroke'},gOver);dimText(x+w/2,y-6*k,`${fmt(w)} × ${fmt(h)}`,k)}
   else if(draft.type==='circle'){const r=Math.hypot(draft.b[0]-draft.a[0],draft.b[1]-draft.a[1]);
     el('circle',{cx:draft.a[0],cy:draft.a[1],r,fill:'none',stroke:'var(--sel)','stroke-width':1.5,'vector-effect':'non-scaling-stroke'},gOver);dimText(draft.a[0],draft.a[1]-r-6*k,'Ø'+fmt(2*r),k)}}
-function finishPoly(close){if(!draft||draft.type!=='poly')return;const pts=draft.pts;draft=null;
-  if(pts.length<2||(close&&pts.length<3)){render();return}pushUndo();
-  const s={id:newId(),name:close?'多角形':'線',type:'poly',kind:'cut',pts,closed:!!close,p:{},st:{on:false,inset:'コバ',pitch:'ピッチ',hole:'穴'}};
+function finishPoly(close){if(!draft||draft.type!=='poly')return;const D=draft.nodes;draft=null;
+  const curved=D.some(n=>n.ho);
+  if(D.length<2||(close&&D.length<3&&!curved)){render();return}pushUndo();
+  const nodes=D.map(n=>{const o={x:num(n.x),y:num(n.y)};if(n.ho){o.t='smooth';o.hi=n.hi.map(num);o.ho=n.ho.map(num)}return o});
+  const s={id:newId(),name:close?(curved?'曲線パーツ':'多角形'):(curved?'曲線':'線'),type:'poly',kind:'cut',nodes,closed:!!close,p:{},st:{on:false,inset:'コバ',pitch:'ピッチ',hole:'穴'}};
   fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select')}
 function fixStitchDefaults(s){const env=C.env;for(const k of['inset','pitch','hole'])if(!(s.st[k]in env))s.st[k]={inset:'3',pitch:'4',hole:'1.2'}[k]}
 svg.addEventListener('pointerdown',e=>{
   svg.setPointerCapture(e.pointerId);const m=toMM(e),sm=[snap(m[0]),snap(m[1])];
   if(e.button===1||e.button===2||spaceDown){drag={kind:'pan',sx:e.clientX,sy:e.clientY,tx:view.tx,ty:view.ty};svg.classList.add('pan');return}
+  const now=performance.now(),dbl=lastDown&&now-lastDown.t<380&&Math.hypot(e.clientX-lastDown.x,e.clientY-lastDown.y)<6;lastDown={t:now,x:e.clientX,y:e.clientY};
+  if(dbl){lastDown=null;if(onDouble(e))return}
   if(tool==='rect'||tool==='circle'){draft={type:tool,a:sm,b:sm};return}
-  if(tool==='poly'){if(!draft)draft={type:'poly',pts:[]};
-    if(draft.pts.length>=3){const f=draft.pts[0];if(Math.hypot(f[0]-m[0],f[1]-m[1])*view.s<9){finishPoly(true);return}}
-    const p=draft.hover||sm;const last=draft.pts.at(-1);if(!last||last[0]!==p[0]||last[1]!==p[1])draft.pts.push([...p]);render();return}
+  if(tool==='poly'){if(!draft)draft={type:'poly',nodes:[]};const D=draft.nodes;
+    if(D.length>=3||(D.length>=2&&D.some(n=>n.ho))){const f=D[0];if(Math.hypot(f.x-m[0],f.y-m[1])*view.s<9){finishPoly(true);return}}
+    const p=draft.hover||sm;const last=D.at(-1);
+    if(!last||last.x!==p[0]||last.y!==p[1])D.push({x:p[0],y:p[1]});
+    draft.dragging=D.length-1;draft.sx=e.clientX;draft.sy=e.clientY;render();return}
   const h=e.target.dataset&&e.target.dataset.h;
   if(h){const s=cur();pushUndo();drag={kind:'handle',h,s,m0:m};return}
   const g=e.target.closest('g[data-id]');
@@ -507,13 +581,16 @@ svg.addEventListener('pointerdown',e=>{
     if(!picks.includes(id))setSel(id);
     const s=byId(id);const movers=picks.length>1?picks.map(byId).filter(Boolean):[s];
     const ls=[...new Set(movers.flatMap(leaves))];
-    const locked=ls.some(c=>c.type!=='poly'&&!(isNum(c.p[c.type==='rect'?'x':'cx'])&&isNum(c.p[c.type==='rect'?'y':'cy'])));
+    const locked=ls.some(fixedPos);
     drag={kind:'move',s,ls,m0:m,orig:ls.map(c=>structuredClone(c)),locked,moved:false,undo:JSON.stringify(doc)};render();return}
   if(e.pointerType==='touch'){drag={kind:'pan',sx:e.clientX,sy:e.clientY,tx:view.tx,ty:view.ty};svg.classList.add('pan');return}
   drag={kind:'box',a:m,b:m,sx:e.clientX,sy:e.clientY,add:e.shiftKey,base:picks.slice()}});
 svg.addEventListener('pointermove',e=>{const m=toMM(e);$('sPos').textContent=`x ${fmt(m[0])}  y ${fmt(m[1])}`;
-  if(draft&&draft.type==='poly'){let p=[snap(m[0]),snap(m[1])];const last=draft.pts.at(-1);
-    if(last&&e.shiftKey){if(Math.abs(p[0]-last[0])>Math.abs(p[1]-last[1]))p[1]=last[1];else p[0]=last[0]}draft.hover=p;render();return}
+  if(draft&&draft.type==='poly'){
+    if(draft.dragging!=null){if(Math.hypot(e.clientX-draft.sx,e.clientY-draft.sy)>4){const n=draft.nodes[draft.dragging];
+      const hx=Math.round((m[0]-n.x)*100)/100,hy=Math.round((m[1]-n.y)*100)/100;n.ho=[hx,hy];n.hi=[-hx,-hy];render()}return}
+    let p=[snap(m[0]),snap(m[1])];const last=draft.nodes.at(-1);
+    if(last&&e.shiftKey){if(Math.abs(p[0]-last.x)>Math.abs(p[1]-last.y))p[1]=last.y;else p[0]=last.x}draft.hover=p;render();return}
   if(draft){draft.b=[snap(m[0]),snap(m[1])];if(draft.type==='rect'&&e.shiftKey){const w=draft.b[0]-draft.a[0],h=draft.b[1]-draft.a[1],d=Math.max(Math.abs(w),Math.abs(h));draft.b=[draft.a[0]+Math.sign(w||1)*d,draft.a[1]+Math.sign(h||1)*d]}render();return}
   if(!drag)return;
   if(drag.kind==='pan'){view.tx=drag.tx+e.clientX-drag.sx;view.ty=drag.ty+e.clientY-drag.sy;applyView();return}
@@ -522,15 +599,22 @@ svg.addEventListener('pointermove',e=>{const m=toMM(e);$('sPos').textContent=`x 
   if(drag.kind==='move'){if(!dx&&!dy)return;
     if(drag.locked){if(!drag.warned){toast('位置が式で決まっている図形を含むため、パネルの数値欄で動かしてください');drag.warned=true}return}
     if(!drag.moved){undoS.push(drag.undo);redoS=[];drag.moved=true}
-    drag.ls.forEach((c,i)=>{const o=drag.orig[i];if(c.type==='poly')c.pts=o.pts.map(([x,y])=>[x+dx,y+dy]);else c.p=structuredClone(o.p);if(c.type!=='poly')shiftLeaf(c,dx,dy)});
+    drag.ls.forEach((c,i)=>{const o=drag.orig[i];if(c.type==='poly')c.nodes=structuredClone(o.nodes);else c.p=structuredClone(o.p);shiftLeaf(c,dx,dy)});
     render();return}
   if(drag.kind==='handle'){const s=drag.s,it=C.byId[s.id];if(!it||!it.g)return;
-    if(drag.h.startsWith('v')){const i=+drag.h.slice(1);s.pts[i]=[snap(m[0]),snap(m[1])];render();return}
+    if(s.type==='poly'){const nd=drag.h[0]==='n',i=+drag.h.slice(nd?1:2),sn=s.nodes[i],N=it.g.nodes[i];if(!sn||!N)return;
+      const warn=t=>{if(!drag.warned){toast(t);drag.warned=true}};
+      if(nd){if(!isNum(sn.x)||!isNum(sn.y))return warn('この頂点は式で決まっているので、パネルで編集してください');sn.x=num(snap(m[0]));sn.y=num(snap(m[1]));render();return}
+      const hk=drag.h.slice(0,2),ok=hk==='hi'?'ho':'hi';if(!sn[hk].every(isNum))return warn('このハンドルは式で決まっているので、パネルで編集してください');
+      const rx=m[0]-N.x,ry=m[1]-N.y;sn[hk]=[num(rx),num(ry)];
+      if(sn.t==='smooth'&&sn[ok]&&sn[ok].every(isNum)&&!e.altKey){const l=Math.hypot(+sn[ok][0],+sn[ok][1]),r=Math.hypot(rx,ry)||1;sn[ok]=[num(-rx/r*l),num(-ry/r*l)]}
+      render();return}
     if(drag.h==='size'){if(!isNum(s.p.w)||!isNum(s.p.h)){if(!drag.warned){toast('幅・高さが式なので、パネルで編集してください');drag.warned=true}return}
       s.p.w=String(Math.max(1,snap(m[0]-it.g.x)));s.p.h=String(Math.max(1,snap(m[1]-it.g.y)));render();return}
     if(drag.h==='rad'){if(!isNum(s.p.d)){if(!drag.warned){toast('直径が式なので、パネルで編集してください');drag.warned=true}return}
       s.p.d=String(Math.max(0.5,snap(2*Math.hypot(m[0]-it.g.cx,m[1]-it.g.cy))));render()}}});
 svg.addEventListener('pointerup',e=>{svg.classList.remove('pan');
+  if(draft&&draft.type==='poly'){draft.dragging=null;render()}
   if(drag&&drag.kind==='box'){const d=drag;drag=null;
     if(!d.big){if(!d.add)setSel(null);render();return}
     const x0=Math.min(d.a[0],d.b[0]),x1=Math.max(d.a[0],d.b[0]),y0=Math.min(d.a[1],d.b[1]),y1=Math.max(d.a[1],d.b[1]);
@@ -543,7 +627,12 @@ svg.addEventListener('pointerup',e=>{svg.classList.remove('pan');
     else{const r=Math.hypot(d.b[0]-d.a[0],d.b[1]-d.a[1]);if(r>=0.5){pushUndo();const s={id:newId(),name:'穴・円',type:'circle',kind:'cut',p:{cx:String(d.a[0]),cy:String(d.a[1]),d:String(+(2*r).toFixed(2))},st:{on:false,inset:'2',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
     render()}
   drag=null});
-svg.addEventListener('dblclick',()=>{if(draft&&draft.type==='poly')finishPoly(false)});
+let lastDown=null;
+function onDouble(e){if(draft&&draft.type==='poly'){finishPoly(false);return true}
+  const s=cur();if(tool!=='select'||!s||s.type!=='poly'||picks.length>1)return false;const tg=document.elementFromPoint(e.clientX,e.clientY)||e.target;const h=tg.dataset&&tg.dataset.h;
+  if(h&&/^n\d/.test(h)){pushUndo();toggleNode(s,+h.slice(1));lastPanelKey=null;render();return true}
+  const g=tg.closest&&tg.closest('g[data-id]');if(g&&g.dataset.id===s.id){pushUndo();if(insertNode(s,toMM(e))){lastPanelKey=null;render();toast('頂点を追加しました');return true}undoS.pop()}
+  return false}
 svg.addEventListener('contextmenu',e=>e.preventDefault());
 svg.addEventListener('wheel',e=>{e.preventDefault();const r=svg.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;
   const f=Math.exp(-e.deltaY*(e.ctrlKey?0.01:0.0015)),ns=Math.min(60,Math.max(0.3,view.s*f));
@@ -584,7 +673,7 @@ function buildSVG(){const{items,bb}=exportItems();const m=5,x0=bb[0]-m,y0=bb[1]-
   for(const{s,g,st}of items){const id=esc(s.name);let e;
     if(s.type==='rect')e=`<rect x="${fmt(g.x,3)}" y="${fmt(g.y,3)}" width="${fmt(g.w,3)}" height="${fmt(g.h,3)}" rx="${fmt(g.r,3)}"><title>${id}</title></rect>\n`;
     else if(s.type==='circle')e=`<circle cx="${fmt(g.cx,3)}" cy="${fmt(g.cy,3)}" r="${fmt(g.d/2,3)}"><title>${id}</title></circle>\n`;
-    else e=`<path fill-rule="evenodd" d="${dPaths(g.paths,g.closed)}"><title>${id}</title></path>\n`;
+    else e=`<path fill-rule="evenodd" d="${s.type==='poly'?nodesD(g.nodes,g.closed):dPaths(g.paths,g.closed)}"><title>${id}</title></path>\n`;
     groups[s.kind==='guide'?'guide':'cut']+=e;
     if(st)for(const[x,y]of st.holes)groups.stitch+=`<circle cx="${fmt(x,3)}" cy="${fmt(y,3)}" r="${fmt(st.hole/2,3)}"/>\n`}
   o+=`<g id="cut" fill="none" stroke="#000" stroke-width="0.25">\n${groups.cut}</g>\n<g id="stitch" fill="none" stroke="#c0392b" stroke-width="0.15">\n${groups.stitch}</g>\n<g id="guide" fill="none" stroke="#2c6fbb" stroke-width="0.2" stroke-dasharray="2 1.5">\n${groups.guide}</g>\n</svg>\n`;return o}
@@ -618,6 +707,8 @@ function buildPDF(){const{items,bb}=exportItems();const K=72/25.4;
     for(const{s:sh,g,st}of items){
       if(sh.kind==='guide')s+='0.25 0.45 0.75 RG [4 3] 0 d 0.5 w\n';else s+='0 0 0 RG [] 0 d 0.7 w\n';
       if(sh.type==='circle'){const[x,y]=T(g.cx,g.cy);s+=circ(x,y,g.d/2*K)}
+      else if(sh.type==='poly'){const N=g.nodes,P=q=>{const[x,y]=T(q[0],q[1]);return F(x)+' '+F(y)};s+=P([N[0].x,N[0].y])+' m\n';
+        for(let i=0;i<(g.closed?N.length:N.length-1);i++){const c=segCtrl(N,i);s+=c.line?P(c.p3)+' l\n':`${P(c.p1)} ${P(c.p2)} ${P(c.p3)} c\n`}s+=g.closed?'h S\n':'S\n'}
       else for(const p of g.paths){s+=p.map((q,i)=>{const[x,y]=T(q[0],q[1]);return`${F(x)} ${F(y)} ${i?'l':'m'}`}).join('\n')+(g.closed?' h S\n':' S\n')}
       if(st){s+='[] 0 d 0.75 0.2 0.15 RG 0.4 w\n';for(const[hx,hy]of st.holes){const[x,y]=T(hx,hy);s+=circ(x,y,st.hole/2*K)}}}
     s+='Q\n0.5 g 0.5 G 0.3 w []0 d\n';
@@ -647,7 +738,7 @@ $('xSvg').onclick=()=>{offer('kawagata.svg',buildSVG())};
 $('xDxf').onclick=()=>offer('kawagata.dxf',buildDXF());
 $('xJson').onclick=()=>offer('kawagata.json',JSON.stringify(doc,null,2));
 $('xLoad').onclick=()=>$('fileIn').click();
-$('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.shapes||!d.vars)throw 0;pushUndo();doc=d;setSel(null);fit();toast('読み込みました')}catch(x){toast('型紙ファイルとして読めませんでした')}});e.target.value=''};
+$('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.shapes||!d.vars)throw 0;pushUndo();doc=migrate(d);setSel(null);fit();toast('読み込みました')}catch(x){toast('型紙ファイルとして読めませんでした')}});e.target.value=''};
 $('xNew').onclick=()=>{pushUndo();doc={vars:structuredClone(SAMPLE.vars),shapes:[]};setSel(null);render();toast('新規にしました（⌘Zで戻せます）')};
 $('xSample').onclick=()=>{pushUndo();doc=structuredClone(SAMPLE);setSel(null);fit();toast('サンプル（名刺入れ）を開きました')};
 
