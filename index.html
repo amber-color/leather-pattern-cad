@@ -1080,7 +1080,7 @@ const toastEl=$('toast');let toastT;
 function toast(m,ms=2600){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),ms)}
 function toMM(e){const r=svg.getBoundingClientRect();return[(e.clientX-r.left-view.tx)/view.s,(e.clientY-r.top-view.ty)/view.s]}
 const snap=v=>snapStep?Math.round(v/snapStep)*snapStep:Math.round(v*100)/100;
-const HINT={dim:'始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック',text:'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集',select:'クリックで選択、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで矩形を描く。図形の角・中点・辺に吸着すると、その図形に連動します（Ctrl / ⌘ で一時的に吸着なし）',circle:'中心からドラッグして円を描く。中心は図形の点に吸着・連動します',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直'};
+const HINT={dim:'始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック',text:'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集',select:'クリックで選択（重なっている所は同じ場所をもう一度クリックで奥の図形へ）、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで矩形を描く。図形の角・中点・辺に吸着すると、その図形に連動します（Ctrl / ⌘ で一時的に吸着なし）',circle:'中心からドラッグして円を描く。中心は図形の点に吸着・連動します',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直'};
 function setTool(t){tool=t;draft=null;snapHint=null;document.querySelectorAll('.tool[data-tool]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));svg.className.baseVal=t==='select'?'':'draw';$('sHint').textContent=HINT[t];render()}
 document.querySelectorAll('.tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
 function contentBB(){let bb=[1e9,1e9,-1e9,-1e9];for(const it of C.items){if(!it.g||it.parent)continue;const b=bboxG(it.g);
@@ -1237,11 +1237,14 @@ svg.addEventListener('pointerdown',e=>{
     const extra=s.type==='poly'&&g0&&g0.nodes?g0.nodes.filter((n,i)=>i!==ni).map(n=>({x:n.x,y:n.y})):[];
     drag={kind:'handle',h,s,m0:m,g0,p0:structuredClone(s.p),ctx:{...makeCtx([s.id]),extra}};return}
   const ek=e.target.dataset&&e.target.dataset.edge;if(ek&&!e.shiftKey){selEdge={id:sel,key:ek};render();return}
-  const g=e.target.closest('g[data-id]');
-  if(g){const id=g.dataset.id;
+  const cands=hitList(e);
+  if(cands.length){let id=cands[0];
     if(e.shiftKey){if(C.byId[id].parent){toast('材料は演算結果ごと選んでください');return}
       picks=picks.includes(id)?picks.filter(x=>x!==id):picks.concat(id);sel=picks[0]||null;render();return}
-    if(!picks.includes(id))setSel(id);else if(selNodes.length){selNodes=[];lastPanelKey=null}
+    // a selected shape under the cursor is the one dragged; a plain click (no drag) decides the selection on release
+    const held=cands.find(c=>picks.includes(c));if(held)id=held;
+    if(!held)setSel(id);else if(selNodes.length){selNodes=[];lastPanelKey=null}
+    const click={cands,held:!!held,x:e.clientX,y:e.clientY};
     const s=byId(id);const movers=picks.length>1?picks.map(byId).filter(Boolean):[s];
     const ls=[...new Set(movers.flatMap(leaves))];
     const ctx=makeCtx([...new Set([...movers.map(x=>x.id),...ls.map(x=>x.id),...movers.flatMap(x=>descendants(x).map(d=>d.id))])]);
@@ -1251,7 +1254,7 @@ svg.addEventListener('pointerdown',e=>{
     for(const c of snapCands({})){if(!mv.has(c.id))continue;const d=Math.hypot(c.x-m[0],c.y-m[1]);if(d<bd){bd=d;base=c}}
     // the bools being moved keep their own pivot in step with their materials
     const bs=[...new Set(movers.flatMap(x=>[x,...descendants(x)]).filter(x=>x.type==='bool'))];
-    drag={kind:'move',s,ls,bs,bp:bs.map(x=>structuredClone(x.p)),m0:m,orig:ls.map(c=>structuredClone(c)),base,ctx,moved:false,undo:JSON.stringify(doc)};render();return}
+    drag={kind:'move',click,s,ls,bs,bp:bs.map(x=>structuredClone(x.p)),m0:m,orig:ls.map(c=>structuredClone(c)),base,ctx,moved:false,undo:JSON.stringify(doc)};render();return}
   if(e.pointerType==='touch'){drag={kind:'pan',sx:e.clientX,sy:e.clientY,tx:view.tx,ty:view.ty};svg.classList.add('pan');return}
   drag={kind:'box',a:m,b:m,sx:e.clientX,sy:e.clientY,add:e.shiftKey,base:picks.slice()}});
 svg.addEventListener('pointermove',e=>{const m=toMM(e);$('sPos').textContent=`x ${fmt(m[0])}  y ${fmt(m[1])}`;
@@ -1332,7 +1335,20 @@ svg.addEventListener('pointerup',e=>{svg.classList.remove('pan');if(!draft||draf
       if(w>=1&&h>=1){pushUndo();const s={id:newId(),name:uniqName('パーツ'),type:'rect',kind:'cut',p:(()=>{const X=span(L.ex,Rt.ex,L.x,w,'x','w'),Y=span(T.ey,Bt.ey,T.y,h,'y','h');return{x:X.x,y:Y.y,w:X.w,h:Y.h,r:'R' in C.env?'R':'0'}})(),st:{on:true,inset:'縫い代',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
     else{const r=Math.hypot(d.b.x-d.a.x,d.b.y-d.a.y);if(r>=0.5){pushUndo();const s={id:newId(),name:uniqName('穴・円'),type:'circle',kind:'cut',p:{cx:exOf(d.a),cy:eyOf(d.a),d:String(+(2*r).toFixed(2))},st:{on:false,inset:'2',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
     render()}
+  if(drag&&drag.kind==='move'&&!drag.moved&&drag.click)clickPick(drag.click);
   drag=null});
+// shapes under the cursor, the likeliest pick first: ones whose outline was hit (front to back), then the rest from small to large
+function hitList(e){const seen=new Map();
+  for(const el of document.elementsFromPoint(e.clientX,e.clientY)){const g=el.closest&&el.closest('g[data-id]');if(!g||!gShapes.contains(g))continue;
+    const id=g.dataset.id,line=el.getAttribute('stroke')==='transparent';if(!seen.has(id))seen.set(id,{id,line,z:seen.size});else if(line)seen.get(id).line=true}
+  const area=id=>{const it=C.byId[id];if(!it||!it.g)return 1e18;const b=bboxG(it.g);return(b[2]-b[0])*(b[3]-b[1])};
+  return[...seen.values()].sort((a,b)=>a.line!==b.line?(a.line?-1:1):a.line?a.z-b.z:area(a.id)-area(b.id)).map(o=>o.id)}
+// clicking the same spot again steps to the next shape underneath
+let lastClick=null;
+function clickPick(c){const same=lastClick&&Math.hypot(c.x-lastClick.x,c.y-lastClick.y)<5;lastClick={x:c.x,y:c.y};
+  if(picks.length>1&&c.held)return;
+  const next=same&&picks.length===1&&c.cands.includes(sel)&&c.cands.length>1?c.cands[(c.cands.indexOf(sel)+1)%c.cands.length]:c.cands[0];
+  if(next!==sel||picks.length!==1){setSel(next);lastPanelKey=null;render();if(same)toast(`奥の図形：${byId(next).name}（${c.cands.indexOf(next)+1}/${c.cands.length}）`,1400)}}
 let lastDown=null;
 function onDouble(e){if(draft&&draft.type==='poly'){finishPoly(false);return true}
   {const s=cur();if(tool==='select'&&s&&s.type==='text'&&picks.length===1){const f=$('f_text');if(f){f.focus();f.select()}return true}}
