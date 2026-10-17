@@ -35,7 +35,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .app{height:100%;display:grid;grid-template-columns:52px minmax(0,1fr) auto auto;grid-template-rows:46px minmax(0,1fr) 30px;
   padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 .top{grid-column:1/-1;grid-row:1;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
-.top .brand{font-weight:500;font-size:14px;letter-spacing:.01em;color:var(--fg);margin-right:10px;white-space:nowrap}
+.top .brand{font-weight:500;font-size:14px;letter-spacing:.01em;color:var(--accent);margin-right:10px;white-space:nowrap}
 .top .brand .cap{font-weight:700;font-size:20px;color:var(--accent);line-height:1}
 .opt{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;align-items:center}
 .opt>label,.opt>span{font-size:12px;color:var(--muted)}
@@ -155,7 +155,7 @@ input.err{border-color:var(--danger)}
     <div class="spacer"></div>
     <div class="grp" role="group" aria-label="書き出し">
       <span class="lbl">書き出し</span>
-      <button class="btn primary" id="xPdf" title="A4に分割した実寸PDF。各ページ下に50mmの確認目盛り。印刷は「実際のサイズ（100%）」で">実寸PDF</button>
+      <button class="btn primary" id="xPdf" title="実寸のPDF。用紙と向きを選んで書き出します">PDF</button>
       <button class="btn" id="xSvg" title="mm単位のSVG（裁断線・ステッチ穴・ガイドをグループ分け）">SVG</button>
       <button class="btn" id="xDxf" title="R12形式のDXF（レイヤー CUT / STITCH / GUIDE）">DXF</button>
     </div>
