@@ -77,6 +77,7 @@ html.theme-fade,html.theme-fade *{transition:background-color .45s ease,color .4
 .help .hbody h2{font-size:16px;margin:24px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--line)}
 .help .hbody h3{font-size:14px;margin:18px 0 4px}
 .help .hbody p{margin:6px 0}
+.help .hbody .shot{margin:10px 0 14px}.help .hbody .shot img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:6px}
 .help .hbody ul{margin:4px 0;padding-left:20px}
 .help .hbody li{margin:2px 0}
 .help .hbody code{font:12.5px var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:0 4px}
@@ -1758,6 +1759,9 @@ function mdInline(t){return esc(t).replace(/`([^`]+)`/g,'<code>$1</code>').repla
 function mdToHtml(md){const L=md.replace(/\r/g,'').split('\n'),out=[];let i=0,para=[];const flush=()=>{if(para.length){out.push('<p>'+para.map(mdInline).join('<br>')+'</p>');para=[]}};
   while(i<L.length){const l=L[i];
     if(!l.trim()){flush();i++;continue}
+    const im=l.trim().match(/^<img\s+([^>]*)\/?>$/);
+    if(im){flush();const at=k=>{const r=new RegExp(k+'="([^"]*)"').exec(im[1]);return r?r[1]:''},src=at('src'),w=parseInt(at('width'))||0;
+      if(/^[\w./-]+\.(png|jpe?g|svg|webp)$/i.test(src))out.push(`<figure class="shot"><img src="${esc(src)}" alt="${esc(at('alt'))}"${w?` style="max-width:${w}px"`:''} loading="lazy"></figure>`);i++;continue}
     let m=l.match(/^(#{1,3})\s+(.*)$/);if(m){flush();out.push(`<h${m[1].length}>${mdInline(m[2])}</h${m[1].length}>`);i++;continue}
     if(/^\s*\|/.test(l)){flush();const rows=[];while(i<L.length&&/^\s*\|/.test(L[i]))rows.push(L[i++]);const cells=r=>r.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
       const head=cells(rows[0]),body=rows.slice(2).map(cells);out.push('<div class="tablewrap"><table><thead><tr>'+head.map(c=>`<th>${mdInline(c)}</th>`).join('')+'</tr></thead><tbody>'+body.map(r=>'<tr>'+r.map(c=>`<td>${mdInline(c)}</td>`).join('')+'</tr>').join('')+'</tbody></table></div>');continue}
