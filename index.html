@@ -53,9 +53,10 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .top .vsep{width:1px;height:22px;background:var(--line);margin:0 6px;flex:none}
 .top .spacer{flex:1}
 .top .btn{padding:6px 10px}
-.top .ibtn{width:34px;height:34px;padding:0;display:grid;place-items:center;border:1px solid transparent;background:none;border-radius:6px;color:var(--fg)}
+.top .ibtn{width:40px;height:40px;padding:0;display:grid;place-items:center;border:1px solid transparent;background:none;border-radius:6px;color:var(--fg)}
 .top .ibtn:hover{background:var(--bg);border-color:transparent}
-.top .ibtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+/* same look as the tool rail: 1.6px strokes on screen (22px icon drawn on a 20-unit grid) */
+.top .ibtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.45}
 .top .btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .pdfprev{display:flex;flex-wrap:wrap;gap:8px;max-height:260px;overflow:auto;padding:8px;background:var(--bg);border:1px solid var(--line);border-radius:4px}
 .pdfprev figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:3px}
