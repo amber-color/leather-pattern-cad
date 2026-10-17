@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}</style>
-<title>革型 Kawagata</title>
+<title>Parametric Pattern Plotter</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap">
@@ -35,7 +35,17 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .app{height:100%;display:grid;grid-template-columns:52px minmax(0,1fr) auto auto;grid-template-rows:46px minmax(0,1fr) 30px;
   padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 .top{grid-column:1/-1;grid-row:1;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
-.top .brand{font-weight:700;font-size:16px;letter-spacing:.06em;color:var(--accent);margin-right:6px}
+.top .brand{font-weight:700;font-size:16px;letter-spacing:.08em;color:var(--accent);margin-right:6px;display:flex;align-items:baseline;gap:8px}
+.top .brand .full{font-weight:400;font-size:12px;letter-spacing:.02em;color:var(--muted)}
+.opt{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;align-items:center}
+.opt>label,.opt>span{font-size:12px;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg label{flex:1;text-align:center;padding:6px 0;font-size:12px;cursor:pointer;border-left:1px solid var(--line)}
+.seg label:first-child{border-left:none}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--accent-soft);color:var(--accent)}
+.seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
+.seg.off{opacity:.45;pointer-events:none}
 .top .grp{display:flex;align-items:center;gap:6px}
 .top .lbl{font-size:11px;letter-spacing:.12em;color:var(--muted);margin-right:2px}
 .top .vsep{width:1px;height:22px;background:var(--line);margin:0 6px;flex:none}
@@ -113,7 +123,7 @@ input.err{border-color:var(--danger)}
   body{overflow:auto}
   .app{height:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:46px auto 62vh 30px auto}
   .top{grid-column:1;padding-left:max(12px,env(safe-area-inset-left,0px))}
-  .top .lbl,.top .spacer{display:none}
+  .top .lbl,.top .spacer,.top .brand .full{display:none}
   .rail{grid-row:2;flex-direction:row;border-right:none;border-bottom:1px solid var(--line);overflow-x:auto;padding-left:max(8px,env(safe-area-inset-left,0px))}
   .rail .sep{width:1px;height:28px;margin:0 4px}
   .stage{grid-row:3;grid-column:1}.status{grid-column:1;grid-row:4}
@@ -134,7 +144,7 @@ input.err{border-color:var(--danger)}
 <body>
 <div class="app">
   <header class="top">
-    <div class="brand">革型</div>
+    <div class="brand" title="Parametric Pattern Plotter — 式で描くレザークラフト型紙CAD">PPP<span class="full">Parametric Pattern Plotter</span></div>
     <div class="grp" role="group" aria-label="ファイル">
       <button class="btn" id="xNew" title="空の型紙を作る（変数は残ります）">新規</button>
       <button class="btn" id="xSample" title="名刺入れのサンプルを開く">サンプル</button>
@@ -197,6 +207,18 @@ input.err{border-color:var(--danger)}
     </section>
   </aside>
 </div>
+<div class="modal" id="pdfModal" hidden role="dialog" aria-modal="true" aria-labelledby="pdfTitle"><div class="box" style="width:min(380px,100%)">
+  <strong id="pdfTitle">実寸PDFの書き出し</strong>
+  <div class="opt"><label for="pdfSize">用紙</label><select class="inp" id="pdfSize">
+    <option value="A4">A4（210 × 297 mm）</option><option value="A3">A3（297 × 420 mm）</option><option value="A5">A5（148 × 210 mm）</option>
+    <option value="B4">B4（257 × 364 mm）</option><option value="B5">B5（182 × 257 mm）</option><option value="Letter">レター（216 × 279 mm）</option>
+    <option value="fit">図形に合わせる（1枚）</option></select></div>
+  <div class="opt"><span id="pdfOrientLbl">向き</span><div class="seg" id="pdfOrient" role="radiogroup" aria-labelledby="pdfOrientLbl">
+    <label><input type="radio" name="pdfo" value="auto" id="pdfoA">自動</label><label><input type="radio" name="pdfo" value="portrait" id="pdfoP">縦</label><label><input type="radio" name="pdfo" value="landscape" id="pdfoL">横</label></div></div>
+  <div class="result" id="pdfInfo"></div>
+  <div class="small">「自動」は枚数が少なくなる向きを選びます。印刷は「実際のサイズ（100%）」で行い、各ページ下の50mm目盛りで確認してください。</div>
+  <div class="btns"><button class="btn primary" id="pdfGo">書き出す</button><button class="btn" id="pdfCancel">キャンセル</button></div>
+</div></div>
 <div class="modal" id="modal" hidden><div class="box">
   <strong id="mTitle"></strong><div class="small" id="mNote"></div>
   <textarea id="mText" readonly></textarea>
@@ -518,11 +540,14 @@ $('vars').addEventListener('pointerdown',e=>{const d=e.target.dataset.vdel;if(d=
   const users=varUsers(v.n);if(users.length){toast(`「${v.n}」は ${users.join('、')} で使われているので削除できません`,5000);return}
   pushUndo();doc.vars.splice(+d,1);if(box_has_focus())document.activeElement.blur();renderVars(false);render()});
 const box_has_focus=()=>$('vars').contains(document.activeElement);
+// per-viewer UI settings (storage keys keep the old internal name so existing drafts and settings survive the rename)
+let UI={};try{UI=JSON.parse(localStorage.getItem('kawagata-ui')||'{}')||{}}catch(e){}
+function saveUI(){try{localStorage.setItem('kawagata-ui',JSON.stringify(UI))}catch(e){}}
 function setVarsCollapsed(c){$('varsBar').classList.toggle('collapsed',c);$('varsFull').inert=c;$('varsMini').inert=!c;$('varsToggle').setAttribute('aria-expanded',String(!c));
-  try{localStorage.setItem('kawagata-ui',JSON.stringify({varsCollapsed:c}))}catch(e){}}
+  UI.varsCollapsed=c;saveUI()}
 $('varsToggle').onclick=()=>setVarsCollapsed(true);
 $('varsExpand').onclick=$('varsLabel').onclick=()=>setVarsCollapsed(false);
-document.body.classList.add('noanim');try{if(JSON.parse(localStorage.getItem('kawagata-ui')||'{}').varsCollapsed)setVarsCollapsed(true)}catch(e){}
+document.body.classList.add('noanim');if(UI.varsCollapsed)setVarsCollapsed(true);
 requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.remove('noanim')));
 $('addVar').onclick=()=>{pushUndo();let n='a',i=1;while(doc.vars.some(v=>v.n===n))n='a'+(i++);doc.vars.push({n,e:'10'});renderVars(false);render();$('vn'+(doc.vars.length-1)).focus()};
 const cur=()=>byId(sel);
@@ -706,7 +731,7 @@ $('zIn').onclick=()=>zoomBy(1.25);$('zOut').onclick=()=>zoomBy(0.8);
 function undo(){if(!undoS.length)return;redoS.push(JSON.stringify(doc));doc=JSON.parse(undoS.pop());lastPanelKey=null;render()}
 function redo(){if(!redoS.length)return;undoS.push(JSON.stringify(doc));doc=JSON.parse(redoS.pop());lastPanelKey=null;render()}
 $('bUndo').onclick=undo;$('bRedo').onclick=redo;
-document.addEventListener('keydown',e=>{const inField=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden)return;const inField=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
   if(e.key===' '&&!inField){spaceDown=true;svg.classList.add('pan');e.preventDefault();return}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!inField){e.preventDefault();e.shiftKey?redo():undo();return}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='d'&&!inField){e.preventDefault();dup(false);return}
@@ -752,11 +777,15 @@ function buildDXF(){const{items}=exportItems();const L=[];const add=(...a)=>L.pu
     else for(const p of g.paths)poly(layer,p,g.closed);
     if(st)for(const[hx,hy]of st.holes)circ('STITCH',hx,hy,st.hole/2)}
   add(0,'ENDSEC',0,'EOF');return L.join('\n')+'\n'}
-function buildPDF(){const{items,bb}=exportItems();const K=72/25.4;
-  const sizes=[[210,297],[297,210]];const M=10;let best=null;
-  for(const[pw,ph]of sizes){const aw=pw-2*M,ah=ph-2*M-6,cols=Math.max(1,Math.ceil((bb[2]-bb[0]+0.01)/aw)),rows=Math.max(1,Math.ceil((bb[3]-bb[1]+0.01)/ah));
-    if(!best||cols*rows<best.cols*best.rows)best={pw,ph,aw,ah,cols,rows}}
-  const{pw,ph,aw,ah,cols,rows}=best;const objs=[];const pages=[];
+const PAPERS={A4:[210,297,'A4'],A3:[297,420,'A3'],A5:[148,210,'A5'],B4:[257,364,'B4'],B5:[182,257,'B5'],Letter:[215.9,279.4,'レター']};
+function pdfLayout(bb,o){const M=10,BAR=6,bw=bb[2]-bb[0]+0.01,bh=bb[3]-bb[1]+0.01;
+  if(o.size==='fit'){const pw=Math.max(bw+2*M,120),ph=bh+2*M+BAR;return{pw,ph,aw:pw-2*M,ah:ph-2*M-BAR,cols:1,rows:1,M,label:`図形に合わせる（${fmt(pw,0)} × ${fmt(ph,0)} mm）`}}
+  const[a,b,name]=PAPERS[o.size]||PAPERS.A4;const cand=o.orient==='portrait'?[[a,b]]:o.orient==='landscape'?[[b,a]]:[[a,b],[b,a]];let best=null;
+  for(const[pw,ph]of cand){const aw=pw-2*M,ah=ph-2*M-BAR,cols=Math.max(1,Math.ceil(bw/aw)),rows=Math.max(1,Math.ceil(bh/ah));
+    if(!best||cols*rows<best.cols*best.rows)best={pw,ph,aw,ah,cols,rows,M}}
+  best.label=`${name} ${best.pw>best.ph?'横':'縦'}`;return best}
+function buildPDF(o){const{items,bb}=exportItems();const K=72/25.4;
+  const L=pdfLayout(bb,o);const{pw,ph,aw,ah,cols,rows,M}=L;const objs=[];const pages=[];
   const F=v=>(Math.round(v*1000)/1000).toString();
   const circ=(x,y,r)=>{const c=0.5523*r;return`${F(x+r)} ${F(y)} m ${F(x+r)} ${F(y+c)} ${F(x+c)} ${F(y+r)} ${F(x)} ${F(y+r)} c ${F(x-c)} ${F(y+r)} ${F(x-r)} ${F(y+c)} ${F(x-r)} ${F(y)} c ${F(x-r)} ${F(y-c)} ${F(x-c)} ${F(y-r)} ${F(x)} ${F(y-r)} c ${F(x+c)} ${F(y-r)} ${F(x+r)} ${F(y-c)} ${F(x+r)} ${F(y)} c S\n`};
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
@@ -781,7 +810,7 @@ function buildPDF(){const{items,bb}=exportItems();const K=72/25.4;
   objs[1]=`<< /Type /Pages /Kids [${kids.map(k=>k+' 0 R').join(' ')}] /Count ${kids.length} >>`;
   let pdf='%PDF-1.4\n';const offs=[];objs.forEach((o,i)=>{offs.push(pdf.length);pdf+=`${i+1} 0 obj\n${o}\nendobj\n`});
   const x=pdf.length;pdf+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`+offs.map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('');
-  pdf+=`trailer\n<< /Size ${objs.length+1} /Root 1 0 R >>\nstartxref\n${x}\n%%EOF\n`;return{pdf,n:pages.length}}
+  pdf+=`trailer\n<< /Size ${objs.length+1} /Root 1 0 R >>\nstartxref\n${x}\n%%EOF\n`;return{pdf,n:pages.length,label:L.label}}
 let dl=null;(async()=>{try{if(window.claude&&window.claude.use)dl=await window.claude.use('downloads')}catch(e){}})();
 async function offer(filename,data){
   if(!dl){try{const url=URL.createObjectURL(new Blob([data]));const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);toast(filename+' を保存しました');return true}catch(e){toast('保存できませんでした');return false}}
@@ -790,11 +819,22 @@ async function offer(filename,data){
 $('mClose').onclick=()=>$('modal').hidden=true;
 $('modal').onclick=e=>{if(e.target.id==='modal')$('modal').hidden=true};
 $('mCopy').onclick=()=>{const t=$('mText');navigator.clipboard.writeText(t.value).then(()=>toast('コピーしました'),()=>{t.focus();t.select();toast('選択しました。⌘Cでコピーしてください')})};
-$('xPdf').onclick=async()=>{const{pdf,n}=buildPDF();const bytes=new Uint8Array(pdf.length);for(let i=0;i<pdf.length;i++)bytes[i]=pdf.charCodeAt(i)&255;
-  if(await offer('kawagata.pdf',bytes))toast(`A4 ${n}枚のPDFを保存しました`)};
-$('xSvg').onclick=()=>{offer('kawagata.svg',buildSVG())};
-$('xDxf').onclick=()=>offer('kawagata.dxf',buildDXF());
-$('xJson').onclick=()=>offer('kawagata.json',JSON.stringify(doc,null,2));
+function pdfOpts(){return{size:$('pdfSize').value,orient:(document.querySelector('input[name=pdfo]:checked')||{}).value||'auto'}}
+function updatePdfInfo(){const o=pdfOpts(),{bb,items}=exportItems();$('pdfOrient').classList.toggle('off',o.size==='fit');
+  if(!items.length){$('pdfInfo').innerHTML='<span>書き出す図形がありません</span><span></span>';$('pdfGo').disabled=true;return}$('pdfGo').disabled=false;
+  const L=pdfLayout(bb,o);$('pdfInfo').innerHTML=`<span>用紙</span><span>${L.label}</span><span>枚数</span><span>${L.cols*L.rows}枚${L.cols*L.rows>1?`（横${L.cols} × 縦${L.rows}）`:''}</span><span>型紙</span><span>${fmt(bb[2]-bb[0])} × ${fmt(bb[3]-bb[1])} mm</span>`}
+$('xPdf').onclick=()=>{$('pdfSize').value=UI.pdfSize||'A4';(document.getElementById({auto:'pdfoA',portrait:'pdfoP',landscape:'pdfoL'}[UI.pdfOrient||'auto'])).checked=true;
+  updatePdfInfo();$('pdfModal').hidden=false;$('pdfGo').focus()};
+$('pdfSize').onchange=updatePdfInfo;$('pdfOrient').addEventListener('change',updatePdfInfo);
+$('pdfCancel').onclick=()=>$('pdfModal').hidden=true;
+$('pdfModal').addEventListener('click',e=>{if(e.target.id==='pdfModal')$('pdfModal').hidden=true});
+$('pdfModal').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();$('pdfModal').hidden=true}});
+$('pdfGo').onclick=async()=>{const o=pdfOpts();UI.pdfSize=o.size;UI.pdfOrient=o.orient;saveUI();$('pdfModal').hidden=true;
+  const{pdf,n,label}=buildPDF(o);const bytes=new Uint8Array(pdf.length);for(let i=0;i<pdf.length;i++)bytes[i]=pdf.charCodeAt(i)&255;
+  if(await offer('pattern.pdf',bytes))toast(`${label}・${n}枚のPDFを保存しました`)};
+$('xSvg').onclick=()=>{offer('pattern.svg',buildSVG())};
+$('xDxf').onclick=()=>offer('pattern.dxf',buildDXF());
+$('xJson').onclick=()=>offer('pattern.json',JSON.stringify(doc,null,2));
 $('xLoad').onclick=()=>$('fileIn').click();
 $('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.shapes||!d.vars)throw 0;pushUndo();doc=migrate(d);setSel(null);fit();toast('読み込みました')}catch(x){toast('型紙ファイルとして読めませんでした')}});e.target.value=''};
 $('xNew').onclick=()=>{pushUndo();doc={vars:structuredClone(SAMPLE.vars),shapes:[]};setSel(null);render();toast('新規にしました（⌘Zで戻せます）')};
