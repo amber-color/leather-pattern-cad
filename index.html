@@ -75,12 +75,13 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .status select{font:12px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px}
 .status .hint{color:var(--fg);overflow:hidden;text-overflow:ellipsis;font-family:var(--ui)}
 .side{grid-row:2/4;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;box-sizing:border-box}
-.side.parts{grid-column:3;width:0;border-left-width:0;overflow:hidden auto;visibility:hidden;transition:width .24s cubic-bezier(.2,.7,.2,1),border-left-width .24s,visibility 0s .24s}
+.side.parts{grid-column:3;width:0;border-left-width:0;overflow:hidden;visibility:hidden;transition:width .24s cubic-bezier(.2,.7,.2,1),border-left-width .24s,visibility 0s .24s}
 .side.parts.open{width:300px;border-left-width:1px;visibility:visible;transition:width .24s cubic-bezier(.2,.7,.2,1),border-left-width .24s,visibility 0s}
-.side.parts .sec{width:300px;flex:none;box-sizing:border-box}
-.side.vars{grid-column:4;width:228px;position:relative;overflow:hidden auto;transition:width .24s cubic-bezier(.2,.7,.2,1)}
+.side.parts .sec{width:300px;flex:none;box-sizing:border-box;height:100%;overflow-y:auto;overflow-x:hidden}
+.side.vars{grid-column:4;width:228px;position:relative;overflow:hidden;transition:width .24s cubic-bezier(.2,.7,.2,1)}
 .side.vars.collapsed{width:38px;overflow:hidden}
-.vfull{width:228px;flex:none;box-sizing:border-box;transition:opacity .16s}
+/* the list scrolls inside .vfull, so a scrollbar narrows the content instead of pushing the right edge out of view */
+.vfull{width:228px;flex:none;box-sizing:border-box;height:100%;overflow-y:auto;overflow-x:hidden;transition:opacity .16s}
 .vmini{position:absolute;top:0;left:0;bottom:0;width:38px;display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:10px;box-sizing:border-box;opacity:0;pointer-events:none;transition:opacity .16s}
 .vmini .vlabel{writing-mode:vertical-rl;letter-spacing:.3em;font-size:11px;color:var(--muted);cursor:pointer;border:none;background:none;padding:2px 0}
 .side.vars.collapsed .vfull{opacity:0;pointer-events:none}
@@ -160,6 +161,7 @@ input.err{border-color:var(--danger)}
   .side{grid-column:1;border-left:none;overflow:visible;width:auto!important;transition:none!important}
   .side.parts:not(.open){display:none}
   .side.parts .sec,.vfull{width:auto}
+  .vfull,.side.parts .sec{height:auto;overflow:visible}
   .side.parts{grid-row:5}.side.vars{grid-row:6}
   .app{grid-template-rows:46px auto 62vh 30px auto auto}
   .side.vars.collapsed .vfull{display:none}
