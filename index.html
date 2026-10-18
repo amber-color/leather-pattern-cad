@@ -1199,8 +1199,9 @@ function render(){
   {const sc=byId(sel);if(!sc||sc.type!=='poly'||picks.length!==1)selNodes=[];else selNodes=selNodes.filter(i=>i<sc.nodes.length)}
   if(selEdge){const si=C.byId[sel];if(selEdge.id!==sel||picks.length!==1||!si||!si.st||!si.st.edges.some(e=>e.key===selEdge.key))selEdge=null}
   const k=1/view.s;
-  // materials first (faint), then top-level shapes on top
-  const order=C.items.filter(i=>i.parent&&i.s.id!==sel).concat(C.items.filter(i=>!i.parent||i.s.id===sel));
+  // materials first (faint), then top-level shapes, and the selection last so its outline is never covered
+  const picked=i=>picks.includes(i.s.id)||i.s.id===sel;
+  const order=C.items.filter(i=>i.parent&&!picked(i)).concat(C.items.filter(i=>!i.parent&&!picked(i)),C.items.filter(picked));
   for(const it of order){const s=it.s,g=it.g;if(!g)continue;const on=picks.includes(s.id),mat=!!it.parent;
     const faint=mat&&s.id!==sel;
     const grp=el('g',{'data-id':s.id,'pointer-events':faint?'none':'auto',opacity:faint?.35:s.noexp&&!on?.45:1},gShapes);
