@@ -362,7 +362,6 @@ input.err{border-color:var(--danger)}
   <strong id="mvTitle">式で位置が決まっているパーツを動かしますか？</strong>
   <div class="small">動かした分だけ、式の後ろに数値が足されます。変数との関係が変わるので、意図した移動か確かめてください。</div>
   <div class="mvlist" id="mvList"></div>
-  <label class="check"><input type="checkbox" id="mvSkip"> 次から確認しない</label>
   <div class="btns"><button class="btn primary" id="mvOk">動かす</button><button class="btn" id="mvUndo">元に戻す</button></div>
 </div></div>
 <div class="modal" id="modal" hidden><div class="box">
@@ -490,7 +489,7 @@ const EN_EXACT={
   '「自動」は枚数が少なくなる向きを選びます。印刷は「実際のサイズ（100%）」で行い、各ページ下の50mm目盛りで確認してください。':'“Auto” picks the orientation with fewer pages. Print at “Actual size (100%)” and check the 50 mm scale at the bottom of each page.',
   '書き出す':'Export','キャンセル':'Cancel','読み込んでいます…':'Loading…','コピー':'Copy','テキストで保存':'Save as text','閉じる':'Close','枚数':'Pages','型紙':'Pattern','書き出す図形がありません':'Nothing to export','レター':'Letter',
   '式で位置が決まっているパーツを動かしますか？':'Move a part whose position is set by an expression?','動かした分だけ、式の後ろに数値が足されます。変数との関係が変わるので、意図した移動か確かめてください。':'The distance moved is added to the end of the expression, which changes how it relates to the variables. Check that the move is intended.',
-  '次から確認しない':'Don’t ask again','動かす':'Move','元に戻す':'Undo','移動を取り消しました':'Move undone',
+  '動かす':'Move','元に戻す':'Undo','移動を取り消しました':'Move undone',
   '名前が空です':'The name is empty','数字だけの名前は使えません':'A name can’t be only digits','名前に使えない文字があります（空白や + - * / ( ) など）':'The name has characters that can’t be used (spaces, + - * / ( ) …)',
   '関数や予約された名前（sqrt・pi・自分 など）は使えません':'Function and reserved names (sqrt, pi, self …) can’t be used','同じ名前の変数がすでにあります':'Another variable already has this name',
   'コード':'Code','コード：型紙をJSONで直接編集':'Code: edit the pattern directly as JSON','コード（JSON）':'Code (JSON)','適用':'Apply','図面に反映（⌘Enter / Ctrl+Enter）':'Apply to the drawing (⌘Enter / Ctrl+Enter)',
@@ -1883,7 +1882,7 @@ svg.addEventListener('pointerup',e=>{if(e.pointerType==='touch'&&touchUp(e)){ren
     else{const r=Math.hypot(d.b.x-d.a.x,d.b.y-d.a.y);if(r>=0.5){pushUndo();const s={id:newId(),name:uniqName(nm('穴・円')),type:'circle',kind:'cut',p:{cx:exOf(d.a),cy:eyOf(d.a),d:String(+(2*r).toFixed(2))},st:{on:false,inset:'2',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
     render()}
   if(drag&&drag.kind==='move'&&!drag.moved&&drag.click)clickPick(drag.click);
-  if(drag&&drag.kind==='move'&&drag.moved&&!UI.noMoveConfirm){const ch=exprMoves(drag);if(ch.length)askMove(ch)}
+  if(drag&&drag.kind==='move'&&drag.moved){const ch=exprMoves(drag);if(ch.length)askMove(ch)}
   drag=null});
 // ---- confirm a drag that rewrote expression positions
 // position fields whose old value was an expression (not a plain number) and that the move changed
@@ -1896,8 +1895,8 @@ function exprMoves(d){const out=[];
 function askMove(ch){const box=$('mvList');let h='';
   for(const c of ch.slice(0,4)){h+=`<b>${esc(c.name)}</b>`;for(const[l,a,b]of c.rows.slice(0,4))h+=`<span>${esc(l)}：${esc(a)} → ${esc(b)}</span>`;if(c.rows.length>4)h+=`<span>ほか ${c.rows.length-4} 件</span>`}
   if(ch.length>4)h+=`<b>ほか ${ch.length-4} 個のパーツ</b>`;
-  box.innerHTML=h;$('mvSkip').checked=false;$('mvModal').hidden=false;$('mvOk').focus()}
-function closeMove(keep){$('mvModal').hidden=true;if($('mvSkip').checked){UI.noMoveConfirm=true;saveUI()}
+  box.innerHTML=h;$('mvModal').hidden=false;$('mvOk').focus()}
+function closeMove(keep){$('mvModal').hidden=true;
   if(!keep&&undoS.length){redoS=[];doc=JSON.parse(undoS.pop());lastPanelKey=null;render();toast('移動を取り消しました')}}
 $('mvOk').onclick=()=>closeMove(true);$('mvUndo').onclick=()=>closeMove(false);
 $('mvModal').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeMove(false)}});
