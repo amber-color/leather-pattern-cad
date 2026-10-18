@@ -820,16 +820,21 @@ function geomLeaf0(s,env){
   // nodes: as written (handles, references, editing); fnodes: with the rounded corners, for drawing and export
   const g={paths:[pts],pts,closed:s.closed,nodes:N};if(fl){g.fnodes=FN;g.fmid=fl.mids}return g}
 // ---------- split (分割) ----------
-// cut a closed outline along lines (open paths, or other shapes' outlines): the cut lines become 2 µm slivers that are taken
-// away, and the rest falls apart into pieces, each an outline with its holes
-function splitPieces(tg,cutGs){const co=new ClipperLib.ClipperOffset();
-  for(const g of cutGs){if(g.closed)co.AddPaths(toC(g.paths),ClipperLib.JoinType.jtMiter,ClipperLib.EndType.etClosedLine);else co.AddPaths(toC([g.pts]),ClipperLib.JoinType.jtMiter,ClipperLib.EndType.etOpenButt)}
-  const sl=new ClipperLib.Paths();co.Execute(sl,1);
-  const c=new ClipperLib.Clipper(),tree=new ClipperLib.PolyTree(),F=ClipperLib.PolyFillType.pftNonZero;
-  c.AddPaths(toC(clip('union',tg.paths)),ClipperLib.PolyType.ptSubject,true);c.AddPaths(sl,ClipperLib.PolyType.ptClip,true);c.Execute(ClipperLib.ClipType.ctDifference,tree,F,F);
+// cut a closed outline along lines and outlines. A closed cutter splits each part exactly into what lies inside it and what
+// lies outside. Open lines become 2 µm slivers taken away so the parts fall apart; each part then grows back by half the
+// sliver and is trimmed to what it was, so neighbours meet on the cut line. A piece is an outline followed by its holes
+function pgroups(type,a,b){const c=new ClipperLib.Clipper(),tree=new ClipperLib.PolyTree(),F=ClipperLib.PolyFillType.pftNonZero,T=ClipperLib.ClipType;
+  c.AddPaths(Array.isArray(a[0]&&a[0][0])?toC(a):a,ClipperLib.PolyType.ptSubject,true);if(b)c.AddPaths(Array.isArray(b[0]&&b[0][0])?toC(b):b,ClipperLib.PolyType.ptClip,true);
+  c.Execute({union:T.ctUnion,diff:T.ctDifference,inter:T.ctIntersection}[type],tree,F,F);
   const groups=[],P=p=>p.map(q=>[q.X/CS,q.Y/CS]);
   const walk=n=>{for(const ch of n.Childs()){if(ch.IsHole())continue;const g=[P(ch.Contour()),...ch.Childs().map(h=>P(h.Contour()))];if(Math.abs(area(g[0]))>0.01)groups.push(g);for(const h of ch.Childs())walk(h)}};
   walk(tree);return groups}
+function splitPieces(tg,cutGs){let groups=pgroups('union',tg.paths);
+  for(const g of cutGs)if(g.closed){const K=clip('union',g.paths);groups=groups.flatMap(p=>[...pgroups('inter',p,K),...pgroups('diff',p,K)])}
+  const open=cutGs.filter(g=>!g.closed);if(!open.length)return groups;
+  const co=new ClipperLib.ClipperOffset(),sl=new ClipperLib.Paths();for(const g of open)co.AddPaths(toC([g.pts]),ClipperLib.JoinType.jtMiter,ClipperLib.EndType.etOpenButt);co.Execute(sl,1);
+  return groups.flatMap(p=>pgroups('diff',toC(p),sl).map(g=>{const co2=new ClipperLib.ClipperOffset(),sol=new ClipperLib.Paths();co2.AddPaths(toC(g),ClipperLib.JoinType.jtMiter,ClipperLib.EndType.etClosedPolygon);co2.Execute(sol,1);
+    const r=pgroups('inter',sol,p);return r.length===1?r[0]:g}))}
 const insideG=(g,q)=>{const P={X:Math.round(q[0]*CS),Y:Math.round(q[1]*CS)},cg=toC(g);if(ClipperLib.Clipper.PointInPolygon(P,cg[0])!==1)return false;return cg.slice(1).every(h=>ClipperLib.Clipper.PointInPolygon(P,h)===0)};
 // a point well inside a piece: its centroid when that is inside, else the inside grid point farthest from the edges
 function insidePt(g){const o=g[0];let A=0,x=0,y=0;for(let i=0;i<o.length;i++){const[x1,y1]=o[i],[x2,y2]=o[(i+1)%o.length],f=x1*y2-x2*y1;A+=f;x+=(x1+x2)*f;y+=(y1+y2)*f}
