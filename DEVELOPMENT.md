@@ -32,6 +32,8 @@ Push straight to `main` when asked; there is no build step.
 - shape: `{id,name,type,kind:'cut'|'guide',p:{…},st:{on,inset,pitch,hole,method?,pos?,eo?}}`
 - types: `rect` (x,y,w,h,r; `ct` round|chamfer; `cmode:'each'` + `cs[4]{t,r}`), `circle` (cx,cy,d),
   `poly` (`nodes:[{x,y,t?,hi?,ho?}]`, `closed`), `bool` (`op` union|diff|inter|xor, `ops:[ids]`, materials stay as shapes),
+  `offset` (`src:[ids]`, `op` for several sources, `side` out|in, `join` round|miter, `p.d` distance; the sources stay
+  ordinary shapes — not materials — and dragging, duplicating or mirroring an offset carries its sources along),
   `text` (text; x,y,size,rot), `dim` (x1,y1,x2,y2,off,size). rect/poly/bool may have `rot`, `rcx`, `rcy` (pivot).
 - per-edge stitch overrides: `st.eo:[{u,v,off?,pitch?,method?,pos?,from?,to?}]`, anchored to the edge midpoint in the
   unrotated bbox (0..1) and matched to the nearest edge on each compute (old `st.edges` is migrated).
@@ -53,6 +55,8 @@ with cycle detection. Variables cannot reference shapes.
   for confirmation (`mvModal`).
 - Japanese IME: never act on Enter while composing (`composing(e)`), or text is committed twice.
 - `render()` rebuilds the panel unless a panel text field has focus with the same selection key (`lastPanelKey`).
+- bool and offset share `combine(op, outlines)`; `moveTree` lists what moves with a shape (bool materials, offset sources),
+  `blockedBySrc` stops deleting a shape an offset uses.
 - Avoid short global names: `L` is used as a local in many places (a helper named `L` once broke rect creation).
 
 ## i18n
