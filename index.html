@@ -100,6 +100,7 @@ html.theme-fade,html.theme-fade *{transition:background-color .45s ease,color .4
 .top .ibtn svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
 .top #xHelp svg{stroke-width:.875}
 .top .btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.expopts{display:flex;flex-wrap:wrap;gap:4px 14px}.expopts label{display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer}.expopts input{accent-color:var(--accent);margin:0}
 .pdfprev{display:flex;flex-wrap:wrap;gap:8px;max-height:260px;overflow:auto;padding:8px;background:var(--bg);border:1px solid var(--line);border-radius:4px}
 .pdfprev figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:3px}
 .pdfprev svg{width:140px;height:auto;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);display:block}
@@ -264,8 +265,8 @@ input.err{border-color:var(--danger)}
       <div class="menuwrap"><button class="btn ibtn" id="xExport" title="書き出し（PDF・SVG・DXF）" aria-label="書き出し" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2"/><path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4"/><path d="M7 15a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2l0 -4"/></svg></button>
         <div class="menu" id="exportMenu" role="menu" hidden>
           <button role="menuitem" id="xPdf"><b>PDF</b><span>実寸で印刷。用紙と向きを選んで書き出します</span></button>
-          <button role="menuitem" id="xSvg"><b>SVG</b><span>mm単位。裁断線・ステッチ穴・ガイドをグループ分け</span></button>
-          <button role="menuitem" id="xDxf"><b>DXF</b><span>R12形式。レイヤー CUT / STITCH / GUIDE</span></button>
+          <button role="menuitem" id="xSvg"><b>SVG</b><span>mm単位。出力する内容を選んで、種類ごとにグループ分け</span></button>
+          <button role="menuitem" id="xDxf"><b>DXF</b><span>R12形式。出力する内容を選んで、種類ごとにレイヤー分け</span></button>
         </div></div>
       <button class="btn ibtn" id="xFrame" aria-pressed="false" title="印刷枠：PDFの用紙と向きで印刷される範囲を図面に表示" aria-label="印刷枠"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v2"/><path d="M20 16v2a2 2 0 0 1 -2 2h-2"/><path d="M8 20h-2a2 2 0 0 1 -2 -2v-2"/><path d="M4 8v-2a2 2 0 0 1 2 -2h2"/></svg></button>
       <button class="btn ibtn" id="xTheme" title="ライト / ダークを切り替え" aria-label="ライト / ダークを切り替え"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="t-moon"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454l0 .008"/></g><g class="t-sun"><path d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"/></g></svg></button>
@@ -336,17 +337,21 @@ input.err{border-color:var(--danger)}
     <div class="cfoot" id="codeMsg" aria-live="polite"></div>
   </aside>
 </div>
-<div class="modal" id="pdfModal" hidden role="dialog" aria-modal="true" aria-labelledby="pdfTitle"><div class="box" style="width:min(520px,100%)">
+<div class="modal" id="pdfModal" hidden role="dialog" aria-modal="true" aria-labelledby="pdfTitle"><div class="box" style="width:min(520px,100%);overflow:auto">
   <strong id="pdfTitle">実寸PDFの書き出し</strong>
+  <div class="opt"><span id="expOptsLbl">出力</span><div class="expopts" id="expOpts" role="group" aria-labelledby="expOptsLbl"></div></div>
+  <div class="small">図形ごとに書き出さない設定は、パーツ欄の「書き出す」で。選んだ内容は形式ごとに覚えます。</div>
+  <div id="expPaper" style="display:contents">
   <div class="opt"><label for="pdfSize">用紙</label><select class="inp" id="pdfSize">
     <option value="A4">A4（210 × 297 mm）</option><option value="A3">A3（297 × 420 mm）</option><option value="A5">A5（148 × 210 mm）</option>
     <option value="B4">B4（257 × 364 mm）</option><option value="B5">B5（182 × 257 mm）</option><option value="Letter">レター（216 × 279 mm）</option>
     <option value="fit">図形に合わせる（1枚）</option></select></div>
   <div class="opt"><span id="pdfOrientLbl">向き</span><div class="seg" id="pdfOrient" role="radiogroup" aria-labelledby="pdfOrientLbl">
     <label><input type="radio" name="pdfo" value="auto" id="pdfoA">自動</label><label><input type="radio" name="pdfo" value="portrait" id="pdfoP">縦</label><label><input type="radio" name="pdfo" value="landscape" id="pdfoL">横</label></div></div>
+  </div>
   <div class="result" id="pdfInfo"></div>
   <div class="pdfprev" id="pdfPrev" aria-label="PDFのプレビュー"></div>
-  <div class="small">「自動」は枚数が少なくなる向きを選びます。印刷は「実際のサイズ（100%）」で行い、各ページ下の50mm目盛りで確認してください。</div>
+  <div class="small" id="pdfNote">「自動」は枚数が少なくなる向きを選びます。印刷は「実際のサイズ（100%）」で行い、各ページ下の50mm目盛りで確認してください。</div>
   <div class="btns"><button class="btn primary" id="pdfGo">書き出す</button><button class="btn" id="pdfCancel">キャンセル</button></div>
 </div></div>
 <div class="modal help" id="helpModal" hidden role="dialog" aria-modal="true" aria-labelledby="helpTitle"><div class="box">
@@ -471,6 +476,9 @@ const EN_EXACT={
   '回転した線どうしはフィレットできません':'Rotated lines can’t be filleted together','別々の図形どうしは、開いた線（直線・折れ線）のときにフィレットできます':'Separate shapes can be filleted only when both are open lines',
   '角を丸めました':'Corner rounded','2本を延長して角を丸めました':'Extended both edges and rounded the corner','フィレットできませんでした':'Couldn’t fillet','間の辺を別の線として残しました':'Kept the edges between as a separate line',
   '角Rが大きすぎます（辺の長さが足りません）':'The corner radius is too large (the edges are too short)','曲線につながる頂点は丸められません':'A node joined to a curve can’t be rounded',
+  '出力':'Include','ガイド線':'Guide lines','縫い線':'Stitch lines','演算の材料':'Operation materials','図形の名前':'Shape names','書き出す（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)',
+  '図形ごとに書き出さない設定は、パーツ欄の「書き出す」で。選んだ内容は形式ごとに覚えます。':'To leave out a single shape, untick “Export” in its part panel. The choices here are remembered per format.',
+  'SVGの書き出し':'Export SVG','DXFの書き出し':'Export DXF','mm単位。出力する内容を選んで、種類ごとにグループ分け':'In mm; choose what to include, grouped by kind','R12形式。出力する内容を選んで、種類ごとにレイヤー分け':'R12; choose what to include, one layer per kind',
   'オフセット':'Offset','外側':'Outward','内側':'Inward','方向':'Direction','距離':'Distance','角の形':'Corners','丸く':'Round','尖らせる':'Sharp','元の図形':'Source shapes','元の図形から外す':'Remove from the sources',
   '元の図形（上から順に演算。差は1番目から残りを引きます）':'Source shapes (applied top to bottom; difference takes the rest away from the first)',
   '角の形は、外側では出っ張った角、内側では凹んだ角に効きます。元の図形を変えるとオフセットも作り直され、オフセットをドラッグすると元の図形ごと動きます。':'Corners applies to the outer corners when offsetting outward and to the inner corners when offsetting inward. The offset is rebuilt whenever its sources change; dragging it moves the sources with it.',
@@ -519,7 +527,7 @@ const EN_EXACT={
 };
 // [Japanese with {0}…, English, optional {index:{ja:en}} for words that read differently inside the sentence]
 const EN_PAT=[
-  ['{0}（材料）  {1}穴','{0} (material)  {1} holes'],['{0}  {1}穴','{0}  {1} holes'],['{0}（材料）','{0} (material)'],['周長 {0}','Perimeter {0}'],['{0} · 連動','{0} · linked',{0:'T'}],
+  ['{0}（書き出さない）  {1}穴','{0} (not exported)  {1} holes',{0:'T'}],['{0}（書き出さない）','{0} (not exported)',{0:'T'}],['{0}（材料）  {1}穴','{0} (material)  {1} holes'],['{0}  {1}穴','{0}  {1} holes'],['{0}（材料）','{0} (material)'],['周長 {0}','Perimeter {0}'],['{0} · 連動','{0} · linked',{0:'T'}],
   ['{0} 横  {1}','{0} landscape  {1}',{0:'T'}],['{0} 縦  {1}','{0} portrait  {1}',{0:'T'}],['{0} 横','{0} landscape',{0:'T'}],['{0} 縦','{0} portrait',{0:'T'}],['図形に合わせる（{0} × {1} mm）  {2}','Fit to the shapes ({0} × {1} mm)  {2}'],['図形に合わせる（{0} × {1} mm）','Fit to the shapes ({0} × {1} mm)'],
   ['{0}枚（横{1} × 縦{2}）','{0} pages ({1} across × {2} down)'],['{0}枚','{0} page(s)'],['{0}-{1} ページ','Page {0}-{1}'],['ほか {0} 枚','{0} more'],
   ['演算 · {0}','Operation · {0}',{0:'T'}],['始点から：{0}','From start: {0}',{0:'T'}],['終点から：{0}','From end: {0}',{0:'T'}],['ピッチ：{0}','Pitch: {0}',{0:'T'}],['辺{0}：{1}','Edge {0}: {1}',{1:'T'}],['{0}の角を丸めました','Rounded the corner: {0}',{0:'T'}],['頂点{0}の角を丸めました','Rounded the corner at node {0}'],['「{0}」とつないで角を丸めました','Joined with “{0}” and rounded the corner'],
@@ -1080,7 +1088,7 @@ function render(){
   const order=C.items.filter(i=>i.parent&&i.s.id!==sel).concat(C.items.filter(i=>!i.parent||i.s.id===sel));
   for(const it of order){const s=it.s,g=it.g;if(!g)continue;const on=picks.includes(s.id),mat=!!it.parent;
     const faint=mat&&s.id!==sel;
-    const grp=el('g',{'data-id':s.id,'pointer-events':faint?'none':'auto',opacity:faint?.35:1},gShapes);
+    const grp=el('g',{'data-id':s.id,'pointer-events':faint?'none':'auto',opacity:faint?.35:s.noexp&&!on?.45:1},gShapes);
     const d=dPaths(g.paths,g.closed);
     if(g.isDim){const D=g.dim,col=on?'var(--sel)':'var(--guide)';
       el('path',{d:D.lines.map(([a,b])=>`M${a[0]} ${a[1]}L${b[0]} ${b[1]}`).join(''),stroke:col,'stroke-width':1,fill:'none','vector-effect':'non-scaling-stroke','pointer-events':'none'},grp);
@@ -1102,7 +1110,7 @@ function render(){
       const r=Math.max(it.st.hole/2,0.2);let hd='';for(const[x,y]of it.st.holes)hd+=`M${fmt(x-r,3)} ${fmt(y,3)}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0`;
       el('path',{d:hd,fill:'var(--stitch)','fill-opacity':.25,stroke:'var(--stitch)','stroke-width':1,'vector-effect':'non-scaling-stroke','pointer-events':'none'},grp)}
     if(!faint&&!g.isText){const bb=bboxG(g);const t=el('text',{x:bb[0],y:bb[1]-5*k,'font-size':11*k,fill:on?'var(--sel)':'var(--cut)','fill-opacity':on?1:.7,'font-family':'var(--ui)','pointer-events':'none'},gOver);
-      t.textContent=s.name+(mat?'（材料）':'')+(it.st?`  ${it.st.n}穴`:'')}
+      t.textContent=s.name+(mat?'（材料）':'')+(s.noexp?'（書き出さない）':'')+(it.st?`  ${it.st.n}穴`:'')}
     if(s.id===sel&&picks.length===1)drawSel(it,k)}
   if(UI.showFrame)drawFrame(k);
   if(draft)drawDraft(k);
@@ -1184,6 +1192,7 @@ function renderPanel(){
     if(pendingBetween&&pendingBetween.id===s.id)h+=`<div class="result" style="grid-template-columns:1fr;color:var(--fg)"><span>フィレットでつなぐため、間の辺 ${pendingBetween.nodes.length-1} 本を消しました。</span><div class="btns"><button class="btn" id="bBetweenKeep">別の線として残す</button><button class="btn" id="bBetweenDrop">消したままにする</button></div></div>`;
     h+=`<h2>パーツ <span class="pill">${TYPE_LABEL(s)}</span></h2>
     <div class="row"><label for="f_name">名前</label><input type="text" id="f_name" data-path="name" value="${esc(s.name)}"><span></span></div>`;
+    h+=`<label class="check"><input type="checkbox" id="f_exp" data-path="exp"${s.noexp?'':' checked'}> 書き出す（PDF・SVG・DXF）</label>`;
     if(!it.parent&&s.type!=='dim')h+=`<div class="row"><label for="f_kind">線種</label><select class="inp" id="f_kind" data-path="kind"><option value="cut"${s.kind==='cut'?' selected':''}>裁断線</option><option value="guide"${s.kind==='guide'?' selected':''}>ガイド</option></select><span></span></div>`;
     if(s.type==='bool'){
       h+=`<div class="row"><label for="f_op">演算</label><select class="inp" id="f_op" data-path="op">${Object.entries(OPS).map(([k,v])=>`<option value="${k}"${s.op===k?' selected':''}>${v}</option>`).join('')}</select><span></span></div>
@@ -1304,7 +1313,7 @@ function renameShape(s,v){v=v.replace(/[\[\]]/g,'');s.name=v;const E=nameEdit;if
   for(const[o,k,orig]of E.slots)o[k]=v.trim()?renameIn(orig,E.from,v):orig;
   if(v&&doc.shapes.some(x=>x!==s&&x.name===v)&&!E.warned){toast(`「${v}」という名前の図形がほかにもあります。式から参照するときは名前を変えてください`,4000);E.warned=true}}
 $('secProps').addEventListener('input',e=>{const t=e.target,p=t.dataset.path;if(!p)return;const s=cur();if(!s)return;
-  if(t.type==='checkbox'){pushUndo();if(p==='closed')s.closed=t.checked;else if(p==='st.on')s.st.on=t.checked;
+  if(t.type==='checkbox'){pushUndo();if(p==='exp'){if(t.checked)delete s.noexp;else s.noexp=true}else if(p==='closed')s.closed=t.checked;else if(p==='st.on')s.st.on=t.checked;
     else if(p==='edge.on'){const e=curEdge();if(e)edgeSet(s,e,'off',t.checked?'':true)}lastPanelKey=null;render();return}
   if(t.tagName==='SELECT'){pushUndo();s[p]=t.value;lastPanelKey=null;render();return}
   if(p.startsWith('edge.')){const e=curEdge();if(!e)return;if(t.type==='radio')pushUndo();edgeSet(s,e,p.slice(5),t.value);if(t.type==='radio')lastPanelKey=null;render();return}
@@ -1556,9 +1565,7 @@ const HINT={dim:'始点と終点をクリック（図形の角・辺の中点・
 function setTool(t){if(t==='offset'&&tool!=='offset'&&picks.length&&makeOffset(picks))return;
   tool=t;draft=null;snapHint=null;fsel=null;fhover=null;$('fRBox').hidden=t!=='fillet';document.querySelectorAll('.tool[data-tool]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));svg.className.baseVal=t==='select'||t==='offset'?'':'draw';$('sHint').textContent=HINT[t];render()}
 document.querySelectorAll('.tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
-function contentBB(){let bb=[1e9,1e9,-1e9,-1e9];for(const it of C.items){if(!it.g||it.parent)continue;const b=bboxG(it.g);
-    if(it.st)for(const[x,y]of it.st.holes){b[0]=Math.min(b[0],x);b[1]=Math.min(b[1],y);b[2]=Math.max(b[2],x);b[3]=Math.max(b[3],y)}
-    bb=[Math.min(bb[0],b[0]),Math.min(bb[1],b[1]),Math.max(bb[2],b[2]),Math.max(bb[3],b[3])]}return bb[0]>bb[2]?null:bb}
+function contentBB(){const{items,bb}=exportItems(expOpts('pdf'),true);return items.length?bb:null}
 // printable area of every page that the PDF button would produce, with the paper edge drawn faintly around it
 function drawFrame(k){const bb=contentBB();if(!bb)return;const L=pdfLayout(bb,{size:UI.pdfSize||'A4',orient:UI.pdfOrient||'auto'}),{aw,ah,cols,rows,M,pw,ph}=L;
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=bb[0]+c*aw,y=bb[1]+r*ah;
@@ -1917,32 +1924,59 @@ $('snap').onchange=e=>{snapStep=+e.target.value};
 new ResizeObserver(()=>applyView()).observe($('stage'));
 
 // ---------- export ----------
-function exportItems(){C=compute();const items=[];
-  for(const it of C.items){if(!it.g||it.parent)continue;items.push({s:it.s,g:it.g,st:it.st})}
-  let bb=[1e9,1e9,-1e9,-1e9];for(const it of items){const b=bboxG(it.g);if(it.st)for(const[x,y]of it.st.holes){b[0]=Math.min(b[0],x);b[1]=Math.min(b[1],y)}bb=[Math.min(bb[0],b[0]),Math.min(bb[1],b[1]),Math.max(bb[2],b[2]),Math.max(bb[3],b[3])]}
+// what goes into PDF / SVG / DXF: chosen per format in the export dialog (UI.exp), and per shape with s.noexp
+const EXP_KEYS=[['cut','裁断線'],['guide','ガイド線'],['holes','ステッチ穴'],['line','縫い線'],['mat','演算の材料'],['dim','寸法線'],['text','テキスト'],['names','図形の名前']];
+const EXP_DEFAULT={cut:true,guide:true,holes:true,line:false,mat:false,dim:true,text:true,names:false};
+const expOpts=f=>({...EXP_DEFAULT,...((UI.exp||{})[f]||{})});
+const NAME_SIZE=3;
+// each item: out (draw the shape itself), mat (a material of an operation, drawn faint and dashed), st (stitch holes),
+// line (stitched runs as polylines), name ({str,x,y}: the shape's name above its top left)
+function exportItems(opt=EXP_DEFAULT,reuse){if(!reuse)C=compute();const items=[];
+  for(const it of C.items){const s=it.s,g=it.g;if(!g||s.noexp)continue;const mat=!!it.parent;
+    if(mat&&(!opt.mat||g.isDim||g.isText))continue;
+    const o={s,g,mat,out:false,st:null,line:null,name:null};
+    if(g.isDim)o.out=opt.dim;else if(g.isText)o.out=opt.text;
+    else{o.out=mat||(s.kind==='guide'?opt.guide:opt.cut);
+      if(!mat&&it.st){if(opt.holes)o.st=it.st;if(opt.line){const L=it.st.edges.filter(e=>e.on&&e.sub).map(e=>e.sub);if(L.length)o.line=L}}
+      if(!mat&&opt.names&&s.name){const b=bboxG(g);o.name={str:s.name,x:b[0],y:b[1]-1.2}}}
+    if(o.out||o.st||o.line||o.name)items.push(o)}
+  let bb=[1e9,1e9,-1e9,-1e9];const ext=(x,y)=>{bb[0]=Math.min(bb[0],x);bb[1]=Math.min(bb[1],y);bb[2]=Math.max(bb[2],x);bb[3]=Math.max(bb[3],y)};
+  for(const o of items){if(o.out){const b=bboxG(o.g);ext(b[0],b[1]);ext(b[2],b[3])}
+    if(o.st){const r=o.st.hole/2;for(const[x,y]of o.st.holes){ext(x-r,y-r);ext(x+r,y+r)}}
+    if(o.line)for(const P of o.line)for(const[x,y]of P)ext(x,y);
+    if(o.name){ext(o.name.x,o.name.y-NAME_SIZE);ext(o.name.x+textWidth(o.name.str,NAME_SIZE),o.name.y)}}
   return{items,bb}}
-function buildSVG(){const{items,bb}=exportItems();const m=5,x0=bb[0]-m,y0=bb[1]-m,w=bb[2]-bb[0]+2*m,h=bb[3]-bb[1]+2*m;
+function buildSVG(opt){const{items,bb}=exportItems(opt);const m=5,x0=bb[0]-m,y0=bb[1]-m,w=bb[2]-bb[0]+2*m,h=bb[3]-bb[1]+2*m;
   let o=`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${fmt(w,3)}mm" height="${fmt(h,3)}mm" viewBox="${fmt(x0,3)} ${fmt(y0,3)} ${fmt(w,3)} ${fmt(h,3)}">\n`;
-  const groups={cut:'',guide:'',stitch:'',text:'',dim:''};
-  for(const{s,g,st}of items){const id=esc(s.name);let e;
+  const groups={cut:'',guide:'',mat:'',stitch:'',line:'',text:'',dim:'',names:''};
+  for(const{s,g,st,out,mat,line,name}of items){const id=esc(s.name);let e;
+    if(line)groups.line+=`<path d="${line.map(P=>dOf(P,false)).join('')}"><title>${id}</title></path>\n`;
+    if(name)groups.names+=`<text x="${fmt(name.x,3)}" y="${fmt(name.y,3)}" font-size="${NAME_SIZE}">${esc(name.str)}</text>\n`;
+    if(st)for(const[x,y]of st.holes)groups.stitch+=`<circle cx="${fmt(x,3)}" cy="${fmt(y,3)}" r="${fmt(st.hole/2,3)}"/>\n`;
+    if(!out)continue;
     if(g.isDim){const D=g.dim;groups.dim+=`<g><title>${id}</title><path d="${D.lines.map(([a,b])=>`M${fmt(a[0],3)} ${fmt(a[1],3)}L${fmt(b[0],3)} ${fmt(b[1],3)}`).join('')}"/><path fill="#444" stroke="none" d="${D.arrows.map(t=>dOf(t,true)).join('')}"/><text x="${fmt(D.text.x,3)}" y="${fmt(D.text.y,3)}" font-size="${fmt(D.text.size,3)}" text-anchor="middle" fill="#444" stroke="none" transform="rotate(${fmt(D.text.rot,3)} ${fmt(D.text.x,3)} ${fmt(D.text.y,3)})">${D.text.str}</text></g>\n`;continue}
     if(g.isText){groups.text+=`<text x="${fmt(g.x,3)}" y="${fmt(g.y,3)}" font-size="${fmt(g.size,3)}"${g.rot?` transform="rotate(${fmt(g.rot,3)} ${fmt(g.x,3)} ${fmt(g.y,3)})"`:''} fill="${s.kind==='guide'?'#2c6fbb':'#000'}">${esc(g.str)}</text>\n`;continue}
     if(s.type==='rect')e=`<path d="${rectPathD(g)}"><title>${id}</title></path>\n`;
     else if(s.type==='circle')e=`<circle cx="${fmt(g.cx,3)}" cy="${fmt(g.cy,3)}" r="${fmt(g.d/2,3)}"><title>${id}</title></circle>\n`;
     else e=`<path fill-rule="evenodd" d="${s.type==='poly'?nodesD(g.fnodes||g.nodes,g.closed):dPaths(g.paths,g.closed)}"><title>${id}</title></path>\n`;
-    groups[s.kind==='guide'?'guide':'cut']+=e;
-    if(st)for(const[x,y]of st.holes)groups.stitch+=`<circle cx="${fmt(x,3)}" cy="${fmt(y,3)}" r="${fmt(st.hole/2,3)}"/>\n`}
-  o+=`<g id="cut" fill="none" stroke="#000" stroke-width="0.25">\n${groups.cut}</g>\n<g id="stitch" fill="none" stroke="#c0392b" stroke-width="0.15">\n${groups.stitch}</g>\n<g id="guide" fill="none" stroke="#2c6fbb" stroke-width="0.2" stroke-dasharray="2 1.5">\n${groups.guide}</g>\n<g id="text" font-family="sans-serif">\n${groups.text}</g>\n<g id="dim" fill="none" stroke="#444" stroke-width="0.15" font-family="sans-serif">\n${groups.dim}</g>\n</svg>\n`;return o}
-function buildDXF(){const{items}=exportItems();const L=[];const add=(...a)=>L.push(...a.map(String));const n=v=>fmt(v,4);
+    groups[mat?'mat':s.kind==='guide'?'guide':'cut']+=e}
+  o+=`<g id="cut" fill="none" stroke="#000" stroke-width="0.25">\n${groups.cut}</g>\n<g id="stitch" fill="none" stroke="#c0392b" stroke-width="0.15">\n${groups.stitch}</g>\n<g id="guide" fill="none" stroke="#2c6fbb" stroke-width="0.2" stroke-dasharray="2 1.5">\n${groups.guide}</g>\n`+
+    (groups.mat?`<g id="material" fill="none" stroke="#999" stroke-width="0.15" stroke-dasharray="1.5 1">\n${groups.mat}</g>\n`:'')+(groups.line?`<g id="stitch-line" fill="none" stroke="#c0392b" stroke-width="0.15" stroke-dasharray="1 1">\n${groups.line}</g>\n`:'')+
+    (groups.names?`<g id="names" fill="#555" font-family="sans-serif">\n${groups.names}</g>\n`:'')+`<g id="text" font-family="sans-serif">\n${groups.text}</g>\n<g id="dim" fill="none" stroke="#444" stroke-width="0.15" font-family="sans-serif">\n${groups.dim}</g>\n</svg>\n`;return o}
+function buildDXF(opt){const{items}=exportItems(opt);const L=[];const add=(...a)=>L.push(...a.map(String));const n=v=>fmt(v,4);
   add(0,'SECTION',2,'HEADER',9,'$ACADVER',1,'AC1009',9,'$INSUNITS',70,4,0,'ENDSEC');
-  add(0,'SECTION',2,'TABLES',0,'TABLE',2,'LAYER',70,5);
-  for(const[nm,c]of[['CUT',7],['STITCH',1],['GUIDE',5],['TEXT',3],['DIM',8]])add(0,'LAYER',2,nm,70,0,62,c,6,'CONTINUOUS');
+  add(0,'SECTION',2,'TABLES',0,'TABLE',2,'LAYER',70,8);
+  for(const[nm,c]of[['CUT',7],['STITCH',1],['GUIDE',5],['TEXT',3],['DIM',8],['MATERIAL',9],['STITCHLINE',6],['NAME',3]])add(0,'LAYER',2,nm,70,0,62,c,6,'CONTINUOUS');
   add(0,'ENDTAB',0,'ENDSEC',0,'SECTION',2,'ENTITIES');
   const poly=(layer,verts,closed)=>{add(0,'POLYLINE',8,layer,66,1,70,closed?1:0,10,0,20,0,30,0);for(const[x,y,b]of verts){add(0,'VERTEX',8,layer,10,n(x),20,n(-y),30,0);if(b)add(42,n(b))}add(0,'SEQEND',8,layer)};
   const circ=(layer,x,y,r)=>add(0,'CIRCLE',8,layer,10,n(x),20,n(-y),30,0,40,n(r));
   // non-ASCII characters are written as \U+XXXX so Japanese survives in R12 readers
   const dxfStr=t=>[...t].map(ch=>{const c=ch.codePointAt(0);return c<128?ch:'\\U+'+c.toString(16).toUpperCase().padStart(4,'0')}).join('');
-  for(const{s,g,st}of items){const layer=s.kind==='guide'?'GUIDE':'CUT';
+  for(const{s,g,st,out,mat,line,name}of items){const layer=mat?'MATERIAL':s.kind==='guide'?'GUIDE':'CUT';
+    if(line)for(const P of line)poly('STITCHLINE',P,false);
+    if(name)add(0,'TEXT',8,'NAME',10,n(name.x),20,n(-name.y),30,0,40,n(NAME_SIZE*0.72),1,dxfStr(name.str));
+    if(st)for(const[hx,hy]of st.holes)circ('STITCH',hx,hy,st.hole/2);
+    if(!out)continue;
     if(g.isDim){const D=g.dim,line=(a,b)=>add(0,'LINE',8,'DIM',10,n(a[0]),20,n(-a[1]),30,0,11,n(b[0]),21,n(-b[1]),31,0);
       for(const[a,b]of D.lines)line(a,b);for(const t of D.arrows)poly('DIM',t,true);
       add(0,'TEXT',8,'DIM',10,n(D.text.x),20,n(-D.text.y),30,0,40,n(D.text.size*0.72),1,D.text.str,50,n(-D.text.rot),72,1,11,n(D.text.x),21,n(-D.text.y),31,0);continue}
@@ -1952,8 +1986,7 @@ function buildDXF(){const{items}=exportItems();const L=[];const add=(...a)=>L.pu
       const B=-Math.tan(Math.PI/8),v=[];for(const c of rectCorners(g.x,g.y,g.w,g.h,g.corners)){if(c.t==='none'){v.push([...c.C]);continue}v.push(c.t==='round'?[...c.pin,B]:[...c.pin]);v.push([...c.pout])}
       if(g.rot)for(const q of v){const r=rotP(g.rot,q);q[0]=r[0];q[1]=r[1]}
       poly(layer,v.filter((q,i)=>i===0||dist(q,v[i-1])>1e-6),true)}
-    else for(const p of g.paths)poly(layer,p,g.closed);
-    if(st)for(const[hx,hy]of st.holes)circ('STITCH',hx,hy,st.hole/2)}
+    else for(const p of g.paths)poly(layer,p,g.closed)}
   add(0,'ENDSEC',0,'EOF');return L.join('\n')+'\n'}
 const PAPERS={A4:[210,297,'A4'],A3:[297,420,'A3'],A5:[148,210,'A5'],B4:[257,364,'B4'],B5:[182,257,'B5'],Letter:[215.9,279.4,'レター']};
 function pdfLayout(bb,o){const M=10,BAR=6,bw=bb[2]-bb[0]+0.01,bh=bb[3]-bb[1]+0.01;
@@ -1967,29 +2000,34 @@ function textMask(str,size){const pxmm=400/25.4,px=size*pxmm,cv=document.createE
   const d=ctx.getImageData(0,0,w,h).data,rb=Math.ceil(w/8);let bin='';
   for(let y=0;y<h;y++){const row=new Uint8Array(rb);for(let x=0;x<w;x++)if(d[(y*w+x)*4+3]>110)row[x>>3]|=0x80>>(x&7);bin+=String.fromCharCode.apply(null,row)}
   return{w,h,bin,wmm:w/pxmm,hmm:h/pxmm}}
-function buildPDF(o){const{items,bb}=exportItems();const K=72/25.4;
+function buildPDF(o,opt){const{items,bb}=exportItems(opt);const K=72/25.4;
   const L=pdfLayout(bb,o);const{pw,ph,aw,ah,cols,rows,M}=L;
-  const masks=new Map();let mi=0;for(const{s:sh,g}of items)if(g.isText&&g.str)masks.set(sh.id,{name:'Im'+(++mi),m:textMask(g.str,g.size)});const objs=[];const pages=[];
+  const masks=new Map();let mi=0;for(const{s:sh,g,out,name}of items){if(out&&g.isText&&g.str)masks.set(sh.id,{name:'Im'+(++mi),m:textMask(g.str,g.size)});if(name)masks.set('n:'+sh.id,{name:'Im'+(++mi),m:textMask(name.str,NAME_SIZE)})}const objs=[];const pages=[];
   const F=v=>(Math.round(v*1000)/1000).toString();
   const circ=(x,y,r)=>{const c=0.5523*r;return`${F(x+r)} ${F(y)} m ${F(x+r)} ${F(y+c)} ${F(x+c)} ${F(y+r)} ${F(x)} ${F(y+r)} c ${F(x-c)} ${F(y+r)} ${F(x-r)} ${F(y+c)} ${F(x-r)} ${F(y)} c ${F(x-r)} ${F(y-c)} ${F(x-c)} ${F(y-r)} ${F(x)} ${F(y-r)} c ${F(x+c)} ${F(y-r)} ${F(x+r)} ${F(y-c)} ${F(x+r)} ${F(y)} c S\n`};
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
     const ox=bb[0]+c*aw,oy=bb[1]+r*ah;const T=(X,Y)=>[(M+X-ox)*K,(ph-M-(Y-oy))*K];
     let s=`q ${F(M*K)} ${F((ph-M-ah)*K)} ${F(aw*K)} ${F(ah*K)} re W n\n1 J 1 j\n`;
-    for(const{s:sh,g,st}of items){
+    // text (and names) are placed as image masks, so any script prints
+    const mask=(m,x,y,size,rot,col)=>{const a=rot*Math.PI/180,cs=Math.cos(a),sn=Math.sin(a),Rt=(px,py)=>{const dx=px-x,dy=py-y;return T(x+dx*cs-dy*sn,y+dx*sn+dy*cs)};
+      const top=y-size,BL=Rt(x,top+m.m.hmm),BR=Rt(x+m.m.wmm,top+m.m.hmm),TL=Rt(x,top);
+      return`q ${col} rg ${F(BR[0]-BL[0])} ${F(BR[1]-BL[1])} ${F(TL[0]-BL[0])} ${F(TL[1]-BL[1])} ${F(BL[0])} ${F(BL[1])} cm /${m.name} Do Q\n`};
+    for(const{s:sh,g,st,out,mat,line,name}of items){
+      if(name)s+=mask(masks.get('n:'+sh.id),name.x,name.y,NAME_SIZE,0,'0.33 0.33 0.33');
+      if(line){s+='0.75 0.2 0.15 RG [1.5 1.5] 0 d 0.35 w\n';for(const P of line)s+=P.map((q,i)=>{const[x,y]=T(q[0],q[1]);return`${F(x)} ${F(y)} ${i?'l':'m'}`}).join('\n')+' S\n'}
+      if(st){s+='[] 0 d 0.75 0.2 0.15 RG 0.4 w\n';for(const[hx,hy]of st.holes){const[x,y]=T(hx,hy);s+=circ(x,y,st.hole/2*K)}}
+      if(!out)continue;
       if(g.isDim){const D=g.dim,P=q=>{const[x,y]=T(q[0],q[1]);return F(x)+' '+F(y)};
         s+='0.27 0.27 0.27 RG 0.27 0.27 0.27 rg [] 0 d 0.4 w\n'+D.lines.map(([a,b])=>`${P(a)} m ${P(b)} l S`).join('\n')+'\n'+D.arrows.map(t=>`${P(t[0])} m ${P(t[1])} l ${P(t[2])} l h f`).join('\n')+'\n';
         // Helvetica widths: digits 0.556 em, point 0.278 em
         const fs=D.text.size*K,tw=[...D.text.str].reduce((w,ch)=>w+(ch==='.'?0.278:0.556),0)*D.text.size,st=[D.text.x-D.text.dir[0]*tw/2,D.text.y-D.text.dir[1]*tw/2],[sx,sy]=T(st[0],st[1]),a=-D.text.rot*Math.PI/180;
         s+=`BT /F1 ${F(fs)} Tf ${F(Math.cos(a))} ${F(Math.sin(a))} ${F(-Math.sin(a))} ${F(Math.cos(a))} ${F(sx)} ${F(sy)} Tm (${D.text.str}) Tj ET\n`;continue}
-      if(g.isText){const m=masks.get(sh.id);if(!m)continue;const a=g.rot*Math.PI/180,cs=Math.cos(a),sn=Math.sin(a),Rt=(px,py)=>{const dx=px-g.x,dy=py-g.y;return T(g.x+dx*cs-dy*sn,g.y+dx*sn+dy*cs)};
-        const top=g.y-g.size,BL=Rt(g.x,top+m.m.hmm),BR=Rt(g.x+m.m.wmm,top+m.m.hmm),TL=Rt(g.x,top);
-        s+=`q ${sh.kind==='guide'?'0.25 0.45 0.75':'0 0 0'} rg ${F(BR[0]-BL[0])} ${F(BR[1]-BL[1])} ${F(TL[0]-BL[0])} ${F(TL[1]-BL[1])} ${F(BL[0])} ${F(BL[1])} cm /${m.name} Do Q\n`;continue}
-      if(sh.kind==='guide')s+='0.25 0.45 0.75 RG [4 3] 0 d 0.5 w\n';else s+='0 0 0 RG [] 0 d 0.7 w\n';
+      if(g.isText){const m=masks.get(sh.id);if(m)s+=mask(m,g.x,g.y,g.size,g.rot,sh.kind==='guide'?'0.25 0.45 0.75':'0 0 0');continue}
+      if(mat)s+='0.6 0.6 0.6 RG [2 2] 0 d 0.4 w\n';else if(sh.kind==='guide')s+='0.25 0.45 0.75 RG [4 3] 0 d 0.5 w\n';else s+='0 0 0 RG [] 0 d 0.7 w\n';
       if(sh.type==='circle'){const[x,y]=T(g.cx,g.cy);s+=circ(x,y,g.d/2*K)}
       else if(sh.type==='poly'){const N=g.fnodes||g.nodes,P=q=>{const[x,y]=T(q[0],q[1]);return F(x)+' '+F(y)};s+=P([N[0].x,N[0].y])+' m\n';
         for(let i=0;i<(g.closed?N.length:N.length-1);i++){const c=segCtrl(N,i);s+=c.line?P(c.p3)+' l\n':`${P(c.p1)} ${P(c.p2)} ${P(c.p3)} c\n`}s+=g.closed?'h S\n':'S\n'}
-      else for(const p of g.paths){s+=p.map((q,i)=>{const[x,y]=T(q[0],q[1]);return`${F(x)} ${F(y)} ${i?'l':'m'}`}).join('\n')+(g.closed?' h S\n':' S\n')}
-      if(st){s+='[] 0 d 0.75 0.2 0.15 RG 0.4 w\n';for(const[hx,hy]of st.holes){const[x,y]=T(hx,hy);s+=circ(x,y,st.hole/2*K)}}}
+      else for(const p of g.paths){s+=p.map((q,i)=>{const[x,y]=T(q[0],q[1]);return`${F(x)} ${F(y)} ${i?'l':'m'}`}).join('\n')+(g.closed?' h S\n':' S\n')}}
     s+='Q\n0.5 g 0.5 G 0.3 w []0 d\n';
     for(const[cx,cy]of[[M,ph-M-ah],[M+aw,ph-M-ah],[M,ph-M],[M+aw,ph-M]]){s+=`${F((cx-3)*K)} ${F(cy*K)} m ${F((cx+3)*K)} ${F(cy*K)} l S ${F(cx*K)} ${F((cy-3)*K)} m ${F(cx*K)} ${F((cy+3)*K)} l S\n`}
     const by=(ph-M-ah-6)*K+2;s+=`0 g 0 G 0.6 w ${F(M*K)} ${F(by)} m ${F((M+50)*K)} ${F(by)} l S `;for(let i=0;i<=50;i+=10)s+=`${F((M+i)*K)} ${F(by)} m ${F((M+i)*K)} ${F(by+(i%50?2:4))} l S `;
@@ -2013,19 +2051,32 @@ $('mClose').onclick=()=>$('modal').hidden=true;
 $('modal').onclick=e=>{if(e.target.id==='modal')$('modal').hidden=true};
 $('mCopy').onclick=()=>{const t=$('mText');navigator.clipboard.writeText(t.value).then(()=>toast('コピーしました'),()=>{t.focus();t.select();toast('選択しました。⌘Cでコピーしてください')})};
 function pdfOpts(){return{size:$('pdfSize').value,orient:(document.querySelector('input[name=pdfo]:checked')||{}).value||'auto'}}
-function updatePdfInfo(){const o=pdfOpts(),{bb,items}=exportItems();$('pdfOrient').classList.toggle('off',o.size==='fit');
-  if(!items.length){$('pdfInfo').innerHTML='<span>書き出す図形がありません</span><span></span>';$('pdfGo').disabled=true;return}$('pdfGo').disabled=false;
-  const L=pdfLayout(bb,o);renderPdfPreview(L,items,bb);$('pdfInfo').innerHTML=`<span>用紙</span><span>${L.label}</span><span>枚数</span><span>${L.cols*L.rows}枚${L.cols*L.rows>1?`（横${L.cols} × 縦${L.rows}）`:''}</span><span>型紙</span><span>${fmt(bb[2]-bb[0])} × ${fmt(bb[3]-bb[1])} mm</span>`}
-$('xPdf').onclick=()=>{$('pdfSize').value=UI.pdfSize||'A4';(document.getElementById({auto:'pdfoA',portrait:'pdfoP',landscape:'pdfoL'}[UI.pdfOrient||'auto'])).checked=true;
-  updatePdfInfo();$('pdfModal').hidden=false;$('pdfGo').focus()};
+// the export dialog serves PDF, SVG and DXF: what to include (remembered per format), and for PDF the paper and pages
+let expFmt='pdf';
+function updatePdfInfo(){const pdf=expFmt==='pdf',o=pdf?pdfOpts():{size:'fit'},{bb,items}=exportItems(expOpts(expFmt));$('pdfOrient').classList.toggle('off',o.size==='fit');
+  if(!items.length){$('pdfInfo').innerHTML='<span>書き出す図形がありません</span><span></span>';$('pdfPrev').innerHTML='';$('pdfGo').disabled=true;return}$('pdfGo').disabled=false;
+  const L=pdfLayout(bb,o);renderPdfPreview(L,items,bb);
+  $('pdfInfo').innerHTML=(pdf?`<span>用紙</span><span>${L.label}</span><span>枚数</span><span>${L.cols*L.rows}枚${L.cols*L.rows>1?`（横${L.cols} × 縦${L.rows}）`:''}</span>`:'')+`<span>型紙</span><span>${fmt(bb[2]-bb[0])} × ${fmt(bb[3]-bb[1])} mm</span>`}
+function openExport(f){expFmt=f;const pdf=f==='pdf',o=expOpts(f);
+  $('pdfTitle').textContent={pdf:'実寸PDFの書き出し',svg:'SVGの書き出し',dxf:'DXFの書き出し'}[f];$('expPaper').style.display=pdf?'contents':'none';$('pdfNote').hidden=!pdf;
+  $('expOpts').innerHTML=EXP_KEYS.map(([k,l])=>`<label><input type="checkbox" data-exp="${k}"${o[k]?' checked':''}>${l}</label>`).join('');
+  if(pdf){$('pdfSize').value=UI.pdfSize||'A4';(document.getElementById({auto:'pdfoA',portrait:'pdfoP',landscape:'pdfoL'}[UI.pdfOrient||'auto'])).checked=true}
+  updatePdfInfo();$('pdfModal').hidden=false;$('pdfGo').focus()}
+$('expOpts').addEventListener('change',e=>{const k=e.target.dataset.exp;if(!k)return;UI.exp=UI.exp||{};UI.exp[expFmt]={...expOpts(expFmt),[k]:e.target.checked};saveUI();updatePdfInfo();if(expFmt==='pdf')render()});
+$('xPdf').onclick=()=>openExport('pdf');
 // the print frame follows whatever is chosen in the dialog
 const pdfChanged=()=>{const o=pdfOpts();UI.pdfSize=o.size;UI.pdfOrient=o.orient;saveUI();updatePdfInfo();render()};
 $('pdfSize').onchange=pdfChanged;$('pdfOrient').addEventListener('change',pdfChanged);
 function renderPdfPreview(L,items,bb){const{pw,ph,aw,ah,cols,rows,M}=L,max=12,shown=Math.min(cols*rows,max);let h='',n=0;
-  const art=items.map(({s,g,st})=>{if(g.isText)return`<text x="${g.x}" y="${g.y}" font-size="${g.size}" fill="${s.kind==='guide'?'#2c6fbb':'#000'}"${g.rot?` transform="rotate(${g.rot} ${g.x} ${g.y})"`:''}>${esc(g.str)}</text>`;
-    if(g.isDim){const D=g.dim;return`<path d="${D.lines.map(([a,b])=>`M${a[0]} ${a[1]}L${b[0]} ${b[1]}`).join('')}" stroke="#444" stroke-width="0.25" fill="none"/><text x="${D.text.x}" y="${D.text.y}" font-size="${D.text.size}" text-anchor="middle" fill="#444" transform="rotate(${D.text.rot} ${D.text.x} ${D.text.y})">${D.text.str}</text>`}
-    let o=`<path d="${dPaths(g.paths,g.closed)}" fill="none" stroke="${s.kind==='guide'?'#2c6fbb':'#000'}" stroke-width="0.5"${s.kind==='guide'?' stroke-dasharray="3 2"':''}/>`;
-    if(st)o+=`<path d="${st.holes.map(([x,y])=>`M${x-0.6} ${y}a0.6 0.6 0 1 0 1.2 0a0.6 0.6 0 1 0 -1.2 0`).join('')}" fill="#c0392b"/>`;return o}).join('');
+  const art=items.map(({s,g,st,out,mat,line,name})=>{let o='';
+    if(name)o+=`<text x="${name.x}" y="${name.y}" font-size="${NAME_SIZE}" fill="#555">${esc(name.str)}</text>`;
+    if(line)o+=`<path d="${line.map(P=>dOf(P,false)).join('')}" fill="none" stroke="#c0392b" stroke-width="0.3" stroke-dasharray="1.5 1.5"/>`;
+    if(st)o+=`<path d="${st.holes.map(([x,y])=>`M${x-0.6} ${y}a0.6 0.6 0 1 0 1.2 0a0.6 0.6 0 1 0 -1.2 0`).join('')}" fill="#c0392b"/>`;
+    if(!out)return o;
+    if(g.isText)return o+`<text x="${g.x}" y="${g.y}" font-size="${g.size}" fill="${s.kind==='guide'?'#2c6fbb':'#000'}"${g.rot?` transform="rotate(${g.rot} ${g.x} ${g.y})"`:''}>${esc(g.str)}</text>`;
+    if(g.isDim){const D=g.dim;return o+`<path d="${D.lines.map(([a,b])=>`M${a[0]} ${a[1]}L${b[0]} ${b[1]}`).join('')}" stroke="#444" stroke-width="0.25" fill="none"/><text x="${D.text.x}" y="${D.text.y}" font-size="${D.text.size}" text-anchor="middle" fill="#444" transform="rotate(${D.text.rot} ${D.text.x} ${D.text.y})">${D.text.str}</text>`}
+    const col=mat?'#999':s.kind==='guide'?'#2c6fbb':'#000';
+    return o+`<path d="${dPaths(g.paths,g.closed)}" fill="none" stroke="${col}" stroke-width="${mat?0.35:0.5}"${mat?' stroke-dasharray="2 1.5"':s.kind==='guide'?' stroke-dasharray="3 2"':''}/>`}).join('');
   for(let r=0;r<rows&&n<shown;r++)for(let c=0;c<cols&&n<shown;c++,n++){const ox=bb[0]+c*aw,oy=bb[1]+r*ah,id='pv'+n;
     h+=`<figure><svg viewBox="0 0 ${pw} ${ph}" role="img" aria-label="${c+1}-${r+1} ページ"><defs><clipPath id="${id}"><rect x="${M}" y="${M}" width="${aw}" height="${ah}"/></clipPath></defs>
       <rect x="${M}" y="${M}" width="${aw}" height="${ah}" fill="none" stroke="#bbb" stroke-width="0.6" stroke-dasharray="4 3"/>
@@ -2035,11 +2086,13 @@ function renderPdfPreview(L,items,bb){const{pw,ph,aw,ah,cols,rows,M}=L,max=12,sh
 $('pdfCancel').onclick=()=>$('pdfModal').hidden=true;
 $('pdfModal').addEventListener('click',e=>{if(e.target.id==='pdfModal')$('pdfModal').hidden=true});
 $('pdfModal').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();$('pdfModal').hidden=true}});
-$('pdfGo').onclick=async()=>{const o=pdfOpts();UI.pdfSize=o.size;UI.pdfOrient=o.orient;saveUI();$('pdfModal').hidden=true;
-  const{pdf,n,label}=buildPDF(o);const bytes=new Uint8Array(pdf.length);for(let i=0;i<pdf.length;i++)bytes[i]=pdf.charCodeAt(i)&255;
+$('pdfGo').onclick=async()=>{$('pdfModal').hidden=true;const opt=expOpts(expFmt);
+  if(expFmt==='svg'){offer('pattern.svg',buildSVG(opt));return}if(expFmt==='dxf'){offer('pattern.dxf',buildDXF(opt));return}
+  const o=pdfOpts();UI.pdfSize=o.size;UI.pdfOrient=o.orient;saveUI();
+  const{pdf,n,label}=buildPDF(o,opt);const bytes=new Uint8Array(pdf.length);for(let i=0;i<pdf.length;i++)bytes[i]=pdf.charCodeAt(i)&255;
   if(await offer('pattern.pdf',bytes))toast(`${label}・${n}枚のPDFを保存しました`)};
-$('xSvg').onclick=()=>{offer('pattern.svg',buildSVG())};
-$('xDxf').onclick=()=>offer('pattern.dxf',buildDXF());
+$('xSvg').onclick=()=>openExport('svg');
+$('xDxf').onclick=()=>openExport('dxf');
 $('xJson').onclick=()=>offer('pattern.json',JSON.stringify(doc,null,2));
 $('xLoad').onclick=()=>$('fileIn').click();
 $('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.shapes||!d.vars)throw 0;pushUndo();doc=migrate(d);setSel(null);fit();toast('読み込みました')}catch(x){toast('型紙ファイルとして読めませんでした')}});e.target.value=''};

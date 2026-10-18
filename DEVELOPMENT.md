@@ -41,7 +41,9 @@ Push straight to `main` when asked; there is no build step.
   paths / drops the nodes between two edges of one path (`pendingBetween` offers keeping them as a line).
 - per-edge stitch overrides: `st.eo:[{u,v,off?,pitch?,method?,pos?,from?,to?}]`, anchored to the edge midpoint in the
   unrotated bbox (0..1) and matched to the nearest edge on each compute (old `st.edges` is migrated).
-- storage keys: `ppp-v1` (doc), `ppp-ui` (UI: varsCollapsed, pdfSize/pdfOrient, showFrame, osnap, theme, lang, noMoveConfirm).
+- export: `exportItems(opt)` decides what goes out (`UI.exp[pdf|svg|dxf]`, keys in `EXP_KEYS`, defaults `EXP_DEFAULT`)
+  and skips shapes with `s.noexp`; each item says whether to draw the shape, its holes, stitch line and name.
+- storage keys: `ppp-v1` (doc), `ppp-ui` (UI: varsCollapsed, pdfSize/pdfOrient, exp, showFrame, osnap, theme, lang, noMoveConfirm).
 - share link: `#p=` + `z`+base64url(deflate-raw JSON) or `j`+base64url(JSON).
 
 ## Expressions
