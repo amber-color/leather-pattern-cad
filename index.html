@@ -1170,7 +1170,9 @@ $('vars').addEventListener('focusin',e=>{pushUndo();const row=e.target.closest('
 $('vars').addEventListener('input',e=>{const t=e.target;if(t.dataset.vi===undefined)return;
   if(t.tagName==='TEXTAREA'&&/[\r\n]/.test(t.value)){t.value=t.value.replace(/[\r\n]+/g,' ')}
   doc.vars[+t.dataset.vi][t.dataset.vk]=t.value;if(t.tagName==='TEXTAREA')fitTA(t);render()});
-$('vars').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.tagName==='TEXTAREA'){e.preventDefault();e.target.blur()}});
+// Enter while an IME is composing (Japanese conversion) confirms the conversion: leave it to the IME, or the text is committed twice
+const composing=e=>e.isComposing||e.keyCode===229;
+$('vars').addEventListener('keydown',e=>{if(e.key==='Enter'&&!composing(e)&&e.target.tagName==='TEXTAREA'){e.preventDefault();e.target.blur()}});
 $('vars').addEventListener('focusout',e=>setTimeout(()=>{const a=document.activeElement,row=e.target.closest('.vrow');
   if(row&&!row.contains(a)){row.classList.remove('open');const ta=row.querySelector('textarea');if(ta)ta.style.height=''}
   if(!$('vars').contains(a))renderVars(false)},0));
@@ -1629,7 +1631,7 @@ document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden||!$('helpModal'
   if(e.key===' '&&!inField){spaceDown=true;svg.classList.add('pan');e.preventDefault();return}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!inField){e.preventDefault();e.shiftKey?redo():undo();return}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='d'&&!inField){e.preventDefault();dup(false);return}
-  if(inField){if(e.key==='Enter')document.activeElement.blur();return}
+  if(inField){if(e.key==='Enter'&&!composing(e))document.activeElement.blur();return}
   if(e.key==='Escape'){if(draft){draft=null;render()}else if(selNodes.length){selNodes=[];lastPanelKey=null;render()}else if(selEdge){selEdge=null;render()}else{setSel(null);render()}return}
   if(e.key==='Enter'&&draft&&draft.type==='poly'){finishPoly(false);return}
   if((e.key==='Delete'||e.key==='Backspace')&&selNodes.length){e.preventDefault();delNodes();return}
