@@ -673,7 +673,9 @@ const byId=id=>doc.shapes.find(s=>s.id===id);
 const pieceUses=(s,id)=>s.type==='piece'&&(s.src===id||(s.cut||[]).includes(id));
 const parentOf=id=>doc.shapes.find(s=>s.type==='bool'&&s.ops.includes(id))||doc.shapes.find(s=>pieceUses(s,id));
 // whether any material of an operation (at any depth) has stitching on; then the operation's own stitching is not used
-const matStitchOn=b=>(b.ops||[]).some(id=>{const c=byId(id);return!!c&&(!!(c.st&&c.st.on)||c.type==='bool'&&matStitchOn(c))});
+// an operation's materials are its ops; a piece's are its source and cutters
+const matsOf=b=>b.type==='bool'?b.ops||[]:b.type==='piece'?[b.src,...(b.cut||[])]:[];
+const matStitchOn=b=>matsOf(b).some(id=>{const c=byId(id);return!!c&&(!!(c.st&&c.st.on)||(c.type==='bool'||c.type==='piece')&&matStitchOn(c))});
 function descendants(s,out=[]){if(s&&s.type==='bool')for(const id of s.ops){const c=byId(id);if(c){out.push(c);descendants(c,out)}}return out}
 
 // ---------- geometry ----------
@@ -1103,10 +1105,8 @@ function compute(){
   for(const s of doc.shapes){const it={s,parent:parent[s.id]||null};try{it.g=gOf(s)}catch(e){it.err=e.message}
     if(it.g&&it.g.closed&&!it.g.isText&&s.fill&&HATCHES[s.fill.t]&&s.fill.t!=='none'){try{const pt=s.fill.t==='fill'?1:evalExpr(s.fill.pitch||'2',sEnv(s));if(!(pt>0))throw Error('塗りの間隔は正の値に');it.hatch=hatchOf(it.g.paths,s.fill.t,pt)}catch(e){it.fillerr=e.message}}
     // stitch holes come from each shape's own settings, materials included; an operation is stitched on its own outline
-    // only while none of its materials is
-    // a piece's source and cutters are not stitched: the pieces are
-    const pp=it.parent&&byId(it.parent);
-    if(it.g&&(s.type!=='bool'||!matStitchOn(s))&&!(pp&&pp.type==='piece')){try{it.st=stitch(s,it.g,sEnv(s),gOf)}catch(e){it.sterr=e.message}}out.items.push(it);out.byId[s.id]=it}
+    // only while none of its materials is; a piece (分割) follows the same rule with its source and cutters
+    if(it.g&&!((s.type==='bool'||s.type==='piece')&&matStitchOn(s))){try{it.st=stitch(s,it.g,sEnv(s),gOf)}catch(e){it.sterr=e.message}}out.items.push(it);out.byId[s.id]=it}
   return out}
 
 // ---------- shape references ----------
@@ -1232,7 +1232,7 @@ function render(){
       el('path',{d:hd,fill:'var(--stitch)','fill-opacity':.25,stroke:'var(--stitch)','stroke-width':1,'vector-effect':'non-scaling-stroke','pointer-events':'none'},sg)}
     if(!faint&&!g.isText){const bb=bboxG(g);const t=el('text',{x:bb[0],y:bb[1]-5*k,'font-size':11*k,fill:on?'var(--sel)':'var(--cut)','fill-opacity':on?1:.7,'font-family':'var(--ui)','pointer-events':'none'},gOver);
       // an operation shows the holes of its materials
-      const nh=s.type==='bool'&&!it.st?descendants(s).reduce((a,c)=>a+((C.byId[c.id]||{}).st?C.byId[c.id].st.n:0),0):it.st?it.st.n:0;
+      const nh=s.type==='piece'?(it.st?it.st.n:0):s.type==='bool'&&!it.st?descendants(s).reduce((a,c)=>a+((C.byId[c.id]||{}).st?C.byId[c.id].st.n:0),0):it.st?it.st.n:0;
       t.textContent=s.name+(mat?'（材料）':'')+(s.noexp?'（書き出さない）':'')+(nh?`  ${nh}穴`:'')}
     if(s.id===sel&&picks.length===1)drawSel(it,k)}
   if(UI.showFrame)drawFrame(k);
@@ -1362,7 +1362,7 @@ function renderPanel(){
       h+=`<div class="small">頂点のX・Yとハンドル（頂点からの相対位置）にも式が書けます。頂点をクリックで選択（Shiftで追加）してDeleteで削除、ダブルクリックで角⇔曲線、線上をダブルクリックで頂点を追加。中に橙の点がある頂点は変数の式で決まっているのでドラッグでは動きません。水色の点は、ほかの図形に連動している頂点です。</div>`}
     if(it.err)h+=`<div class="small" style="color:var(--danger)">${esc(it.err)}</div>`;
     if(s.type==='dim'&&it.g)h+=`<div class="result"><span>寸法</span><span>${fmt(it.g.dim.L)} mm</span></div><div class="small">始点・終点の丸い四角、線の中央の丸をドラッグで調整。図形の角や中心に吸着します。離れは、始点から終点へ向かって右側が正、左側が負です。</div>`;
-    const matOn=s.type==='bool'&&matStitchOn(s);
+    const matOn=(s.type==='bool'||s.type==='piece')&&matStitchOn(s);
     if(matOn)h+=`<h2 style="margin-top:6px">ステッチ穴</h2><div class="small">材料に穴を並べているので、ステッチ穴は材料ごとの設定で決まり、ここでは変えられません。上の材料を選んで設定してください。演算結果で穴を設定するには、材料の「穴を並べる」をすべてオフにします。</div>`;
     if(!matOn&&s.type!=='text'&&s.type!=='dim'){h+=`<h2 style="margin-top:6px">ステッチ穴</h2><label class="check"><input type="checkbox" id="f_st" data-path="st.on"${s.st.on?' checked':''}> 穴を並べる</label>`;
       if(s.st.on){if(it.g&&it.g.closed)h+=exprRow('st.inset','縫い代',s.st.inset,env);
@@ -1606,7 +1606,7 @@ function makeSplit(ids){const ss=ids.map(byId).filter(Boolean);if(ss.length<2){t
   const cg=[];for(const c of ss.slice(1)){const g=(C.byId[c.id]||{}).g;if(!g||g.isText||g.isDim){toast(`「${c.name}」では切れません`);return false}cg.push(g)}
   const groups=splitPieces(tg,cg);if(groups.length<2){toast('切れませんでした（線が図形を横切っていません）');return false}
   pushUndo();const bb=bboxG(tg),bw=Math.max(bb[2]-bb[0],1e-6),bh=Math.max(bb[3]-bb[1],1e-6),st={...structuredClone(t.st||{on:false,inset:'3',pitch:'4',hole:'1.2'})};delete st.eo;delete st.edges;
-  const news=groups.map((g,i)=>{const q=insidePt(g);return{id:newId(),name:uniqName(`${t.name} (${i+1})`),type:'piece',src:t.id,cut:ss.slice(1).map(c=>c.id),u:+((q[0]-bb[0])/bw).toFixed(4),v:+((q[1]-bb[1])/bh).toFixed(4),kind:LINES[t.kind]?t.kind:'cut',p:{},st:structuredClone(st),...(t.fill?{fill:structuredClone(t.fill)}:{})}});
+  const news=groups.map((g,i)=>{const q=insidePt(g);return{id:newId(),name:uniqName(`${t.name} (${i+1})`),type:'piece',src:t.id,cut:ss.slice(1).map(c=>c.id),u:+((q[0]-bb[0])/bw).toFixed(4),v:+((q[1]-bb[1])/bh).toFixed(4),kind:LINES[t.kind]?t.kind:'cut',p:{},st:{...structuredClone(st),on:false},...(t.fill?{fill:structuredClone(t.fill)}:{})}});
   doc.shapes.push(...news);setSel(news[0].id);setTool('select');toast(`${news.length}つに分割しました`);return true}
 function unsplit(){const s=cur();if(!s||s.type!=='piece')return;const key=JSON.stringify([s.src,s.cut]),sibs=doc.shapes.filter(o=>o.type==='piece'&&JSON.stringify([o.src,o.cut])===key);
   if(blockedByRefs(sibs,'分割を解除'))return;pushUndo();doc.shapes=doc.shapes.filter(o=>!sibs.includes(o));setSel(s.src);render();toast('分割を解除しました')}
@@ -1702,10 +1702,11 @@ function ungroup(){const s=cur();if(!s||s.type!=='bool')return;if(blockedByRefs(
 // bake an operation or an offset into fixed polygons; a bool's materials go, an offset's sources stay
 function bake(){const s=cur();const it=C.byId[sel];if(!s||(s.type!=='bool'&&s.type!=='offset'&&s.type!=='piece')||!it.g)return;
   const kids=s.type==='bool'?descendants(s):[];if(blockedBySrc(kids,'確定'))return;pushUndo();
+  const srcs=s.type==='piece'?matsOf(s).map(byId).filter(Boolean):kids;
   // stitched on its own outline (an offset, or an operation whose materials are all unstitched): keep its settings.
   // Otherwise the stitching lives on the materials: start from the first stitched material's settings, and each edge of
   // the baked outline takes the settings of the material edge it runs along
-  const own=s.type!=='bool'||!matStitchOn(s),mats=own?[]:kids.map(c=>({c,st:(C.byId[c.id]||{}).st})).filter(m=>m.st);
+  const own=!(s.type==='bool'||s.type==='piece')||!matStitchOn(s),mats=own?[]:srcs.map(c=>({c,st:(C.byId[c.id]||{}).st})).filter(m=>m.st);
   const base=own?structuredClone(s.st):{...structuredClone(mats[0]?mats[0].c.st:s.st),on:!!mats[0]};if(!own){delete base.eo;delete base.edges}
   const news=it.g.paths.map((p,i)=>({id:i?newId():s.id,name:i?uniqName(`${s.name} (${i+1})`):s.name,type:'poly',kind:s.kind,nodes:p.map(([x,y])=>({x:num(x),y:num(y)})),closed:true,p:{},st:{...structuredClone(base),on:base.on&&(!own||i===0)}}));
   doc.shapes=doc.shapes.filter(x=>!kids.includes(x));

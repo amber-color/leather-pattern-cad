@@ -45,7 +45,7 @@ Push straight to `main` when asked; there is no build step.
   paths / drops the nodes between two edges of one path (`pendingBetween` offers keeping them as a line).
 - stitching and operations: every non-bool shape, materials included, is stitched on its own outline (drawn at full
   strength even when the material is faint, exported regardless of the materials checkbox). A bool is stitched on its
-  own outline only while no material has stitching on (`matStitchOn`); otherwise its st is kept but unused. `bake`
+  own outline only while no material has stitching on (`matStitchOn`; a piece's materials are its source and cutters, `matsOf`); otherwise its st is kept but unused. `bake`
   keeps a bool's own stitching, or moves the materials' per-edge settings onto the baked outline with `edgeMapper`.
 - per-edge stitch overrides: `st.eo:[{u,v,off?,pitch?,method?,pos?,from?,to?}]`, anchored to the edge midpoint in the
   unrotated bbox (0..1) and matched to the nearest edge on each compute (old `st.edges` is migrated).
