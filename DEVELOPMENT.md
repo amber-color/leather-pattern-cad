@@ -39,6 +39,9 @@ Push straight to `main` when asked; there is no build step.
 - fillets on bool / offset outlines: `fl:[{u,v,r}]`, anchored to the corner in the unrounded outline's bbox (`g.lbb0`) like
   `st.eo` (`filletOutline`). The fillet tool (`doFillet`) writes `node.r`, a rect's `cs[i]`, or `fl`, or joins two open
   paths / drops the nodes between two edges of one path (`pendingBetween` offers keeping them as a line).
+- a bool's stitch edges inherit the per-edge settings of the material edge they run along (`inheritFrom`, materials'
+  stitching from `stOf` in `compute`); a bool's own override wins, and one made from an inherited edge carries `own:1`
+  so it stays in charge even when emptied. Materials with stitching off pass nothing on.
 - per-edge stitch overrides: `st.eo:[{u,v,off?,pitch?,method?,pos?,from?,to?}]`, anchored to the edge midpoint in the
   unrotated bbox (0..1) and matched to the nearest edge on each compute (old `st.edges` is migrated).
 - export: `exportItems(opt)` decides what goes out (`UI.exp[pdf|svg|dxf]`, keys in `EXP_KEYS`, defaults `EXP_DEFAULT`)

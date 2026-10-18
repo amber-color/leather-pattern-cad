@@ -476,7 +476,7 @@ const EN_EXACT={
   '回転した線どうしはフィレットできません':'Rotated lines can’t be filleted together','別々の図形どうしは、開いた線（直線・折れ線）のときにフィレットできます':'Separate shapes can be filleted only when both are open lines',
   '角を丸めました':'Corner rounded','2本を延長して角を丸めました':'Extended both edges and rounded the corner','フィレットできませんでした':'Couldn’t fillet','間の辺を別の線として残しました':'Kept the edges between as a separate line',
   '角Rが大きすぎます（辺の長さが足りません）':'The corner radius is too large (the edges are too short)','曲線につながる頂点は丸められません':'A node joined to a curve can’t be rounded',
-  '出力':'Include','ガイド線':'Guide lines','縫い線':'Stitch lines','演算の材料':'Operation materials','図形の名前':'Shape names','書き出す（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)',
+  '出力':'Include','この演算での設定です。':'Set on this operation.','ガイド線':'Guide lines','縫い線':'Stitch lines','演算の材料':'Operation materials','図形の名前':'Shape names','書き出す（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)',
   '図形ごとに書き出さない設定は、パーツ欄の「書き出す」で。選んだ内容は形式ごとに覚えます。':'To leave out a single shape, untick “Export” in its part panel. The choices here are remembered per format.',
   'SVGの書き出し':'Export SVG','DXFの書き出し':'Export DXF','mm単位。出力する内容を選んで、種類ごとにグループ分け':'In mm; choose what to include, grouped by kind','R12形式。出力する内容を選んで、種類ごとにレイヤー分け':'R12; choose what to include, one layer per kind',
   'オフセット':'Offset','外側':'Outward','内側':'Inward','方向':'Direction','距離':'Distance','角の形':'Corners','丸く':'Round','尖らせる':'Sharp','元の図形':'Source shapes','元の図形から外す':'Remove from the sources',
@@ -530,7 +530,7 @@ const EN_PAT=[
   ['{0}（書き出さない）  {1}穴','{0} (not exported)  {1} holes',{0:'T'}],['{0}（書き出さない）','{0} (not exported)',{0:'T'}],['{0}（材料）  {1}穴','{0} (material)  {1} holes'],['{0}  {1}穴','{0}  {1} holes'],['{0}（材料）','{0} (material)'],['周長 {0}','Perimeter {0}'],['{0} · 連動','{0} · linked',{0:'T'}],
   ['{0} 横  {1}','{0} landscape  {1}',{0:'T'}],['{0} 縦  {1}','{0} portrait  {1}',{0:'T'}],['{0} 横','{0} landscape',{0:'T'}],['{0} 縦','{0} portrait',{0:'T'}],['図形に合わせる（{0} × {1} mm）  {2}','Fit to the shapes ({0} × {1} mm)  {2}'],['図形に合わせる（{0} × {1} mm）','Fit to the shapes ({0} × {1} mm)'],
   ['{0}枚（横{1} × 縦{2}）','{0} pages ({1} across × {2} down)'],['{0}枚','{0} page(s)'],['{0}-{1} ページ','Page {0}-{1}'],['ほか {0} 枚','{0} more'],
-  ['演算 · {0}','Operation · {0}',{0:'T'}],['始点から：{0}','From start: {0}',{0:'T'}],['終点から：{0}','From end: {0}',{0:'T'}],['ピッチ：{0}','Pitch: {0}',{0:'T'}],['辺{0}：{1}','Edge {0}: {1}',{1:'T'}],['{0}の角を丸めました','Rounded the corner: {0}',{0:'T'}],['頂点{0}の角を丸めました','Rounded the corner at node {0}'],['「{0}」とつないで角を丸めました','Joined with “{0}” and rounded the corner'],
+  ['演算 · {0}','Operation · {0}',{0:'T'}],['この辺は材料「{0}」の設定を引き継いでいます。ここで変えると、この演算での設定になります。','This edge follows the settings of the material “{0}”. Changing it here makes it this operation’s own setting.'],['材料「{0}」の設定に戻す','Back to “{0}”'],['始点から：{0}','From start: {0}',{0:'T'}],['終点から：{0}','From end: {0}',{0:'T'}],['ピッチ：{0}','Pitch: {0}',{0:'T'}],['辺{0}：{1}','Edge {0}: {1}',{1:'T'}],['{0}の角を丸めました','Rounded the corner: {0}',{0:'T'}],['頂点{0}の角を丸めました','Rounded the corner at node {0}'],['「{0}」とつないで角を丸めました','Joined with “{0}” and rounded the corner'],
   ['「{0}」はほかの図形から使われているので、つなげられません','“{0}” is used by other shapes, so it can’t be joined'],['フィレットでつなぐため、間の辺 {0} 本を消しました。','To join them, {0} edge(s) between were removed.'],
   ['角R {0}','Corner R {0}'],['角R {0}を削除','Delete corner R {0}'],['角R {0}：{1}','Corner R {0}: {1}',{1:'T'}],['頂点{0}の角R：{1}','Node {0} corner R: {1}',{1:'T'}],['頂点{0} 角R','Node {0} corner R'],
   ['頂点{0}の角Rが大きすぎます（辺の長さが足りません）','Node {0}: the corner radius is too large (the edges are too short)'],['R：{0}','R: {0}',{0:'T'}],['オフセット · {0}','Offset · {0}',{0:'T'}],['距離：{0}','Distance: {0}',{0:'T'}],
@@ -925,12 +925,12 @@ function insertAt(P,b){const n=nearestOn(P,b);if(n.t<1e-6)return{path:P,i:n.i,ad
 // Per-edge settings are stored as overrides anchored to the edge's midpoint in shape-relative coordinates (u,v in 0..1 of the
 // outline's bounding box), not to an edge index. Each compute matches overrides to the nearest edge, so adding vertices,
 // changing corner types or reshaping a boolean keeps a setting on the edge it was made for.
-function stitch(s,g,env,gOf){
+function stitch(s,g,env,gOf,stOf){
   if(!s.st||!s.st.on)return null;const st=s.st;
   const pitch=evalExpr(st.pitch,env),hole=evalExpr(st.hole,env);if(pitch<=0)throw Error('ピッチは正の値に');
   const ins=g.closed?evalExpr(st.inset,env):0;
   let contours;if(g.closed){contours=insetPaths(g.paths,ins);if(!contours.length)throw Error('縫い代が大きすぎます')}else contours=[g.pts];
-  const f=g.paths[0][0],out={closed:g.closed,edges:[],holes:[],irr:[],L:0,hole,pitch,lost:[]};
+  const f=g.paths[0][0],out={closed:g.closed,edges:[],holes:[],irr:[],L:0,hole,pitch,lost:[],ins};
   const paths=contours.map(raw=>dedupe(raw,g.closed));
   const bps=g.closed?stitchBreaks(breakPts(s,g,gOf),paths,ins):[];
   const owner=bps.map(b=>{let best=-1,bd=1e18;paths.forEach((P,c)=>{const d=nearestOn(P,b).d;if(d<bd){bd=d;best=c}});return best});
@@ -957,13 +957,14 @@ function stitch(s,g,env,gOf){
   // follow the edge as the shape changes gradually (dragging, editing variables)
   for(const ai in ovOf){const o=eo[ovOf[ai]],m=all[ai].mid;o.u=+m[0].toFixed(4);o.v=+m[1].toFixed(4)}
   out.lost=eo.map((o,i)=>i).filter(i=>!usedO.has(i));
+  const inh=s.type==='bool'&&gOf&&stOf?inheritFrom(s,ins,gOf,stOf):null;
   per.forEach(({c,path,cs,segs,start})=>{
-    const ons=segs.map((sg,i)=>{const ai=start+i,a=all[ai],oi=ovOf[ai],ov=oi===undefined?{}:eo[oi],on=!ov.off,errs=[];
+    const ons=segs.map((sg,i)=>{const ai=start+i,a=all[ai],oi=ovOf[ai],h=inh?inh(a.pts):null,ov=oi!==undefined?eo[oi]:h?h.ov:{},on=!ov.off,errs=[];
       // a per-edge value that can't be read falls back to the default and is reported on that edge, so the edge stays
       // on the canvas and the value can still be fixed in the panel
       const val=(k,lab,dflt)=>{if(ov[k]===undefined||String(ov[k]).trim()==='')return dflt;try{return evalExpr(ov[k],env)}catch(x){errs.push(`${lab}：${x.message}`);return dflt}};
       let p=val('pitch','ピッチ',pitch);if(p<=0){errs.push(`辺${i+1}のピッチは正の値に`);p=pitch}
-      const e={key:c+':'+i,c,i,pts:a.pts,L:a.L,mid:a.mid,oi,p,on,loop:a.loop,method:ov.method||st.method||'auto',pos:ov.pos||st.pos||'both',ov,n:0,irr:[],errs};
+      const e={key:c+':'+i,c,i,pts:a.pts,L:a.L,mid:a.mid,oi,p,on,loop:a.loop,method:ov.method||st.method||'auto',pos:ov.pos||st.pos||'both',ov,n:0,irr:[],errs,inh:oi===undefined&&h?h.from:null,canInherit:h?h.from:null};
       // stitched range: skip "from" mm after the start and "to" mm before the end; a range end gets its own hole (縫い止まり)
       e.ra=Math.max(0,val('from','始点から',0));e.rb=Math.max(0,val('to','終点から',0));
       let fl={s:false,e:false};
@@ -976,11 +977,33 @@ function stitch(s,g,env,gOf){
     if(g.closed){if(!cs.length){if(ons[0].s||ons[0].e)out.holes.push(path[0].slice())}else segs.forEach((sg,i)=>{if(ons[i].s||ons[(i-1+segs.length)%segs.length].e)out.holes.push(sg.pts[0].slice())})}
     else{segs.forEach((sg,i)=>{if(ons[i].s||(i>0&&ons[i-1].e))out.holes.push(sg.pts[0].slice())});if(ons.at(-1).e)out.holes.push(segs.at(-1).pts.at(-1).slice())}});
   out.n=out.holes.length;return out}
-// change one per-edge setting; an empty value removes it, and an override left with nothing in it is dropped
+// change one per-edge setting; an empty value removes it, and an override left with nothing in it is dropped.
+// Editing an edge that inherits from a material starts from the inherited values and keeps the override (own) even
+// when emptied, so the operation's own choice stays in charge of that edge.
 function edgeSet(s,e,prop,val){const st=s.st;if(!Array.isArray(st.eo))st.eo=[];let o=e.oi!==undefined?st.eo[e.oi]:null;const empty=val===''||val===false||val==null;
-  if(!o){if(empty)return;o={};st.eo.push(o)}
+  if(!o){if(empty&&!e.inh)return;o=e.inh?{...e.ov,own:1}:{};st.eo.push(o)}
   o.u=+e.mid[0].toFixed(4);o.v=+e.mid[1].toFixed(4);if(empty)delete o[prop];else o[prop]=val;
-  if(Object.keys(o).every(k=>k==='u'||k==='v'))st.eo.splice(st.eo.indexOf(o),1)}
+  if(!o.own&&Object.keys(o).every(k=>k==='u'||k==='v'))st.eo.splice(st.eo.indexOf(o),1)}
+// an operation's stitch edges take the per-edge settings of the material they run along (stitch or not, range, pitch,
+// remainder), mapped onto the edge. A material with stitching off as a whole passes nothing on: materials are often
+// left off while only the result is stitched.
+// Returns a lookup from an edge's points to {ov, from: material name}, or null when nothing is inherited.
+function inheritFrom(s,insB,gOf,stOf){const mats=[];
+  for(const id of s.ops||[]){const c=byId(id);if(!c||!c.st||!c.st.on)continue;const stc=stOf(c);if(stc)mats.push({c,st:stc,tol:Math.abs(stc.ins-insB)+0.3})}
+  if(!mats.length)return null;
+  const dOpen=(P,M)=>{let d=1e18;for(let i=0;i<P.length-1;i++)d=Math.min(d,dist(footOn(P[i],P[i+1],M),M));return d};
+  return pts=>{const L=plen(pts,false),M=sampleAlong(pts,false,[L/2])[0];let best=null,bd=1e18;
+    for(const m of mats)for(const me of m.st.edges){const d=dOpen(me.pts,M);if(d<m.tol&&d<bd){bd=d;best={c:m.c,me}}}
+    if(!best)return null;
+    const me=best.me,o={},has=k=>me.ov[k]!=null&&String(me.ov[k]).trim()!=='';if(!me.on)o.off=true;
+    if(has('pitch'))o.pitch=num(me.p);if(me.ov.method)o.method=me.ov.method;
+    // the material's edge may run the other way round
+    const rev=arcPos(pts,me.pts[0])>arcPos(pts,me.pts.at(-1)),sw={start:'end',end:'start'};
+    if(me.ov.pos)o.pos=rev?sw[me.ov.pos]||me.ov.pos:me.ov.pos;
+    if(me.on&&(me.ra>0||me.rb>0)){const sa=me.ra>0?arcPos(pts,sampleAlong(me.pts,false,[me.ra])[0]):null,sb=me.rb>0?arcPos(pts,sampleAlong(me.pts,false,[me.L-me.rb])[0]):null;
+      let fr=0,to=0;if(!rev){if(sa!=null)fr=sa;if(sb!=null)to=L-sb}else{if(sa!=null)to=L-sa;if(sb!=null)fr=sb}
+      if(fr>EPS)o.from=num(fr);if(to>EPS)o.to=num(to)}
+    return Object.keys(o).length?{ov:o,from:best.c.name}:null}}
 const curEdge=()=>{const it=C.byId[sel];return it&&it.st&&selEdge?it.st.edges.find(x=>x.key===selEdge.key):null};
 function compute(){
   const{env,errs}=envOf();const out={env,verr:errs,items:[],byId:{}};
@@ -991,8 +1014,10 @@ function compute(){
   Object.defineProperty(env,'$ref',{enumerable:false,value:(name,prop)=>{const ts=doc.shapes.filter(x=>x.name===name);
     if(!ts.length)throw Error(`図形「${name}」が見つかりません`);if(ts.length>1)throw Error(`「${name}」という名前の図形が${ts.length}個あります`);
     let g;try{g=gOf(ts[0])}catch(e){throw Error(/循環/.test(e.message)?`図形「${name}」との参照が循環しています`:`図形「${name}」にエラーがあります`)}return shapeProp(ts[0],g,prop)}});
+  // a material's own stitching (not drawn), so an operation can inherit its per-edge settings
+  const stMemo={},stOf=c=>{if(c.id in stMemo)return stMemo[c.id];stMemo[c.id]=null;try{return stMemo[c.id]=stitch(c,gOf(c),sEnv(c),gOf,stOf)}catch(e){return null}};
   for(const s of doc.shapes){const it={s,parent:parent[s.id]||null};try{it.g=gOf(s)}catch(e){it.err=e.message}
-    if(it.g&&!it.parent){try{it.st=stitch(s,it.g,sEnv(s),gOf)}catch(e){it.sterr=e.message}}out.items.push(it);out.byId[s.id]=it}
+    if(it.g&&!it.parent){try{it.st=stitch(s,it.g,sEnv(s),gOf,stOf)}catch(e){it.sterr=e.message}}out.items.push(it);out.byId[s.id]=it}
   return out}
 
 // ---------- shape references ----------
@@ -1239,6 +1264,8 @@ function renderPanel(){
         if(e){const kp='edge';h+=`<div class="edgebox"><h2>辺 ${e.i+1}${it.st.edges.some(x=>x.c>0)?`（輪郭 ${e.c+1}）`:''}<button class="x" id="bEdgeX" aria-label="辺の選択を解除" title="辺の選択を解除">×</button></h2>
           <div class="small">長さ ${fmt(e.L)} mm${e.loop?'。角がないので一周を1辺として扱います':''}。矢印の向きが始点→終点です。</div>
           <label class="check"><input type="checkbox" data-path="edge.on"${e.on?' checked':''}> この辺を縫う</label>`;
+          if(e.inh)h+=`<div class="small">この辺は材料「${esc(e.inh)}」の設定を引き継いでいます。ここで変えると、この演算での設定になります。</div>`;
+          else if(e.oi!==undefined&&e.canInherit)h+=`<div class="small">この演算での設定です。<button class="btn" id="bEdgeInherit" style="padding:2px 8px">材料「${esc(e.canInherit)}」の設定に戻す</button></div>`;
           const rr=(k,lab,v)=>`<div class="row"><label for="f_e${k}">${lab}</label><input type="text" id="f_e${k}" data-path="${kp}.${k}" value="${esc(e.ov[k]||'')}" placeholder="0" spellcheck="false" autocomplete="off"><span class="val">= ${fmt(v)}</span></div>`;
           if(e.on)h+=rr('from','始点から',e.ra)+rr('to','終点から',e.rb)+`<div class="small" id="edMsg">${edMsg(e)}</div>`;
           if(e.on)h+=`<div class="row"><label for="f_ep">ピッチ</label><input type="text" id="f_ep" data-path="${kp}.pitch" value="${esc(e.ov.pitch||'')}" placeholder="既定" spellcheck="false" autocomplete="off"><span class="val">= ${fmt(e.p)}</span></div>`+
@@ -1254,6 +1281,7 @@ function renderPanel(){
     if($('bParent'))$('bParent').onclick=()=>{setSel(it.parent);render()};
     if($('bBake'))$('bBake').onclick=bake;if($('bUngroup'))$('bUngroup').onclick=ungroup;
     if($('bEdgeX'))$('bEdgeX').onclick=()=>{selEdge=null;render()};
+    if($('bEdgeInherit'))$('bEdgeInherit').onclick=()=>{const e=curEdge();if(!e||e.oi===undefined)return;pushUndo();s.st.eo.splice(e.oi,1);lastPanelKey=null;render()};
     if($('bBetweenKeep'))$('bBetweenKeep').onclick=keepBetween;if($('bBetweenDrop'))$('bBetweenDrop').onclick=()=>{pendingBetween=null;lastPanelKey=null;render()};
     sec.querySelectorAll('[data-fldel]').forEach(b=>b.onclick=()=>{pushUndo();s.fl.splice(+b.dataset.fldel,1);if(!s.fl.length)delete s.fl;lastPanelKey=null;render()});
     if($('bLost'))$('bLost').onclick=()=>{pushUndo();const lost=new Set(it.st.lost);s.st.eo=s.st.eo.filter((o,i)=>!lost.has(i));lastPanelKey=null;render()};
@@ -1456,7 +1484,7 @@ function makeBool(op){const ss=picks.map(byId);
   if(open){toast(`「${open.name}」は閉じた形ではないので演算に使えません`);return}
   pushUndo();const first=ss[0];
   const b={id:newId(),name:uniqName(ss.map(s=>s.name).join(op==='diff'?' − ':op==='union'?' ＋ ':' ∩ ')),type:'bool',op,ops:ss.map(s=>s.id),kind:first.kind,p:{},st:structuredClone(first.st)};
-  b.st.on=ss.some(s=>s.st&&s.st.on);
+  b.st.on=ss.some(s=>s.st&&s.st.on);delete b.st.eo;delete b.st.edges;
   doc.shapes.push(b);setSel(b.id);render();
   const it=C.byId[b.id];if(it.err)toast(it.err);else toast(`${OPS[op]}しました。元の図形は材料として残っています`)}
 // a new offset of the given shapes (combined with union when there are several), selected so the panel can adjust it
@@ -1550,7 +1578,11 @@ function ungroup(){const s=cur();if(!s||s.type!=='bool')return;if(blockedByRefs(
   doc.shapes=doc.shapes.filter(x=>x!==s);picks=kids.filter(id=>byId(id));sel=picks[0]||null;render()}
 // bake an operation or an offset into fixed polygons; a bool's materials go, an offset's sources stay
 function bake(){const s=cur();const it=C.byId[sel];if(!s||(s.type!=='bool'&&s.type!=='offset')||!it.g)return;
-  const kids=s.type==='bool'?descendants(s):[];if(blockedBySrc(kids,'確定'))return;pushUndo();const news=it.g.paths.map((p,i)=>({id:i?newId():s.id,name:i?uniqName(`${s.name} (${i+1})`):s.name,type:'poly',kind:s.kind,nodes:p.map(([x,y])=>({x:num(x),y:num(y)})),closed:true,p:{},st:i?{...structuredClone(s.st),on:false}:structuredClone(s.st)}));
+  const kids=s.type==='bool'?descendants(s):[];if(blockedBySrc(kids,'確定'))return;pushUndo();
+  // edges that inherited from materials keep those settings as the baked shape's own
+  const inh=it.st?it.st.edges.filter(e=>e.inh).map(e=>({u:+e.mid[0].toFixed(4),v:+e.mid[1].toFixed(4),...e.ov})):[];
+  const news=it.g.paths.map((p,i)=>({id:i?newId():s.id,name:i?uniqName(`${s.name} (${i+1})`):s.name,type:'poly',kind:s.kind,nodes:p.map(([x,y])=>({x:num(x),y:num(y)})),closed:true,p:{},st:i?{...structuredClone(s.st),on:false}:structuredClone(s.st)}));
+  if(inh.length)news[0].st.eo=(news[0].st.eo||[]).concat(inh);
   doc.shapes=doc.shapes.filter(x=>!kids.includes(x));
   doc.shapes.splice(doc.shapes.indexOf(s),1,...news);setSel(s.id);render();toast('確定しました。式は消え、座標が固定されています')}
 
