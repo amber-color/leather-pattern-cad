@@ -31,10 +31,14 @@ Push straight to `main` when asked; there is no build step.
 `doc = {vars:[{n,e}], shapes:[…]}`; every dimension is an expression string.
 - shape: `{id,name,type,kind:'cut'|'guide',p:{…},st:{on,inset,pitch,hole,method?,pos?,eo?}}`
 - types: `rect` (x,y,w,h,r; `ct` round|chamfer; `cmode:'each'` + `cs[4]{t,r}`), `circle` (cx,cy,d),
-  `poly` (`nodes:[{x,y,t?,hi?,ho?}]`, `closed`), `bool` (`op` union|diff|inter|xor, `ops:[ids]`, materials stay as shapes),
+  `poly` (`nodes:[{x,y,t?,hi?,ho?,r?}]`, `closed`; `r` rounds a corner node — `filletNodes` turns it into two tangent
+  points and a two-piece Bézier arc in `g.fnodes`, while `g.nodes` stays as written for editing and references), `bool` (`op` union|diff|inter|xor, `ops:[ids]`, materials stay as shapes),
   `offset` (`src:[ids]`, `op` for several sources, `side` out|in, `join` round|miter, `p.d` distance; the sources stay
   ordinary shapes — not materials — and dragging, duplicating or mirroring an offset carries its sources along),
   `text` (text; x,y,size,rot), `dim` (x1,y1,x2,y2,off,size). rect/poly/bool may have `rot`, `rcx`, `rcy` (pivot).
+- fillets on bool / offset outlines: `fl:[{u,v,r}]`, anchored to the corner in the unrounded outline's bbox (`g.lbb0`) like
+  `st.eo` (`filletOutline`). The fillet tool (`doFillet`) writes `node.r`, a rect's `cs[i]`, or `fl`, or joins two open
+  paths / drops the nodes between two edges of one path (`pendingBetween` offers keeping them as a line).
 - per-edge stitch overrides: `st.eo:[{u,v,off?,pitch?,method?,pos?,from?,to?}]`, anchored to the edge midpoint in the
   unrotated bbox (0..1) and matched to the nearest edge on each compute (old `st.edges` is migrated).
 - storage keys: `ppp-v1` (doc), `ppp-ui` (UI: varsCollapsed, pdfSize/pdfOrient, showFrame, osnap, theme, lang, noMoveConfirm).
