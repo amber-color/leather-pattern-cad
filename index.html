@@ -753,9 +753,12 @@ function geomBool(s,gOf,env){
 function combine(op,gs){
   // normalize each operand first: shapes drawn clockwise vs counter-clockwise would otherwise cancel out under the non-zero fill rule
   gs=gs.map(g=>clip('union',g));
-  if(op==='diff')return gs.length>1?clip('diff',gs[0],gs.slice(1).flat()):gs[0];
+  if(op==='diff')return gs.length>1?clip('diff',gs[0],unionAll(gs.slice(1))):gs[0];
   if(op==='inter'||op==='xor'){let res=gs[0];for(const g of gs.slice(1))res=clip(op,res,g);return res}
-  return clip('union',gs.flat())}
+  return unionAll(gs)}
+// union one operand at a time: in a single pass with every operand, clipper can leave a shape that only shares an edge
+// with the rest as a separate outline (depending on the order), which shows the shared edge as a cut line
+function unionAll(gs){let res=gs[0]||[];for(const g of gs.slice(1))res=clip('union',res,g);return clip('union',res)}
 // offset: the source shapes (combined by op when there are several) grown outward or shrunk inward by p.d.
 // The sources stay ordinary shapes; the offset is rebuilt from them on every compute.
 const OFFSET_SIDES={out:'外側',in:'内側'},OFFSET_JOINS={round:'丸く',miter:'尖らせる'};
