@@ -1176,7 +1176,7 @@ function render(){
       if(H.fill)el('path',{d,'fill-rule':'evenodd',fill:hc,'fill-opacity':.22,stroke:'none',...A},grp);
       if(H.lines.length)el('path',{d:H.lines.map(P=>dOf(P,false)).join(''),fill:'none',stroke:hc,'stroke-opacity':.55,'stroke-width':.8,'vector-effect':'non-scaling-stroke',...A},grp);
       if(H.dots.length){const r=H.r;el('path',{d:H.dots.map(([x,y])=>`M${fmt(x-r,3)} ${fmt(y,3)}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0`).join(''),fill:hc,'fill-opacity':.6,stroke:'none',...A},grp)}}
-    el('path',{d,'fill-rule':'evenodd',fill:g.closed&&!faint&&!it.hatch?'rgba(244,239,226,0.06)':'none',stroke:on?'var(--sel)':LN.scr,
+    el('path',{d,'fill-rule':'evenodd',fill:g.closed&&!faint?(it.hatch?'rgba(0,0,0,0)':'rgba(244,239,226,0.06)'):'none',stroke:on?'var(--sel)':LN.scr,
       'stroke-width':on?Math.max(2,LN.sw):LN.sw,'stroke-dasharray':faint?'3 3':LN.dash,'vector-effect':'non-scaling-stroke','stroke-linejoin':'round'},grp);
     el('path',{d,fill:'none',stroke:'transparent','stroke-width':12,'vector-effect':'non-scaling-stroke'},grp);
     if(it.st){const sg=faint?el('g',{'pointer-events':'none',opacity:s.noexp?.45:1},gShapes):grp;
