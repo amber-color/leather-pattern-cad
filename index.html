@@ -375,19 +375,21 @@ const CONST={pi:Math.PI};
 // shape references: 外装.右 or [内装ポケット（左）].上 — a shape's name, a dot and one of its properties
 // names may start with digits when a letter follows (500円玉直径); plain numbers stay numbers
 const IDRE=/^(?:[\p{L}_]|[0-9]+[\p{L}_])[\p{L}\p{N}_]*$/u;
+// full-width digits and operators (typed with a Japanese input method on) read as their ASCII forms; names keep theirs
+const ASC=c=>c==='−'?'-':/[０-９＋－＊／＾（），．]/.test(c)?String.fromCharCode(c.charCodeAt(0)-0xFEE0):c;
 function tokenize(s){
-  const t=[];let i=0;const re=/[\p{L}_][\p{L}\p{N}_]*/uy,reD=/[0-9]+[\p{L}_][\p{L}\p{N}_]*/uy;
-  const prop=()=>{if(s[i]!=='.')return null;re.lastIndex=i+1;const m=re.exec(s);if(!m)throw Error('「.」の後ろに図形の値の名前（右・上・幅など）を書いてください');i+=1+m[0].length;return propIn(m[0])};
-  while(i<s.length){const c=s[i],at=i;
+  const t=[];let i=0;const re=/[\p{L}_][\p{L}\p{N}_]*/uy,reD=/[0-9０-９]+[\p{L}_][\p{L}\p{N}_]*/uy,isDot=k=>s[k]==='.'||s[k]==='．';
+  const prop=()=>{if(!isDot(i))return null;re.lastIndex=i+1;const m=re.exec(s);if(!m)throw Error('「.」の後ろに図形の値の名前（右・上・幅など）を書いてください');i+=1+m[0].length;return propIn(m[0])};
+  while(i<s.length){const c=s[i],a=ASC(c),at=i;
     if(/\s/.test(c)){i++;continue}
-    if(/[0-9]/.test(c)){reD.lastIndex=i;const md=reD.exec(s);if(md){i+=md[0].length;if(s[i]==='.'&&/[\p{L}_]/u.test(s[i+1]||'')){const dot=i,pr=prop();t.push({k:'ref',name:md[0],prop:pr,at,end:i,dot});continue}t.push({k:'id',v:md[0],at,end:i});continue}}
-    if(/[0-9.]/.test(c)){let j=i;while(j<s.length&&/[0-9.]/.test(s[j]))j++;const v=parseFloat(s.slice(i,j));if(isNaN(v))throw Error('数値が不正');t.push({k:'n',v,at,end:j});i=j;continue}
+    if(/[0-9]/.test(a)){reD.lastIndex=i;const md=reD.exec(s);if(md){i+=md[0].length;if(isDot(i)&&/[\p{L}_]/u.test(s[i+1]||'')){const dot=i,pr=prop();t.push({k:'ref',name:md[0],prop:pr,at,end:i,dot});continue}t.push({k:'id',v:md[0],at,end:i});continue}}
+    if(/[0-9.]/.test(a)){let j=i;while(j<s.length&&/[0-9.]/.test(ASC(s[j])))j++;const v=parseFloat([...s.slice(i,j)].map(ASC).join(''));if(isNaN(v))throw Error('数値が不正');t.push({k:'n',v,at,end:j});i=j;continue}
     if(c==='['){const j=s.indexOf(']',i);if(j<0)throw Error('「]」が足りません');const name=s.slice(i+1,j).trim();i=j+1;
       const dot=i,pr=prop();if(!pr)throw Error(`[${name}] の後ろに「.右」のような値の名前が要ります`);t.push({k:'ref',name,prop:pr,at,end:i,dot});continue}
     re.lastIndex=i;const m=re.exec(s);
-    if(m){i+=m[0].length;if(s[i]==='.'&&/[\p{L}_]/u.test(s[i+1]||'')){const dot=i,pr=prop();t.push({k:'ref',name:m[0]==='self'?SELF:m[0],prop:pr,at,end:i,dot});continue}
+    if(m){i+=m[0].length;if(isDot(i)&&/[\p{L}_]/u.test(s[i+1]||'')){const dot=i,pr=prop();t.push({k:'ref',name:m[0]==='self'?SELF:m[0],prop:pr,at,end:i,dot});continue}
       t.push({k:'id',v:m[0],at,end:i});continue}
-    if('+-*/^(),'.includes(c)){t.push({k:c,at,end:i+1});i++;continue}
+    if('+-*/^(),'.includes(a)){t.push({k:a,at,end:i+1});i++;continue}
     if(c==='×'){t.push({k:'*',at,end:i+1});i++;continue}
     throw Error(`「${c}」は使えません`)}
   return t}
@@ -520,7 +522,7 @@ const EN_PAT=[
   ['{0}（材料）  {1}穴','{0} (material)  {1} holes'],['{0}  {1}穴','{0}  {1} holes'],['{0}（材料）','{0} (material)'],['周長 {0}','Perimeter {0}'],['{0} · 連動','{0} · linked',{0:'T'}],
   ['{0} 横  {1}','{0} landscape  {1}',{0:'T'}],['{0} 縦  {1}','{0} portrait  {1}',{0:'T'}],['{0} 横','{0} landscape',{0:'T'}],['{0} 縦','{0} portrait',{0:'T'}],['図形に合わせる（{0} × {1} mm）  {2}','Fit to the shapes ({0} × {1} mm)  {2}'],['図形に合わせる（{0} × {1} mm）','Fit to the shapes ({0} × {1} mm)'],
   ['{0}枚（横{1} × 縦{2}）','{0} pages ({1} across × {2} down)'],['{0}枚','{0} page(s)'],['{0}-{1} ページ','Page {0}-{1}'],['ほか {0} 枚','{0} more'],
-  ['演算 · {0}','Operation · {0}',{0:'T'}],['{0}の角を丸めました','Rounded the corner: {0}',{0:'T'}],['頂点{0}の角を丸めました','Rounded the corner at node {0}'],['「{0}」とつないで角を丸めました','Joined with “{0}” and rounded the corner'],
+  ['演算 · {0}','Operation · {0}',{0:'T'}],['始点から：{0}','From start: {0}',{0:'T'}],['終点から：{0}','From end: {0}',{0:'T'}],['ピッチ：{0}','Pitch: {0}',{0:'T'}],['辺{0}：{1}','Edge {0}: {1}',{1:'T'}],['{0}の角を丸めました','Rounded the corner: {0}',{0:'T'}],['頂点{0}の角を丸めました','Rounded the corner at node {0}'],['「{0}」とつないで角を丸めました','Joined with “{0}” and rounded the corner'],
   ['「{0}」はほかの図形から使われているので、つなげられません','“{0}” is used by other shapes, so it can’t be joined'],['フィレットでつなぐため、間の辺 {0} 本を消しました。','To join them, {0} edge(s) between were removed.'],
   ['角R {0}','Corner R {0}'],['角R {0}を削除','Delete corner R {0}'],['角R {0}：{1}','Corner R {0}: {1}',{1:'T'}],['頂点{0}の角R：{1}','Node {0} corner R: {1}',{1:'T'}],['頂点{0} 角R','Node {0} corner R'],
   ['頂点{0}の角Rが大きすぎます（辺の長さが足りません）','Node {0}: the corner radius is too large (the edges are too short)'],['R：{0}','R: {0}',{0:'T'}],['オフセット · {0}','Offset · {0}',{0:'T'}],['距離：{0}','Distance: {0}',{0:'T'}],
@@ -948,11 +950,14 @@ function stitch(s,g,env,gOf){
   for(const ai in ovOf){const o=eo[ovOf[ai]],m=all[ai].mid;o.u=+m[0].toFixed(4);o.v=+m[1].toFixed(4)}
   out.lost=eo.map((o,i)=>i).filter(i=>!usedO.has(i));
   per.forEach(({c,path,cs,segs,start})=>{
-    const ons=segs.map((sg,i)=>{const ai=start+i,a=all[ai],oi=ovOf[ai],ov=oi===undefined?{}:eo[oi],on=!ov.off;let p=pitch;
-      if(ov.pitch!==undefined&&String(ov.pitch).trim()!==''){p=evalExpr(ov.pitch,env);if(p<=0)throw Error(`辺${i+1}のピッチは正の値に`)}
-      const e={key:c+':'+i,c,i,pts:a.pts,L:a.L,mid:a.mid,oi,p,on,loop:a.loop,method:ov.method||st.method||'auto',pos:ov.pos||st.pos||'both',ov,n:0,irr:[]};
+    const ons=segs.map((sg,i)=>{const ai=start+i,a=all[ai],oi=ovOf[ai],ov=oi===undefined?{}:eo[oi],on=!ov.off,errs=[];
+      // a per-edge value that can't be read falls back to the default and is reported on that edge, so the edge stays
+      // on the canvas and the value can still be fixed in the panel
+      const val=(k,lab,dflt)=>{if(ov[k]===undefined||String(ov[k]).trim()==='')return dflt;try{return evalExpr(ov[k],env)}catch(x){errs.push(`${lab}：${x.message}`);return dflt}};
+      let p=val('pitch','ピッチ',pitch);if(p<=0){errs.push(`辺${i+1}のピッチは正の値に`);p=pitch}
+      const e={key:c+':'+i,c,i,pts:a.pts,L:a.L,mid:a.mid,oi,p,on,loop:a.loop,method:ov.method||st.method||'auto',pos:ov.pos||st.pos||'both',ov,n:0,irr:[],errs};
       // stitched range: skip "from" mm after the start and "to" mm before the end; a range end gets its own hole (縫い止まり)
-      const rv=k=>ov[k]!==undefined&&String(ov[k]).trim()!==''?Math.max(0,evalExpr(ov[k],env)):0;e.ra=rv('from');e.rb=rv('to');
+      e.ra=Math.max(0,val('from','始点から',0));e.rb=Math.max(0,val('to','終点から',0));
       let fl={s:false,e:false};
       if(on){const len=e.L-e.ra-e.rb;
         if(len<=EPS)e.short=true;
@@ -1229,7 +1234,9 @@ function renderPanel(){
           if(e.on)h+=rr('from','始点から',e.ra)+rr('to','終点から',e.rb)+`<div class="small" id="edMsg">${edMsg(e)}</div>`;
           if(e.on)h+=`<div class="row"><label for="f_ep">ピッチ</label><input type="text" id="f_ep" data-path="${kp}.pitch" value="${esc(e.ov.pitch||'')}" placeholder="既定" spellcheck="false" autocomplete="off"><span class="val">= ${fmt(e.p)}</span></div>`+
             segRow(`${kp}.method`,[['','既定'],...METHODS],e.ov.method||'','余りの処理','edm')+segRow(`${kp}.pos`,[['','既定'],...POSES],e.ov.pos||'','余りの位置','edp')+`<div class="result" id="edRes">${edResult(e)}</div>`;
+          if(e.errs.length)h+=`<div class="small" style="color:var(--danger)">${esc(e.errs.join(' / '))}</div>`;
           h+=`</div>`}
+        {const bad=it.st?it.st.edges.filter(x=>x.errs.length):[];if(bad.length&&!(e&&bad.length===1&&bad[0]===e))h+=`<div class="small" style="color:var(--danger)">${bad.map(x=>esc(`辺${x.i+1}：${x.errs.join(' / ')}`)).join('<br>')}</div>`}
         if(it.sterr)h+=`<div class="small" style="color:var(--danger)">${esc(it.sterr)}</div>`}}
     h+=`<div class="btns" style="margin-top:4px">`+(s.type==='bool'?`<button class="btn" id="bBake" title="材料と式を捨てて、今の形で固定します">確定</button><button class="btn" id="bUngroup" title="演算をやめて材料を元の図形に戻します">演算を解除</button>`:s.type==='offset'?`<button class="btn" id="bBake" title="式をやめて、今の形の折れ線に置き換えます（元の図形は残ります）">確定</button>`:'')+
       `<button class="btn" id="bDup">複製</button><button class="btn" id="bMirX" title="左右反転した形を右側に複製">左右複製</button><button class="btn" id="bMirY" title="上下反転した形を下側に複製">上下複製</button><button class="btn" id="bDel">削除</button></div>`;
