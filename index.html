@@ -291,6 +291,7 @@ input.err{border-color:var(--danger)}
     <button class="tool" data-tool="text" title="テキスト (T)"><svg viewBox="0 0 20 20"><path d="M4 5V3.5h12V5M10 3.5v13M7.5 16.5h5"/></svg><kbd>T</kbd></button>
     <button class="tool" data-tool="poly" title="ベジェ曲線 (P)"><svg viewBox="0 0 20 20"><path d="M3 16C5 6 11 4 17 4"/><path d="M8 7.5l6-3" stroke-width="1"/><circle cx="8" cy="7.5" r="1.3"/><circle cx="14" cy="4.5" r="1.3"/></svg><kbd>P</kbd></button>
     <button class="tool" data-tool="offset" title="オフセット (O)"><svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="13" rx="4"/><rect x="6.5" y="7.5" width="7" height="5" rx=".5" stroke-width="1.2"/></svg><kbd>O</kbd></button>
+    <button class="tool" data-tool="split" title="分割 (K)"><svg viewBox="0 0 24 24"><path d="M3 7a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M3 17a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M8.6 8.6l10.4 10.4"/><path d="M8.6 15.4l10.4 -10.4"/></svg><kbd>K</kbd></button>
     <button class="tool" data-tool="fillet" title="フィレット (F)"><svg viewBox="0 0 20 20"><path d="M3.5 17V11a6 6 0 0 1 6-6h7"/><path d="M3.5 11V5h6" stroke-width="1" stroke-dasharray="1.5 1.5"/></svg><kbd>F</kbd></button>
     <div class="sep"></div>
     <button class="tool" id="bUndo" title="元に戻す (⌘Z)"><svg viewBox="0 0 20 20"><path d="M7 5L3 9l4 4M3 9h9a5 5 0 010 10h-2"/></svg></button>
@@ -484,6 +485,11 @@ const EN_EXACT={
   '実線':'Solid','実線（細）':'Solid (thin)','実線（赤）':'Solid (red)','破線':'Dashed','破線（細）':'Dashed (thin)','一点鎖線（シアン）':'Dash-dot (cyan)',
   '塗り':'Fill','斜線':'Diagonal','逆斜線':'Reverse diagonal','綾目':'Crosshatch','横線':'Horizontal','縦線':'Vertical','点':'Dots','ベタ（薄）':'Light tint','間隔':'Spacing',
   '塗りの間隔が細かすぎます':'The fill spacing is too fine','塗りの間隔は正の値に':'Fill spacing must be positive',
+  '分割 (K)':'Split (K)','分割':'Split','分割を解除':'Unsplit','切る線・図形':'Cutting lines / shapes','ピース':'Piece','切る線が見つかりません':'A cutting line is missing','分割した形が残りません':'Nothing is left after the split',
+  '分割する図形をクリックし、続けて切る線（または図形）をクリックして Enter。最初にクリックした図形が切られます（Esc で選び直し）':'Click the shape to split, then the cutting lines (or shapes), and press Enter. The first shape clicked is the one cut (Esc to start over)',
+  '元の図形や切る線を動かしたり変数を変えたりすると、分割も作り直されます。ピースをドラッグすると、元の図形と切る線ごと動きます（ほかのピースも一緒に動きます）。':'Moving the source or the cutting lines, or changing variables, rebuilds the split. Dragging a piece moves the source and cutters with it (and so the other pieces).',
+  '式をやめて、今の形の折れ線に置き換えます':'Drop the expressions and replace it with a polygon of its current shape','この分割のピースをすべて消して、元の図形と切る線に戻します':'Remove every piece of this split and return to the source and cutting lines',
+  '切る図形と、切る線（または図形）を選んでください':'Select the shape to cut and the cutting lines (or shapes)','切れませんでした（線が図形を横切っていません）':'Nothing was cut (the lines don’t cross the shape)','分割を解除しました':'Split undone',
   '出力':'Include','材料に穴を並べているので、ステッチ穴は材料ごとの設定で決まり、ここでは変えられません。上の材料を選んで設定してください。演算結果で穴を設定するには、材料の「穴を並べる」をすべてオフにします。':'A material has stitch holes, so stitching comes from each material’s own settings and can’t be changed here; pick a material above. To stitch this result instead, turn “Place stitch holes” off on every material.','ガイド線':'Guide lines','縫い線':'Stitch lines','演算の材料':'Operation materials','図形の名前':'Shape names','書き出す（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)',
   '図形ごとに書き出さない設定は、パーツ欄の「書き出す」で。選んだ内容は形式ごとに覚えます。':'To leave out a single shape, untick “Export” in its part panel. The choices here are remembered per format.',
   'SVGの書き出し':'Export SVG','DXFの書き出し':'Export DXF','mm単位。出力する内容を選んで、種類ごとにグループ分け':'In mm; choose what to include, grouped by kind','R12形式。出力する内容を選んで、種類ごとにレイヤー分け':'R12; choose what to include, one layer per kind',
@@ -538,7 +544,9 @@ const EN_PAT=[
   ['{0}（書き出さない）  {1}穴','{0} (not exported)  {1} holes',{0:'T'}],['{0}（書き出さない）','{0} (not exported)',{0:'T'}],['{0}（材料）  {1}穴','{0} (material)  {1} holes'],['{0}  {1}穴','{0}  {1} holes'],['{0}（材料）','{0} (material)'],['周長 {0}','Perimeter {0}'],['{0} · 連動','{0} · linked',{0:'T'}],
   ['{0} 横  {1}','{0} landscape  {1}',{0:'T'}],['{0} 縦  {1}','{0} portrait  {1}',{0:'T'}],['{0} 横','{0} landscape',{0:'T'}],['{0} 縦','{0} portrait',{0:'T'}],['図形に合わせる（{0} × {1} mm）  {2}','Fit to the shapes ({0} × {1} mm)  {2}'],['図形に合わせる（{0} × {1} mm）','Fit to the shapes ({0} × {1} mm)'],
   ['{0}枚（横{1} × 縦{2}）','{0} pages ({1} across × {2} down)'],['{0}枚','{0} page(s)'],['{0}-{1} ページ','Page {0}-{1}'],['ほか {0} 枚','{0} more'],
-  ['演算 · {0}','Operation · {0}',{0:'T'}],['始点から：{0}','From start: {0}',{0:'T'}],['終点から：{0}','From end: {0}',{0:'T'}],['ピッチ：{0}','Pitch: {0}',{0:'T'}],['辺{0}：{1}','Edge {0}: {1}',{1:'T'}],['{0}の角を丸めました','Rounded the corner: {0}',{0:'T'}],['頂点{0}の角を丸めました','Rounded the corner at node {0}'],['「{0}」とつないで角を丸めました','Joined with “{0}” and rounded the corner'],
+  ['演算 · {0}','Operation · {0}',{0:'T'}],['分割 · {0}','Split · {0}'],['{0}つに分割しました','Split into {0} pieces'],['「{0}」は閉じた形ではないので分割できません','“{0}” isn’t closed, so it can’t be split'],['「{0}」では切れません','“{0}” can’t cut'],
+  ['分割「{0}」に "src" と "cut" が要ります','Split “{0}” needs "src" and "cut"'],['分割「{0}」の図形 {1} が見つかりません','Split “{0}”: shape {1} not found'],
+  ['{0}は {1} ほか{2}件 の元の図形なので{3}できません','{0} is used by {1} and {2} more, so it can’t be {3}',{3:{'削除':'deleted','演算を解除':'ungrouped','確定':'baked'}}],['{0}は {1} の元の図形なので{2}できません','{0} is used by {1}, so it can’t be {2}',{2:{'削除':'deleted','演算を解除':'ungrouped','確定':'baked'}}],['始点から：{0}','From start: {0}',{0:'T'}],['終点から：{0}','From end: {0}',{0:'T'}],['ピッチ：{0}','Pitch: {0}',{0:'T'}],['辺{0}：{1}','Edge {0}: {1}',{1:'T'}],['{0}の角を丸めました','Rounded the corner: {0}',{0:'T'}],['頂点{0}の角を丸めました','Rounded the corner at node {0}'],['「{0}」とつないで角を丸めました','Joined with “{0}” and rounded the corner'],
   ['「{0}」はほかの図形から使われているので、つなげられません','“{0}” is used by other shapes, so it can’t be joined'],['フィレットでつなぐため、間の辺 {0} 本を消しました。','To join them, {0} edge(s) between were removed.'],
   ['角R {0}','Corner R {0}'],['角R {0}を削除','Delete corner R {0}'],['角R {0}：{1}','Corner R {0}: {1}',{1:'T'}],['頂点{0}の角R：{1}','Node {0} corner R: {1}',{1:'T'}],['頂点{0} 角R','Node {0} corner R'],
   ['頂点{0}の角Rが大きすぎます（辺の長さが足りません）','Node {0}: the corner radius is too large (the edges are too short)'],['R：{0}','R: {0}',{0:'T'}],['オフセット · {0}','Offset · {0}',{0:'T'}],['距離：{0}','Distance: {0}',{0:'T'}],
@@ -661,7 +669,9 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(doc))}catch(e){}}
 let uid=Date.now()%1e6;const newId=()=>'s'+(uid++);
 const OPS={union:'合体',diff:'差',inter:'交差',xor:'排他'};
 const byId=id=>doc.shapes.find(s=>s.id===id);
-const parentOf=id=>doc.shapes.find(s=>s.type==='bool'&&s.ops.includes(id));
+// a piece (分割) uses its source and cutters as materials, like an operation
+const pieceUses=(s,id)=>s.type==='piece'&&(s.src===id||(s.cut||[]).includes(id));
+const parentOf=id=>doc.shapes.find(s=>s.type==='bool'&&s.ops.includes(id))||doc.shapes.find(s=>pieceUses(s,id));
 // whether any material of an operation (at any depth) has stitching on; then the operation's own stitching is not used
 const matStitchOn=b=>(b.ops||[]).some(id=>{const c=byId(id);return!!c&&(!!(c.st&&c.st.on)||c.type==='bool'&&matStitchOn(c))});
 function descendants(s,out=[]){if(s&&s.type==='bool')for(const id of s.ops){const c=byId(id);if(c){out.push(c);descendants(c,out)}}return out}
@@ -684,7 +694,7 @@ function selfProp(s,prop,E){const f=k=>P(s,k,E);
   else if(s.type==='poly'){const pm=/^点(\d+)([XY])$/.exec(prop);
     if(pm){const i=+pm[1]-1,n=s.nodes[i];if(!n)throw Error(`頂点${pm[1]}はありません（${s.nodes.length}個）`);return gEv(E,`n${i}.${pm[2]}`,n[pm[2]==='X'?'x':'y'])}
     const bb=()=>{const N=evalNodes(s,E);return bbox(flatten(N,s.closed))};o=box(()=>bb()[0],()=>bb()[1],()=>bb()[2]-bb()[0],()=>bb()[3]-bb()[1])}
-  else if(s.type==='bool'||s.type==='offset'){const b=LOCALBB[s.id];if(!b)throw Error(s.type==='bool'?'演算結果の「自分」は、角R・ステッチ穴・回転の欄でだけ使えます':'オフセットの「自分」は、ステッチ穴の欄でだけ使えます');o=box(()=>b[0],()=>b[1],()=>b[2]-b[0],()=>b[3]-b[1])}
+  else if(s.type==='bool'||s.type==='offset'||s.type==='piece'){const b=LOCALBB[s.id];if(!b)throw Error(s.type==='bool'?'演算結果の「自分」は、角R・ステッチ穴・回転の欄でだけ使えます':'オフセットの「自分」は、ステッチ穴の欄でだけ使えます');o=box(()=>b[0],()=>b[1],()=>b[2]-b[0],()=>b[3]-b[1])}
   if(!o||!(prop in o))throw Error(`「自分」に「${prop}」はありません（${o?Object.keys(o).map(propOut).join('・'):''}${s.type==='poly'?'・'+propOut('点1X')+'…':''}）`);
   return o[prop]()}
 // line types, named by their look. The ids cut / guide are the former 裁断線 / ガイド, so older files keep working.
@@ -809,6 +819,33 @@ function geomLeaf0(s,env){
   const pts=flatten(FN,s.closed);if(s.closed&&pts.length<3)throw Error('閉じた形にするには頂点が足りません');
   // nodes: as written (handles, references, editing); fnodes: with the rounded corners, for drawing and export
   const g={paths:[pts],pts,closed:s.closed,nodes:N};if(fl){g.fnodes=FN;g.fmid=fl.mids}return g}
+// ---------- split (分割) ----------
+// cut a closed outline along lines (open paths, or other shapes' outlines): the cut lines become 2 µm slivers that are taken
+// away, and the rest falls apart into pieces, each an outline with its holes
+function splitPieces(tg,cutGs){const co=new ClipperLib.ClipperOffset();
+  for(const g of cutGs){if(g.closed)co.AddPaths(toC(g.paths),ClipperLib.JoinType.jtMiter,ClipperLib.EndType.etClosedLine);else co.AddPaths(toC([g.pts]),ClipperLib.JoinType.jtMiter,ClipperLib.EndType.etOpenButt)}
+  const sl=new ClipperLib.Paths();co.Execute(sl,1);
+  const c=new ClipperLib.Clipper(),tree=new ClipperLib.PolyTree(),F=ClipperLib.PolyFillType.pftNonZero;
+  c.AddPaths(toC(clip('union',tg.paths)),ClipperLib.PolyType.ptSubject,true);c.AddPaths(sl,ClipperLib.PolyType.ptClip,true);c.Execute(ClipperLib.ClipType.ctDifference,tree,F,F);
+  const groups=[],P=p=>p.map(q=>[q.X/CS,q.Y/CS]);
+  const walk=n=>{for(const ch of n.Childs()){if(ch.IsHole())continue;const g=[P(ch.Contour()),...ch.Childs().map(h=>P(h.Contour()))];if(Math.abs(area(g[0]))>0.01)groups.push(g);for(const h of ch.Childs())walk(h)}};
+  walk(tree);return groups}
+const insideG=(g,q)=>{const P={X:Math.round(q[0]*CS),Y:Math.round(q[1]*CS)},cg=toC(g);if(ClipperLib.Clipper.PointInPolygon(P,cg[0])!==1)return false;return cg.slice(1).every(h=>ClipperLib.Clipper.PointInPolygon(P,h)===0)};
+// a point well inside a piece: its centroid when that is inside, else the inside grid point farthest from the edges
+function insidePt(g){const o=g[0];let A=0,x=0,y=0;for(let i=0;i<o.length;i++){const[x1,y1]=o[i],[x2,y2]=o[(i+1)%o.length],f=x1*y2-x2*y1;A+=f;x+=(x1+x2)*f;y+=(y1+y2)*f}
+  if(Math.abs(A)>1e-9){const c=[x/(3*A),y/(3*A)];if(insideG(g,c))return c}
+  const b=bbox(o);let best=o[0],bd=-1;for(let i=1;i<12;i++)for(let j=1;j<12;j++){const q=[b[0]+(b[2]-b[0])*i/12,b[1]+(b[3]-b[1])*j/12];if(!insideG(g,q))continue;const d=Math.min(...g.map(P=>nearestOn(P,q).d));if(d>bd){bd=d;best=q}}
+  return best}
+// one piece of a split: the part of the source that holds the anchor (u,v in the source's bounding box); the anchor
+// follows the piece as the shapes change
+function geomPiece(s,gOf){if(!window.ClipperLib)throw Error('演算ライブラリが読み込めていません');
+  const t=byId(s.src);if(!t)throw Error('元の図形が見つかりません');const tg=gOf(t);if(!tg.closed)throw Error(`「${t.name}」が閉じた形ではありません`);
+  const cg=(s.cut||[]).map(id=>{const c=byId(id);if(!c)throw Error('切る線が見つかりません');const g=gOf(c);if(g.isText||g.isDim)throw Error(`「${c.name}」では切れません`);return g});
+  const groups=splitPieces(tg,cg);if(!groups.length)throw Error('分割した形が残りません');
+  const bb=bboxG(tg),bw=Math.max(bb[2]-bb[0],1e-6),bh=Math.max(bb[3]-bb[1],1e-6),A=[bb[0]+s.u*bw,bb[1]+s.v*bh];
+  let gi=groups.findIndex(g=>insideG(g,A));
+  if(gi<0){let bd=1e18;groups.forEach((g,i)=>{const d=Math.min(...g.map(P=>nearestOn(P,A).d));if(d<bd){bd=d;gi=i}});const q=insidePt(groups[gi]);s.u=+((q[0]-bb[0])/bw).toFixed(4);s.v=+((q[1]-bb[1])/bh).toFixed(4)}
+  const g=groups[gi],out={paths:g,pts:g[0],closed:true,piece:{i:gi,n:groups.length}};out.lbb=bbox(g.flat());LOCALBB[s.id]=out.lbb;return out}
 // ---------- fillets ----------
 // a fillet rounds the corner V between straight edges toward P and Q: the tangent points sit t = r/tan(θ/2) from V along
 // each edge, the centre on the bisector at r/sin(θ/2); M is the arc's middle
@@ -1051,9 +1088,10 @@ const curEdge=()=>{const it=C.byId[sel];return it&&it.st&&selEdge?it.st.edges.fi
 function compute(){
   const{env,errs}=envOf();const out={env,verr:errs,items:[],byId:{}};
   const parent={};for(const s of doc.shapes)if(s.type==='bool')for(const id of s.ops)parent[id]=s.id;
+  for(const s of doc.shapes)if(s.type==='piece')for(const id of[s.src,...(s.cut||[])])if(!parent[id])parent[id]=s.id;
   const memo={},busy={},envs={};LOCALBB={};const sEnv=s=>envs[s.id]||(envs[s.id]=selfEnv(s,env));out.envFor=sEnv;
   const gOf=s=>{if(memo[s.id])return memo[s.id];if(busy[s.id])throw Error(s.type==='bool'||s.type==='offset'?'演算か図形の参照が循環しています':'図形の参照が循環しています');busy[s.id]=1;
-    try{return memo[s.id]=s.type==='bool'?geomBool(s,gOf,sEnv(s)):s.type==='offset'?geomOffset(s,gOf,sEnv(s)):geomLeaf(s,sEnv(s))}finally{busy[s.id]=0}};
+    try{return memo[s.id]=s.type==='bool'?geomBool(s,gOf,sEnv(s)):s.type==='offset'?geomOffset(s,gOf,sEnv(s)):s.type==='piece'?geomPiece(s,gOf):geomLeaf(s,sEnv(s))}finally{busy[s.id]=0}};
   Object.defineProperty(env,'$ref',{enumerable:false,value:(name,prop)=>{const ts=doc.shapes.filter(x=>x.name===name);
     if(!ts.length)throw Error(`図形「${name}」が見つかりません`);if(ts.length>1)throw Error(`「${name}」という名前の図形が${ts.length}個あります`);
     let g;try{g=gOf(ts[0])}catch(e){throw Error(/循環/.test(e.message)?`図形「${name}」との参照が循環しています`:`図形「${name}」にエラーがあります`)}return shapeProp(ts[0],g,prop)}});
@@ -1061,7 +1099,9 @@ function compute(){
     if(it.g&&it.g.closed&&!it.g.isText&&s.fill&&HATCHES[s.fill.t]&&s.fill.t!=='none'){try{const pt=s.fill.t==='fill'?1:evalExpr(s.fill.pitch||'2',sEnv(s));if(!(pt>0))throw Error('塗りの間隔は正の値に');it.hatch=hatchOf(it.g.paths,s.fill.t,pt)}catch(e){it.fillerr=e.message}}
     // stitch holes come from each shape's own settings, materials included; an operation is stitched on its own outline
     // only while none of its materials is
-    if(it.g&&(s.type!=='bool'||!matStitchOn(s))){try{it.st=stitch(s,it.g,sEnv(s),gOf)}catch(e){it.sterr=e.message}}out.items.push(it);out.byId[s.id]=it}
+    // a piece's source and cutters are not stitched: the pieces are
+    const pp=it.parent&&byId(it.parent);
+    if(it.g&&(s.type!=='bool'||!matStitchOn(s))&&!(pp&&pp.type==='piece')){try{it.st=stitch(s,it.g,sEnv(s),gOf)}catch(e){it.sterr=e.message}}out.items.push(it);out.byId[s.id]=it}
   return out}
 
 // ---------- shape references ----------
@@ -1098,7 +1138,7 @@ function refUsers(targets,skip=new Set()){const names=new Set(targets.map(t=>t.n
 // ids of shapes whose geometry depends on any of `ids` (through bools, offsets or references), the ids included
 function dependents(ids){const by=new Map(doc.shapes.map(s=>[s.id,s]));const out=new Set(ids);let grown=true;
   while(grown){grown=false;for(const s of doc.shapes){if(out.has(s.id))continue;
-    const hit=(s.type==='bool'&&s.ops.some(id=>out.has(id)))||(s.type==='offset'&&(s.src||[]).some(id=>out.has(id)))||exprSlots(s).some(([o,k])=>refsIn(o[k]).some(r=>doc.shapes.some(x=>x.name===r.name&&out.has(x.id))));
+    const hit=(s.type==='bool'&&s.ops.some(id=>out.has(id)))||(s.type==='offset'&&(s.src||[]).some(id=>out.has(id)))||(s.type==='piece'&&[s.src,...(s.cut||[])].some(id=>out.has(id)))||exprSlots(s).some(([o,k])=>refsIn(o[k]).some(r=>doc.shapes.some(x=>x.name===r.name&&out.has(x.id))));
     if(hit){out.add(s.id);grown=true}}}return out}
 function uniqName(base,skip){const used=new Set(doc.shapes.filter(x=>x!==skip).map(x=>x.name));if(!used.has(base))return base;
   const m=/^(.*?)(\d+)$/.exec(base),stem=m&&IDRE.test(base)?m[1]:base;let i=m?+m[2]+1:2;while(used.has(stem+i))i++;return stem+i}
@@ -1226,7 +1266,7 @@ function drawSel(it,k){const s=it.s,g=it.g;if(g.isText)return;drawEdges(it,k);
     const H={nw:[x,y,'nwse'],n:[x+w/2,y,'ns'],ne:[x+w,y,'nesw'],e:[x+w,y+h/2,'ew'],se:[x+w,y+h,'nwse'],s:[x+w/2,y+h,'ns'],sw:[x,y+h,'nesw'],w:[x,y+h/2,'ew']};
     for(const d in H){const[hx,hy,c]=H[d];handle(hx,hy,k,{'data-h':'rs-'+d,style:`cursor:${c}-resize`,...(d.length===1?{rx:4*k}:{})})}}
   else if(s.type==='circle'){dimText(g.cx,g.cy-g.d/2-6*k,'Ø'+fmt(g.d),k);handle(g.cx+g.d/2,g.cy,k,{'data-h':'rad',style:'cursor:ew-resize'})}
-  else if(s.type==='bool'||s.type==='offset'){const b=bboxG(g);dimBox(b[0],b[1],b[2]-b[0],b[3]-b[1],k);
+  else if(s.type==='bool'||s.type==='offset'||s.type==='piece'){const b=bboxG(g);dimBox(b[0],b[1],b[2]-b[0],b[3]-b[1],k);
     dimText((b[0]+b[2])/2,b[3]+16*k,'周長 '+fmt(g.paths.reduce((a,p)=>a+plen(p,true),0)),k)}
   else{const N=g.nodes;
     N.forEach((n,i)=>{for(const hk of['hi','ho'])if(n[hk]){const hx=n.x+n[hk][0],hy=n.y+n[hk][1];
@@ -1240,7 +1280,7 @@ function drawSel(it,k){const s=it.s,g=it.g;if(g.isText)return;drawEdges(it,k);
 // ---------- panel ----------
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 const LABELS={rcx:'回転中心X',rcy:'回転中心Y',x1:'始点X',y1:'始点Y',x2:'終点X',y2:'終点Y',off:'離れ',x:'X',y:'Y',w:'幅',h:'高さ',r:'角R',cx:'中心X',cy:'中心Y',d:'直径',size:'文字の高さ',rot:'回転（度）'};
-const TYPE_LABEL=s=>({dim:'寸法線',text:'テキスト',rect:'矩形',circle:'円',poly:s.closed?'閉じたパス':'開いたパス',bool:'演算 · '+OPS[s.op],offset:'オフセット · '+OFFSET_SIDES[s.side==='in'?'in':'out']}[s.type]);
+const TYPE_LABEL=s=>({dim:'寸法線',text:'テキスト',rect:'矩形',circle:'円',poly:s.closed?'閉じたパス':'開いたパス',bool:'演算 · '+OPS[s.op],offset:'オフセット · '+OFFSET_SIDES[s.side==='in'?'in':'out'],piece:'分割'+((C.byId[s.id]||{}).g&&C.byId[s.id].g.piece?` · ${C.byId[s.id].g.piece.i+1}/${C.byId[s.id].g.piece.n}`:'')}[s.type]);
 function exprRow(path,label,expr,env){let v,e;try{v=evalExpr(expr,env)}catch(x){e=x.message}
   return `<div class="row"><label for="f_${path}">${label}</label><input type="text" id="f_${path}" data-path="${path}" value="${esc(expr)}" class="${e?'err':''}" spellcheck="false" autocomplete="off"><span class="val ${e?'err':''}" title="${esc(e||'')}">${e?'エラー':'= '+fmt(v)}</span></div>`}
 const irrText=irr=>{if(!irr.length)return'なし';const g={};irr.forEach(x=>{const k=fmt(x.g);g[k]=(g[k]||0)+1});return`<b style="color:var(--danger);font-weight:500">${Object.entries(g).map(([v,c])=>`${v}mm × ${c}`).join('、')}</b>`};
@@ -1290,6 +1330,10 @@ function renderPanel(){
       <div style="display:flex;flex-direction:column;gap:4px">${src.map((id,i)=>{const c=byId(id);return`<div class="vrow" style="grid-template-columns:minmax(0,1fr) auto auto"><button class="btn" data-pick="${id}" style="text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i===0&&src.length>1?'<span class="pill">本体</span> ':''}${esc(c?c.name:'?')}</button>${i>0?`<button class="btn" data-front="${id}" style="padding:3px 8px">本体にする</button>`:'<span></span>'}<button class="x" data-unuse="${id}" aria-label="元の図形から外す" title="元の図形から外す">×</button></div>`}).join('')}</div>
       <div class="small">角の形は、外側では出っ張った角、内側では凹んだ角に効きます。元の図形を変えるとオフセットも作り直され、オフセットをドラッグすると元の図形ごと動きます。</div>`;
       if(it.g){const b=bboxG(it.g);h+=`<div class="result"><span>外形</span><span>${fmt(b[2]-b[0])} × ${fmt(b[3]-b[1])} mm</span><span>輪郭数</span><span>${it.g.paths.length}</span></div>`}}
+    if(s.type==='piece'){const pk=id=>{const c=byId(id);return`<div class="vrow" style="grid-template-columns:minmax(0,1fr)"><button class="btn" data-pick="${id}" style="text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c?c.name:'?')}</button></div>`};
+      h+=`<div class="small">元の図形</div>${pk(s.src)}<div class="small">切る線・図形</div><div style="display:flex;flex-direction:column;gap:4px">${(s.cut||[]).map(pk).join('')}</div>
+      <div class="small">元の図形や切る線を動かしたり変数を変えたりすると、分割も作り直されます。ピースをドラッグすると、元の図形と切る線ごと動きます（ほかのピースも一緒に動きます）。</div>`;
+      if(it.g){const b=bboxG(it.g);h+=`<div class="result"><span>外形</span><span>${fmt(b[2]-b[0])} × ${fmt(b[3]-b[1])} mm</span><span>ピース</span><span>${it.g.piece.i+1} / ${it.g.piece.n}</span></div>`}}
     if((s.type==='bool'||s.type==='offset')&&Array.isArray(s.fl)&&s.fl.length){h+=`<div class="small">角R（フィレットで丸めた角）</div>`+s.fl.map((f,i)=>{let v,e;try{v=evalExpr(f.r,env)}catch(x){e=x.message}const lost=!!(it.g&&it.g.flLost&&it.g.flLost.includes(i));
         return`<div class="row"><label for="f_fl${i}">角R ${i+1}</label><input type="text" id="f_fl${i}" data-path="fl.${i}.r" value="${esc(f.r)}" class="${e?'err':''}" spellcheck="false" autocomplete="off"><span style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><span class="val ${e||lost?'err':''}" title="${esc(e||'')}">${e?'エラー':lost?'外れ':'= '+fmt(v)}</span><button class="x" data-fldel="${i}" aria-label="角R ${i+1}を削除" title="削除">×</button></span></div>`}).join('');
       if(it.g&&it.g.flLost&&it.g.flLost.length)h+=`<div class="small" style="color:var(--danger)">「外れ」の角Rは、形が変わってどの角にも当てはまらなくなっています。</div>`}
@@ -1333,12 +1377,12 @@ function renderPanel(){
           h+=`</div>`}
         {const bad=it.st?it.st.edges.filter(x=>x.errs.length):[];if(bad.length&&!(e&&bad.length===1&&bad[0]===e))h+=`<div class="small" style="color:var(--danger)">${bad.map(x=>esc(`辺${x.i+1}：${x.errs.join(' / ')}`)).join('<br>')}</div>`}
         if(it.sterr)h+=`<div class="small" style="color:var(--danger)">${esc(it.sterr)}</div>`}}
-    h+=`<div class="btns" style="margin-top:4px">`+(s.type==='bool'?`<button class="btn" id="bBake" title="材料と式を捨てて、今の形で固定します">確定</button><button class="btn" id="bUngroup" title="演算をやめて材料を元の図形に戻します">演算を解除</button>`:s.type==='offset'?`<button class="btn" id="bBake" title="式をやめて、今の形の折れ線に置き換えます（元の図形は残ります）">確定</button>`:'')+
+    h+=`<div class="btns" style="margin-top:4px">`+(s.type==='bool'?`<button class="btn" id="bBake" title="材料と式を捨てて、今の形で固定します">確定</button><button class="btn" id="bUngroup" title="演算をやめて材料を元の図形に戻します">演算を解除</button>`:s.type==='offset'?`<button class="btn" id="bBake" title="式をやめて、今の形の折れ線に置き換えます（元の図形は残ります）">確定</button>`:s.type==='piece'?`<button class="btn" id="bBake" title="式をやめて、今の形の折れ線に置き換えます">確定</button><button class="btn" id="bUnsplit" title="この分割のピースをすべて消して、元の図形と切る線に戻します">分割を解除</button>`:'')+
       `<button class="btn ib" id="bDup" title="複製 (⌘D)" aria-label="複製">${ICON.copy}</button><button class="btn ib" id="bMirX" title="左右反転した形を右側に複製" aria-label="左右複製">${ICON.flipX}</button><button class="btn ib" id="bMirY" title="上下反転した形を下側に複製" aria-label="上下複製">${ICON.flipY}</button><button class="btn ib del" id="bDel" title="削除 (Delete)" aria-label="削除">${ICON.trash}</button></div>`;
     sec.innerHTML=h;
     $('bDup').onclick=()=>dup();$('bMirX').onclick=()=>mirrorCopy('x');$('bMirY').onclick=()=>mirrorCopy('y');$('bDel').onclick=delSel;
     if($('bParent'))$('bParent').onclick=()=>{setSel(it.parent);render()};
-    if($('bBake'))$('bBake').onclick=bake;if($('bUngroup'))$('bUngroup').onclick=ungroup;
+    if($('bBake'))$('bBake').onclick=bake;if($('bUngroup'))$('bUngroup').onclick=ungroup;if($('bUnsplit'))$('bUnsplit').onclick=unsplit;
     if($('bEdgeX'))$('bEdgeX').onclick=()=>{selEdge=null;render()};
     if($('bBetweenKeep'))$('bBetweenKeep').onclick=keepBetween;if($('bBetweenDrop'))$('bBetweenDrop').onclick=()=>{pendingBetween=null;lastPanelKey=null;render()};
     sec.querySelectorAll('[data-fldel]').forEach(b=>b.onclick=()=>{pushUndo();s.fl.splice(+b.dataset.fldel,1);if(!s.fl.length)delete s.fl;lastPanelKey=null;render()});
@@ -1485,7 +1529,8 @@ function insertNode(s,m){const g=C.byId[s.id].g,N=g.lnodes||g.nodes;if(g.rot)m=u
 function cloneTree(s,dx){const c=structuredClone(s);c.id=newId();c.name=uniqName(c.name);
   if(c.type==='bool'){c.ops=s.ops.map(id=>cloneTree(byId(id),dx));shiftPivot(c,dx,0)}
   // an offset is copied with its source shapes, so the copy has its own sources beside the originals
-  else if(c.type==='offset')c.src=(s.src||[]).map(byId).filter(Boolean).map(x=>cloneTree(x,dx));else shiftLeaf(c,dx,0);
+  else if(c.type==='offset')c.src=(s.src||[]).map(byId).filter(Boolean).map(x=>cloneTree(x,dx));
+  else if(c.type==='piece'){c.src=cloneTree(byId(s.src),dx);c.cut=(s.cut||[]).map(byId).filter(Boolean).map(x=>cloneTree(x,dx))}else shiftLeaf(c,dx,0);
   doc.shapes.push(c);return c.id}
 function dup(){const s=cur();if(!s)return;pushUndo();
   const it=C.byId[s.id];const bb=it&&it.g?bboxG(it.g):[0,0,0,0];const dx=bb[2]-bb[0]+10;
@@ -1498,6 +1543,7 @@ function mirrorCopy(axis){const s=cur();if(!s)return;const it=C.byId[s.id];if(!i
 function mirrorTree(s,axis,A2){const c=structuredClone(s);c.id=newId();c.name=uniqName(s.name+nm(axis==='x'?' (左右反転)':' (上下反転)'));
   if(c.type==='bool')c.ops=s.ops.map(id=>mirrorTree(byId(id),axis,A2));
   if(c.type==='offset')c.src=(s.src||[]).map(byId).filter(Boolean).map(x=>mirrorTree(x,axis,A2));
+  if(c.type==='piece'){c.src=mirrorTree(byId(s.src),axis,A2);c.cut=(s.cut||[]).map(byId).filter(Boolean).map(x=>mirrorTree(x,axis,A2));if(axis==='x')c.u=+(1-c.u).toFixed(4);else c.v=+(1-c.v).toFixed(4)}
   mirrorShape(c,axis,A2);doc.shapes.push(c);return c.id}
 function mirrorShape(c,axis,A2){const X=axis==='x',has=e=>e!=null&&String(e).trim()!=='';
   const M=e=>combE(A2,e,-1),MW=(e,w)=>combE(M(e),w,-1);
@@ -1529,11 +1575,11 @@ function blockedByRefs(gone,verb){const ids=new Set(gone.map(x=>x.id));
   if(LANG==='en'){toast(`${used.map(n=>`“${n.name}”`).join(', ')} ${used.length>1?'are':'is'} used in the expressions of ${users.slice(0,4).map(u=>u.name).join(', ')}${users.length>4?` and ${users.length-4} more`:''}, so it can’t be ${verb==='削除'?'deleted':'ungrouped'}`,5000);return true}
   toast(`${used.map(n=>`「${n.name}」`).join('')}は ${users.slice(0,4).map(u=>u.name).join('、')}${users.length>4?` ほか${users.length-4}件`:''} の式で参照されているので${verb}できません`,5000);return true}
 // an offset's source shapes can't go away while the offset uses them
-function blockedBySrc(gone,verb){const ids=new Set(gone.map(x=>x.id));
-  const users=doc.shapes.filter(o=>o.type==='offset'&&!ids.has(o.id)&&(o.src||[]).some(id=>ids.has(id)));if(!users.length)return false;
-  const used=gone.filter(x=>users.some(o=>o.src.includes(x.id))),un=users.slice(0,4).map(u=>u.name);
-  if(LANG==='en'){toast(`${used.map(n=>`“${n.name}”`).join(', ')} ${used.length>1?'are sources':'is a source'} of the offset ${un.join(', ')}${users.length>4?` and ${users.length-4} more`:''}, so it can’t be ${{削除:'deleted',演算を解除:'ungrouped',確定:'baked'}[verb]}`,5000);return true}
-  toast(`${used.map(n=>`「${n.name}」`).join('')}は ${un.join('、')}${users.length>4?` ほか${users.length-4}件`:''} のオフセット元なので${verb}できません`,5000);return true}
+function blockedBySrc(gone,verb){const ids=new Set(gone.map(x=>x.id)),uses=(o,id)=>o.type==='offset'&&(o.src||[]).includes(id)||pieceUses(o,id);
+  const users=doc.shapes.filter(o=>!ids.has(o.id)&&[...ids].some(id=>uses(o,id)));if(!users.length)return false;
+  const used=gone.filter(x=>users.some(o=>uses(o,x.id))),un=users.slice(0,4).map(u=>u.name);
+  if(LANG==='en'){toast(`${used.map(n=>`“${n.name}”`).join(', ')} ${used.length>1?'are used':'is used'} by ${un.join(', ')}${users.length>4?` and ${users.length-4} more`:''}, so it can’t be ${{削除:'deleted',演算を解除:'ungrouped',確定:'baked'}[verb]}`,5000);return true}
+  toast(`${used.map(n=>`「${n.name}」`).join('')}は ${un.join('、')}${users.length>4?` ほか${users.length-4}件`:''} の元の図形なので${verb}できません`,5000);return true}
 function delSel(){const targets=picks.map(byId).filter(Boolean);if(!targets.length)return;
   const gone=[...new Set(targets.flatMap(t=>[t,...descendants(t)]))];if(blockedByRefs(gone,'削除')||blockedBySrc(gone,'削除'))return;pushUndo();
   for(const s of targets)if(byId(s.id))removeTree(s);
@@ -1546,6 +1592,19 @@ function makeBool(op){const ss=picks.map(byId);
   const b={id:newId(),name:uniqName(ss.map(s=>s.name).join(op==='diff'?' − ':op==='union'?' ＋ ':' ∩ ')),type:'bool',op,ops:ss.map(s=>s.id),kind:first.kind,p:{},st:{...structuredClone(first.st||{inset:'3',pitch:'4',hole:'1.2'}),on:false}};delete b.st.eo;delete b.st.edges;
   doc.shapes.push(b);setSel(b.id);render();
   const it=C.byId[b.id];if(it.err)toast(it.err);else toast(`${OPS[op]}しました。元の図形は材料として残っています`)}
+function dropUnused(ids){for(const id of ids){const c=byId(id);if(!c||doc.shapes.some(o=>o.type==='bool'&&o.ops.includes(id)||o.type==='offset'&&(o.src||[]).includes(id)||pieceUses(o,id))||refUsers([c]).length)continue;
+  doc.shapes=doc.shapes.filter(x=>x!==c)}}
+// split the first shape along the others (open lines or outlines): one piece per part, each its own shape with the
+// first shape's line, fill and stitch settings; the first shape and the cutters stay as materials
+function makeSplit(ids){const ss=ids.map(byId).filter(Boolean);if(ss.length<2){toast('切る図形と、切る線（または図形）を選んでください');return false}
+  const t=ss[0],tg=(C.byId[t.id]||{}).g;if(!tg||!tg.closed||tg.isText){toast(`「${t.name}」は閉じた形ではないので分割できません`);return false}
+  const cg=[];for(const c of ss.slice(1)){const g=(C.byId[c.id]||{}).g;if(!g||g.isText||g.isDim){toast(`「${c.name}」では切れません`);return false}cg.push(g)}
+  const groups=splitPieces(tg,cg);if(groups.length<2){toast('切れませんでした（線が図形を横切っていません）');return false}
+  pushUndo();const bb=bboxG(tg),bw=Math.max(bb[2]-bb[0],1e-6),bh=Math.max(bb[3]-bb[1],1e-6),st={...structuredClone(t.st||{on:false,inset:'3',pitch:'4',hole:'1.2'})};delete st.eo;delete st.edges;
+  const news=groups.map((g,i)=>{const q=insidePt(g);return{id:newId(),name:uniqName(`${t.name} (${i+1})`),type:'piece',src:t.id,cut:ss.slice(1).map(c=>c.id),u:+((q[0]-bb[0])/bw).toFixed(4),v:+((q[1]-bb[1])/bh).toFixed(4),kind:LINES[t.kind]?t.kind:'cut',p:{},st:structuredClone(st),...(t.fill?{fill:structuredClone(t.fill)}:{})}});
+  doc.shapes.push(...news);setSel(news[0].id);setTool('select');toast(`${news.length}つに分割しました`);return true}
+function unsplit(){const s=cur();if(!s||s.type!=='piece')return;const key=JSON.stringify([s.src,s.cut]),sibs=doc.shapes.filter(o=>o.type==='piece'&&JSON.stringify([o.src,o.cut])===key);
+  if(blockedByRefs(sibs,'分割を解除'))return;pushUndo();doc.shapes=doc.shapes.filter(o=>!sibs.includes(o));setSel(s.src);render();toast('分割を解除しました')}
 // a new offset of the given shapes (combined with union when there are several), selected so the panel can adjust it
 function makeOffset(ids){const ss=ids.map(byId).filter(Boolean);if(!ss.length)return false;
   const open=ss.find(s=>{const it=C.byId[s.id];return !it||!it.g||!it.g.closed});
@@ -1636,7 +1695,7 @@ function drawFillet(k){const line=(S,col,w)=>el('path',{d:`M${S.a[0]} ${S.a[1]}L
 function ungroup(){const s=cur();if(!s||s.type!=='bool')return;if(blockedByRefs([s],'演算を解除')||blockedBySrc([s],'演算を解除'))return;pushUndo();const kids=s.ops.slice();
   doc.shapes=doc.shapes.filter(x=>x!==s);picks=kids.filter(id=>byId(id));sel=picks[0]||null;render()}
 // bake an operation or an offset into fixed polygons; a bool's materials go, an offset's sources stay
-function bake(){const s=cur();const it=C.byId[sel];if(!s||(s.type!=='bool'&&s.type!=='offset')||!it.g)return;
+function bake(){const s=cur();const it=C.byId[sel];if(!s||(s.type!=='bool'&&s.type!=='offset'&&s.type!=='piece')||!it.g)return;
   const kids=s.type==='bool'?descendants(s):[];if(blockedBySrc(kids,'確定'))return;pushUndo();
   // stitched on its own outline (an offset, or an operation whose materials are all unstitched): keep its settings.
   // Otherwise the stitching lives on the materials: start from the first stitched material's settings, and each edge of
@@ -1645,7 +1704,10 @@ function bake(){const s=cur();const it=C.byId[sel];if(!s||(s.type!=='bool'&&s.ty
   const base=own?structuredClone(s.st):{...structuredClone(mats[0]?mats[0].c.st:s.st),on:!!mats[0]};if(!own){delete base.eo;delete base.edges}
   const news=it.g.paths.map((p,i)=>({id:i?newId():s.id,name:i?uniqName(`${s.name} (${i+1})`):s.name,type:'poly',kind:s.kind,nodes:p.map(([x,y])=>({x:num(x),y:num(y)})),closed:true,p:{},st:{...structuredClone(base),on:base.on&&(!own||i===0)}}));
   doc.shapes=doc.shapes.filter(x=>!kids.includes(x));
-  doc.shapes.splice(doc.shapes.indexOf(s),1,...news);setSel(s.id);render();
+  doc.shapes.splice(doc.shapes.indexOf(s),1,...news);
+  // a piece's source and cutters go once no other piece uses them (and nothing else refers to them)
+  if(s.type==='piece')dropUnused([s.src,...(s.cut||[])]);
+  setSel(s.id);render();
   if(mats.length){for(const n of news){const ni=C.byId[n.id];if(!ni||!ni.st)continue;const map=edgeMapper(mats,ni.st.ins);
       n.st.eo=ni.st.edges.map(e=>{const o=map(e.pts);return Object.keys(o).length?{u:+e.mid[0].toFixed(4),v:+e.mid[1].toFixed(4),...o}:null}).filter(Boolean)}
     lastPanelKey=null;render()}
@@ -1657,10 +1719,11 @@ const toastEl=$('toast');let toastT;
 function toast(m,ms=2600){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),ms)}
 function toMM(e){const r=svg.getBoundingClientRect();return[(e.clientX-r.left-view.tx)/view.s,(e.clientY-r.top-view.ty)/view.s]}
 const snap=v=>snapStep?Math.round(v/snapStep)*snapStep:Math.round(v*100)/100;
-const HINT={dim:'始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック',text:'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集',select:'クリックで選択（重なっている所は同じ場所をもう一度クリックで奥の図形へ）、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで矩形を描く。図形の角・中点・辺に吸着すると、その図形に連動します（Ctrl / ⌘ で一時的に吸着なし）',circle:'中心からドラッグして円を描く。中心は図形の点に吸着・連動します',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',fillet:'平行でない2本の線分を順にクリック。交わっていなくても延長してつなぎ、クリックした側を残して角を丸めます（R は下の欄。Esc で選び直し）',offset:'オフセットする図形をクリック。複数まとめるときは Shift＋クリックで選んで Enter（図形を選んでからこのツールを押しても作れます）'};
+const HINT={dim:'始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック',text:'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集',select:'クリックで選択（重なっている所は同じ場所をもう一度クリックで奥の図形へ）、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで矩形を描く。図形の角・中点・辺に吸着すると、その図形に連動します（Ctrl / ⌘ で一時的に吸着なし）',circle:'中心からドラッグして円を描く。中心は図形の点に吸着・連動します',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',split:'分割する図形をクリックし、続けて切る線（または図形）をクリックして Enter。最初にクリックした図形が切られます（Esc で選び直し）',fillet:'平行でない2本の線分を順にクリック。交わっていなくても延長してつなぎ、クリックした側を残して角を丸めます（R は下の欄。Esc で選び直し）',offset:'オフセットする図形をクリック。複数まとめるときは Shift＋クリックで選んで Enter（図形を選んでからこのツールを押しても作れます）'};
 // the offset tool applies to the selection at once when there is one; otherwise it waits for a click on a shape
 function setTool(t){if(t==='offset'&&tool!=='offset'&&picks.length&&makeOffset(picks))return;
-  tool=t;draft=null;snapHint=null;fsel=null;fhover=null;$('fRBox').hidden=t!=='fillet';document.querySelectorAll('.tool[data-tool]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));svg.className.baseVal=t==='select'||t==='offset'?'':'draw';$('sHint').textContent=HINT[t];render()}
+  if(t==='split'&&tool!=='split'&&picks.length>=2&&makeSplit(picks))return;
+  tool=t;draft=null;snapHint=null;fsel=null;fhover=null;$('fRBox').hidden=t!=='fillet';document.querySelectorAll('.tool[data-tool]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));svg.className.baseVal=t==='select'||t==='offset'||t==='split'?'':'draw';$('sHint').textContent=HINT[t];render()}
 document.querySelectorAll('.tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
 function contentBB(){const{items,bb}=exportItems(expOpts('pdf'),true);return items.length?bb:null}
 // printable area of every page that the PDF button would produce, with the paper edge drawn faintly around it
@@ -1830,6 +1893,8 @@ svg.addEventListener('pointerdown',e=>{
   if(tool==='fillet'){const S=segAt(m,e);if(!S){fsel=null;render();return}
     if(!fsel){fsel={S,m};render();return}
     if(doFillet(fsel.S,fsel.m,S,m)){fsel=null;fhover=null;render()}else render();return}
+  // split: clicks gather the shape to cut (first) and the cutters; Enter splits
+  if(tool==='split'){const id=hitList(e)[0];if(!id)return;picks=picks.includes(id)?picks.filter(x=>x!==id):picks.concat(id);sel=picks[0]||null;lastPanelKey=null;render();return}
   if(tool==='offset'){const id=hitList(e)[0];if(!id){if(!e.shiftKey)setSel(null);render();return}
     if(e.shiftKey){picks=picks.includes(id)?picks.filter(x=>x!==id):picks.concat(id);sel=picks[0]||null;lastPanelKey=null;render();return}
     makeOffset(picks.length>1&&picks.includes(id)?picks:[id]);return}
@@ -1863,7 +1928,7 @@ svg.addEventListener('pointermove',e=>{if(e.pointerType==='touch'&&touchMove(e))
   if(tool==='dim'&&!drag){if(!draft||draft.stage===1){const q=snapAt(m,e);const ch=setHint(q);if(draft){draft.b=q;render()}else if(ch)render();return}
     const dx=draft.b.x-draft.a.x,dy=draft.b.y-draft.a.y,L=Math.hypot(dx,dy);draft.off=snap(((m[0]-draft.a.x)*-dy+(m[1]-draft.a.y)*dx)/L);render();return}
   if(tool==='fillet'&&!drag){const S=segAt(m,e),was=fhover;fhover=S?{S,m}:null;if(fsel||!!was!==!!S||(S&&was&&!sameSeg(S,was.S)))render();return}
-  if(!drag&&!draft&&tool!=='select'&&tool!=='offset'){if(setHint(snapAt(m,e)))render();return}
+  if(!drag&&!draft&&tool!=='select'&&tool!=='offset'&&tool!=='split'){if(setHint(snapAt(m,e)))render();return}
   if(draft&&draft.type==='poly'){
     if(draft.dragging!=null&&!draft.straight){if(Math.hypot(e.clientX-draft.sx,e.clientY-draft.sy)>4){const n=draft.nodes[draft.dragging];
       const hx=Math.round((m[0]-n.x)*100)/100,hy=Math.round((m[1]-n.y)*100)/100;n.ho=[hx,hy];n.hi=[-hx,-hy];render()}return}
@@ -1971,7 +2036,7 @@ function hitList(e){const seen=new Map();
   const area=id=>{const it=C.byId[id];if(!it||!it.g)return 1e18;const b=bboxG(it.g);return(b[2]-b[0])*(b[3]-b[1])};
   return[...seen.values()].sort((a,b)=>a.line!==b.line?(a.line?-1:1):a.line?a.z-b.z:area(a.id)-area(b.id)).map(o=>o.id)}
 // everything that moves with a shape: a bool's materials and an offset's source shapes, all the way down
-function moveTree(s,out=new Set()){if(!s||out.has(s))return out;out.add(s);for(const id of s.type==='bool'?s.ops:s.type==='offset'?s.src||[]:[])moveTree(byId(id),out);return out}
+function moveTree(s,out=new Set()){if(!s||out.has(s))return out;out.add(s);for(const id of s.type==='bool'?s.ops:s.type==='offset'?s.src||[]:s.type==='piece'?[s.src,...(s.cut||[])]:[])moveTree(byId(id),out);return out}
 // clicking the same spot again steps to the next shape underneath
 let lastClick=null;
 function clickPick(c){const same=lastClick&&Math.hypot(c.x-lastClick.x,c.y-lastClick.y)<5;lastClick={x:c.x,y:c.y};
@@ -2006,13 +2071,14 @@ document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden||!$('helpModal'
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='d'&&!inField){e.preventDefault();dup(false);return}
   if(inField){if(e.key==='Enter'&&!composing(e))document.activeElement.blur();return}
   if(e.key==='Escape'&&tool==='fillet'){if(fsel){fsel=null;render()}else setTool('select');return}
-  if(e.key==='Escape'){if(draft){draft=null;render()}else if(selNodes.length){selNodes=[];lastPanelKey=null;render()}else if(selEdge){selEdge=null;render()}else{setSel(null);if(tool==='offset')setTool('select');else render()}return}
+  if(e.key==='Escape'){if(draft){draft=null;render()}else if(selNodes.length){selNodes=[];lastPanelKey=null;render()}else if(selEdge){selEdge=null;render()}else{setSel(null);if(tool==='offset'||tool==='split')setTool('select');else render()}return}
   if(e.key==='Enter'&&draft&&draft.type==='poly'){finishPoly(false);return}
   if(e.key==='Enter'&&tool==='offset'&&picks.length){makeOffset(picks);return}
+  if(e.key==='Enter'&&tool==='split'){makeSplit(picks);return}
   if((e.key==='Delete'||e.key==='Backspace')&&selNodes.length){e.preventDefault();delNodes();return}
   if((e.key==='Delete'||e.key==='Backspace')&&picks.length){e.preventDefault();delSel();return}
   if(e.key.toLowerCase()==='f'&&e.shiftKey&&!e.metaKey&&!e.ctrlKey){fit();return}
-  const map={v:'select',r:'rect',c:'circle',l:'line',p:'poly',t:'text',d:'dim',o:'offset',f:'fillet'};if(map[e.key.toLowerCase()]&&!e.metaKey&&!e.ctrlKey){setTool(map[e.key.toLowerCase()]);return}
+  const map={v:'select',r:'rect',c:'circle',l:'line',p:'poly',t:'text',d:'dim',o:'offset',f:'fillet',k:'split'};if(map[e.key.toLowerCase()]&&!e.metaKey&&!e.ctrlKey){setTool(map[e.key.toLowerCase()]);return}
   if(e.key.toLowerCase()==='s'&&!e.metaKey&&!e.ctrlKey&&!e.altKey){setOsnap(UI.osnap===false);toast(UI.osnap===false?'図形スナップ：オフ':'図形スナップ：オン',1400)}});
 function setOsnap(on){UI.osnap=on;saveUI();$('osnap').checked=on;if(!on&&setHint(null))render()}
 $('osnap').checked=UI.osnap!==false;$('osnap').onchange=e=>setOsnap(e.target.checked);
@@ -2300,7 +2366,7 @@ function docJSON(d){const L=['{','  "vars": ['];d.vars.forEach((v,i)=>L.push('  
   d.shapes.forEach((s,i)=>L.push('    '+pj(s,'    ',0)+(i<d.shapes.length-1?',':'')));
   L.push('  ]');for(const k of Object.keys(d))if(k!=='vars'&&k!=='shapes'){L[L.length-1]+=',';L.push('  '+JSON.stringify(k)+': '+cj(d[k]))}
   L.push('}');return L.join('\n')}
-const SHAPE_TYPES=['rect','circle','poly','bool','offset','text','dim'];
+const SHAPE_TYPES=['rect','circle','poly','bool','offset','piece','text','dim'];
 // structural problems that would break the drawing; returns [message, shape id or null]
 function codeProblems(d){const out=[];if(!d||typeof d!=='object'||Array.isArray(d))return[['全体が { … } のオブジェクトになっていません',null]];
   if(!Array.isArray(d.vars))out.push(['"vars" が配列ではありません',null]);if(!Array.isArray(d.shapes)){out.push(['"shapes" が配列ではありません',null]);return out}
@@ -2311,9 +2377,11 @@ function codeProblems(d){const out=[];if(!d||typeof d!=='object'||Array.isArray(
     if(!SHAPE_TYPES.includes(s.type))out.push([`"type" が不明です：${s.type}（${SHAPE_TYPES.join(' / ')}）`,s.id]);
     if(s.type==='poly'&&!Array.isArray(s.nodes))out.push([`パス「${s.name||s.id}」に "nodes" がありません`,s.id]);
     if(s.type==='bool'&&!Array.isArray(s.ops))out.push([`演算「${s.name||s.id}」に "ops" がありません`,s.id]);
+    if(s.type==='piece'&&(typeof s.src!=='string'||!Array.isArray(s.cut)))out.push([`分割「${s.name||s.id}」に "src" と "cut" が要ります`,s.id]);
     if(s.type==='offset'&&!Array.isArray(s.src))out.push([`オフセット「${s.name||s.id}」に "src" がありません`,s.id]);
     if(s.type!=='poly'&&s.type!=='bool'&&(!s.p||typeof s.p!=='object'))out.push([`「${s.name||s.id}」に "p" がありません`,s.id])}
   for(const s of d.shapes)if(s&&s.type==='bool'&&Array.isArray(s.ops))for(const id of s.ops)if(!ids.has(id))out.push([`演算「${s.name||s.id}」の材料 ${id} が見つかりません`,s.id]);
+  for(const s of d.shapes)if(s&&s.type==='piece'&&Array.isArray(s.cut))for(const id of[s.src,...s.cut])if(!ids.has(id))out.push([`分割「${s.name||s.id}」の図形 ${id} が見つかりません`,s.id]);
   for(const s of d.shapes)if(s&&s.type==='offset'&&Array.isArray(s.src))for(const id of s.src)if(!ids.has(id))out.push([`オフセット「${s.name||s.id}」の元の図形 ${id} が見つかりません`,s.id]);
   return out}
 function varNameErrorIn(vars,n,i){const t=String(n).trim();if(!t)return'名前が空です';if(/^[0-9.]+$/.test(t))return'数字だけの名前は使えません';

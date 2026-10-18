@@ -37,6 +37,8 @@ Push straight to `main` when asked; there is no build step.
   points and a two-piece Bézier arc in `g.fnodes`, while `g.nodes` stays as written for editing and references), `bool` (`op` union|diff|inter|xor, `ops:[ids]`, materials stay as shapes),
   `offset` (`src:[ids]`, `op` for several sources, `side` out|in, `join` round|miter, `p.d` distance; the sources stay
   ordinary shapes — not materials — and dragging, duplicating or mirroring an offset carries its sources along),
+  `piece` (分割: `src`, `cut:[ids]`, anchor `u,v` in the source's bbox; `splitPieces` takes 2 µm slivers along the cuts out
+  of the source and `geomPiece` picks the part holding the anchor; source and cutters count as its materials via `parent`),
   `text` (text; x,y,size,rot), `dim` (x1,y1,x2,y2,off,size). rect/poly/bool may have `rot`, `rcx`, `rcy` (pivot).
 - fillets on bool / offset outlines: `fl:[{u,v,r}]`, anchored to the corner in the unrounded outline's bbox (`g.lbb0`) like
   `st.eo` (`filletOutline`). The fillet tool (`doFillet`) writes `node.r`, a rect's `cs[i]`, or `fl`, or joins two open
