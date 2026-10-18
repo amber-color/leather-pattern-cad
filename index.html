@@ -1938,7 +1938,8 @@ svg.addEventListener('pointermove',e=>{if(e.pointerType==='touch'&&touchMove(e))
   if(!drag&&!draft&&tool!=='select'&&tool!=='offset'&&tool!=='split'){if(setHint(snapAt(m,e)))render();return}
   if(draft&&draft.type==='poly'){
     if(draft.dragging!=null&&!draft.straight){if(Math.hypot(e.clientX-draft.sx,e.clientY-draft.sy)>4){const n=draft.nodes[draft.dragging];
-      const hx=Math.round((m[0]-n.x)*100)/100,hy=Math.round((m[1]-n.y)*100)/100;n.ho=[hx,hy];n.hi=[-hx,-hy];render()}return}
+      // the handle's tip lands on the grid, like the node
+      const hx=+(snap(m[0])-n.x).toFixed(3),hy=+(snap(m[1])-n.y).toFixed(3);n.ho=[hx,hy];n.hi=[-hx,-hy];render()}return}
     const q=polySnap(m,e);draft.hover=[q.x,q.y];draft.hoverQ=q;setHint(q);render();return}
   if(draft){let q=snapAt(m,e);if(draft.type==='rect'&&e.shiftKey){const a=draft.a,w=q.x-a.x,h=q.y-a.y,d=Math.max(Math.abs(w),Math.abs(h));q={x:a.x+Math.sign(w||1)*d,y:a.y+Math.sign(h||1)*d,kind:'grid'}}
     draft.b=q;setHint(q);render();return}
@@ -1984,7 +1985,7 @@ svg.addEventListener('pointermove',e=>{if(e.pointerType==='touch'&&touchMove(e))
           dimHint=[G0[i===0?1:last-1],q];render();return}
         if(RT){const l=unrotP(RT,[q.x,q.y]);if(okx)sn.x=num(l[0]);if(oky)sn.y=num(l[1])}else{if(okx)sn.x=exOf(q);if(oky)sn.y=eyOf(q)}render();return}
       const hk=drag.h.slice(0,2),ok=hk==='hi'?'ho':'hi';if(!sn[hk].every(isNum))return warn('このハンドルは式で決まっているので、パネルで編集してください');
-      const v=it.g.rot?unrotV(it.g.rot,[m[0]-N.x,m[1]-N.y]):[m[0]-N.x,m[1]-N.y],rx=v[0],ry=v[1];sn[hk]=[num(rx),num(ry)];
+      const sm=[snap(m[0]),snap(m[1])],v=it.g.rot?unrotV(it.g.rot,[sm[0]-N.x,sm[1]-N.y]):[sm[0]-N.x,sm[1]-N.y],rx=v[0],ry=v[1];sn[hk]=[num(rx),num(ry)];
       if(sn.t==='smooth'&&sn[ok]&&sn[ok].every(isNum)&&!e.altKey){const l=Math.hypot(+sn[ok][0],+sn[ok][1]),r=Math.hypot(rx,ry)||1;sn[ok]=[num(-rx/r*l),num(-ry/r*l)]}
       render();return}
     if(drag.h.startsWith('rs-')){const d=drag.h.slice(3),g0=drag.g0;if(!g0)return;
