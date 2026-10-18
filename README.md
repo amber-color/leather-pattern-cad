@@ -136,3 +136,7 @@ PDFは「実際のサイズ（100%）」で印刷し、下部の50mm目盛りを
 
 - [clipper-lib](https://www.npmjs.com/package/clipper-lib) 6.4.2（オフセット計算、jsDelivrから読み込み）
 - [CodeMirror 6](https://codemirror.net/)（コードパネルのエディタ。必要な部品を `vendor/codemirror.js` にまとめて同梱し、パネルを開いたときにだけ読み込みます。MIT License）
+
+## 開発
+
+開発者向けのメモ（構成・データ形式・テスト方法など）は [DEVELOPMENT.md](DEVELOPMENT.md) にあります。
