@@ -9,7 +9,7 @@ Push straight to `main` when asked; there is no build step.
 
 ## Working style
 - The owner writes in casual, brief Japanese; reply in Japanese, plain and short. For small changes describe the diff, not a rewrite.
-- Push only when asked (in practice: every finished change is committed and pushed to `main`).
+- Always commit and push every finished change straight to `main` without asking, unless the owner says otherwise.
 - UI wording is Japanese first; every new on-screen string also needs English (see i18n below).
 - Ask before big design decisions; small UI tweaks (colours, labels, icons) are applied directly and shown with a screenshot.
 
