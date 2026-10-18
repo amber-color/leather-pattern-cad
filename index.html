@@ -444,6 +444,8 @@ const EN_EXACT={
   '書き出す':'Export','キャンセル':'Cancel','読み込んでいます…':'Loading…','コピー':'Copy','テキストで保存':'Save as text','閉じる':'Close','枚数':'Pages','型紙':'Pattern','書き出す図形がありません':'Nothing to export','レター':'Letter',
   '式で位置が決まっているパーツを動かしますか？':'Move a part whose position is set by an expression?','動かした分だけ、式の後ろに数値が足されます。変数との関係が変わるので、意図した移動か確かめてください。':'The distance moved is added to the end of the expression, which changes how it relates to the variables. Check that the move is intended.',
   '次から確認しない':'Don’t ask again','動かす':'Move','元に戻す':'Undo','移動を取り消しました':'Move undone',
+  '名前が空です':'The name is empty','数字だけの名前は使えません':'A name can’t be only digits','名前に使えない文字があります（空白や + - * / ( ) など）':'The name has characters that can’t be used (spaces, + - * / ( ) …)',
+  '関数や予約された名前（sqrt・pi・自分 など）は使えません':'Function and reserved names (sqrt, pi, self …) can’t be used','同じ名前の変数がすでにあります':'Another variable already has this name',
   '共有用のURL':'Share URL','自動でコピーできなかったので、下の文字列をコピーしてください。':'Copying automatically didn’t work; copy the text below.',
   '使い方を読み込めませんでした。':'The guide could not be loaded.','GitHub の README':'the README on GitHub','を開いてください。':'Please open it there.',
   // canvas
@@ -475,6 +477,7 @@ const EN_PAT=[
   ['{0}枚（横{1} × 縦{2}）','{0} pages ({1} across × {2} down)'],['{0}枚','{0} page(s)'],['{0}-{1} ページ','Page {0}-{1}'],['ほか {0} 枚','{0} more'],
   ['演算 · {0}','Operation · {0}',{0:'T'}],['{0}個を選択中','{0} selected'],['「{0}」の材料です','A material of “{0}”'],['頂点 {0} 個','{0} nodes'],['頂点{0} {1}ハンドル X','Node {0} {1}-handle X',{1:'T'}],['頂点{0} {1}ハンドル Y','Node {0} {1}-handle Y',{1:'T'}],
   ['{0}：{1} → {2}','{0}: {1} → {2}',{0:'T'}],['ほか {0} 件','{0} more'],['ほか {0} 個のパーツ','{0} more parts'],
+  ['{0}。元の名前に戻しました','{0}; the previous name is back',{0:'T'}],
   ['頂点{0} X','Node {0} X'],['頂点{0} Y','Node {0} Y'],['頂点{0}を削除','Delete node {0}'],['{0}の種類','{0} type',{0:'T'}],['{0}の大きさ','{0} size',{0:'T'}],
   ['どの辺にも当てはまらなくなった辺ごとの設定が {0} 件あります（図形の形が大きく変わったため）。','{0} per-edge setting(s) no longer match any edge (the shape changed a lot).'],
   ['辺 {0}（輪郭 {1}）','Edge {0} (contour {1})'],['辺 {0}','Edge {0}'],['長さ {0} mm。角がないので一周を1辺として扱います。矢印の向きが始点→終点です。','Length {0} mm. With no corners, the whole loop is one edge. The arrow points from start to end.'],
@@ -1122,7 +1125,12 @@ function refreshVals(sec){const env=sel&&byId(sel)?C.envFor(byId(sel)):C.env;sec
 const varUseText=n=>{const u=varUsers(n);if(!u.length)return'まだどこにも使われていません';
   if(LANG==='en')return'Used by '+u.slice(0,3).map(esc).join(', ')+(u.length>3?` and ${u.length-3} more`:'');
   return'使用中：'+u.slice(0,3).map(esc).join('、')+(u.length>3?` ほか${u.length-3}件`:'')};
-function fillVarRow(r,i){const v=doc.vars[i];if(!v)return;const e=C.verr[v.n],ta=r.querySelector('textarea'),env=C.env;
+// a variable name has to read as one name inside expressions
+function varNameError(n,i){const t=String(n).trim();if(!t)return'名前が空です';if(/^[0-9.]+$/.test(t))return'数字だけの名前は使えません';
+  if(!IDRE.test(t))return'名前に使えない文字があります（空白や + - * / ( ) など）';if(t in FN||t in CONST||t===SELF||t==='self')return'関数や予約された名前（sqrt・pi・自分 など）は使えません';
+  if(doc.vars.some((v,j)=>j!==i&&v.n===t))return'同じ名前の変数がすでにあります';return null}
+function fillVarRow(r,i){const v=doc.vars[i];if(!v)return;const ne=varNameError(v.n,i),e=ne||C.verr[v.n],ta=r.querySelector('textarea'),env=C.env;
+  r.querySelector('.vname').classList.toggle('err',!!ne);
   ta.classList.toggle('err',!!e);ta.title=e?e:'= '+fmt(env[v.n],3).replace(/\.?0+$/,'');
   const res=r.querySelector('.vres');res.classList.toggle('err',!!e);res.textContent=e?e:'= '+fmt(env[v.n],4).replace(/\.?0+$/,'');
   r.querySelector('.vuse').innerHTML=varUseText(v.n)}
@@ -1166,7 +1174,7 @@ $('secProps').addEventListener('input',e=>{const t=e.target,p=t.dataset.path;if(
 function setDeep(o,p,v){const ks=p.split('.');const edge=ks[0]==='st'&&ks[1]==='edges';let t=o;
   for(const k of ks.slice(0,-1)){if(t[k]==null||typeof t[k]!=='object')t[k]={};t=t[k]}
   if(edge&&(v===''||v===false)){delete t[ks.at(-1)];const e=o.st.edges;for(const k in e)if(!Object.keys(e[k]).length)delete e[k]}else t[ks.at(-1)]=v}
-$('vars').addEventListener('focusin',e=>{pushUndo();const row=e.target.closest('.vrow');
+$('vars').addEventListener('focusin',e=>{pushUndo();const row=e.target.closest('.vrow');if(e.target.classList.contains('vname'))e.target.dataset.orig=doc.vars[+e.target.dataset.vi].n;
   $('vars').querySelectorAll('.vrow.open').forEach(r=>{if(r!==row){r.classList.remove('open');r.querySelector('textarea').style.height=''}});
   if(row&&!row.classList.contains('open')){row.classList.add('open');fillVarRow(row,+row.dataset.row);fitTA(row.querySelector('textarea'))}});
 $('vars').addEventListener('input',e=>{const t=e.target;if(t.dataset.vi===undefined)return;
@@ -1176,6 +1184,9 @@ $('vars').addEventListener('input',e=>{const t=e.target;if(t.dataset.vi===undefi
 const composing=e=>e.isComposing||e.keyCode===229;
 $('vars').addEventListener('keydown',e=>{if(e.key==='Enter'&&!composing(e)&&e.target.tagName==='TEXTAREA'){e.preventDefault();e.target.blur()}});
 $('vars').addEventListener('focusout',e=>setTimeout(()=>{const a=document.activeElement,row=e.target.closest('.vrow');
+  // leaving the name field with a name that can't be used puts the previous one back
+  if(e.target.classList.contains('vname')){const i=+e.target.dataset.vi,v=doc.vars[i],ne=v&&varNameError(v.n,i);
+    if(ne){const o=e.target.dataset.orig;v.n=o!=null&&!varNameError(o,i)?o:uniqVarName();toast(ne+'。元の名前に戻しました',3500);renderVars(false);render()}else if(v)v.n=v.n.trim()}
   if(row&&!row.contains(a)){row.classList.remove('open');const ta=row.querySelector('textarea');if(ta)ta.style.height=''}
   if(!$('vars').contains(a))renderVars(false)},0));
 // pointerdown + preventDefault: keeps the name/value field from blurring and rebuilding the list before the click lands
@@ -1195,7 +1206,8 @@ $('varsToggle').onclick=()=>setVarsCollapsed(true);
 $('varsExpand').onclick=$('varsLabel').onclick=()=>setVarsCollapsed(false);
 document.body.classList.add('noanim');applyVarsCollapsed();
 requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.remove('noanim')));
-$('addVar').onclick=()=>{pushUndo();let n='a',i=1;while(doc.vars.some(v=>v.n===n))n='a'+(i++);doc.vars.push({n,e:'10'});renderVars(false);render();$('vn'+(doc.vars.length-1)).focus()};
+function uniqVarName(){let n='a',i=1;while(doc.vars.some(v=>v.n===n))n='a'+(i++);return n}
+$('addVar').onclick=()=>{pushUndo();const n=uniqVarName();doc.vars.push({n,e:'10'});renderVars(false);render();$('vn'+(doc.vars.length-1)).focus()};
 const cur=()=>byId(sel);
 const sh=(e,d)=>!d?e:isNum(e)?num(+e+d):`${String(e).trim()}${d<0?'-':'+'}${num(Math.abs(d))}`;
 function shiftLeaf(c,dx,dy){const S=shSmart;shiftPivot(c,dx,dy);
