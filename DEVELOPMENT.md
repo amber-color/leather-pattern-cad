@@ -39,9 +39,10 @@ Push straight to `main` when asked; there is no build step.
 - fillets on bool / offset outlines: `fl:[{u,v,r}]`, anchored to the corner in the unrounded outline's bbox (`g.lbb0`) like
   `st.eo` (`filletOutline`). The fillet tool (`doFillet`) writes `node.r`, a rect's `cs[i]`, or `fl`, or joins two open
   paths / drops the nodes between two edges of one path (`pendingBetween` offers keeping them as a line).
-- a bool has no stitching of its own: every other shape, materials included, is stitched on its own outline (drawn at
-  full strength even when the material is faint) and exported regardless of the materials checkbox. `bake` moves the
-  materials' per-edge settings onto the baked outline with `edgeMapper`.
+- stitching and operations: every non-bool shape, materials included, is stitched on its own outline (drawn at full
+  strength even when the material is faint, exported regardless of the materials checkbox). A bool is stitched on its
+  own outline only while no material has stitching on (`matStitchOn`); otherwise its st is kept but unused. `bake`
+  keeps a bool's own stitching, or moves the materials' per-edge settings onto the baked outline with `edgeMapper`.
 - per-edge stitch overrides: `st.eo:[{u,v,off?,pitch?,method?,pos?,from?,to?}]`, anchored to the edge midpoint in the
   unrotated bbox (0..1) and matched to the nearest edge on each compute (old `st.edges` is migrated).
 - export: `exportItems(opt)` decides what goes out (`UI.exp[pdf|svg|dxf]`, keys in `EXP_KEYS`, defaults `EXP_DEFAULT`)

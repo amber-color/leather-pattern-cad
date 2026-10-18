@@ -476,7 +476,7 @@ const EN_EXACT={
   '回転した線どうしはフィレットできません':'Rotated lines can’t be filleted together','別々の図形どうしは、開いた線（直線・折れ線）のときにフィレットできます':'Separate shapes can be filleted only when both are open lines',
   '角を丸めました':'Corner rounded','2本を延長して角を丸めました':'Extended both edges and rounded the corner','フィレットできませんでした':'Couldn’t fillet','間の辺を別の線として残しました':'Kept the edges between as a separate line',
   '角Rが大きすぎます（辺の長さが足りません）':'The corner radius is too large (the edges are too short)','曲線につながる頂点は丸められません':'A node joined to a curve can’t be rounded',
-  '出力':'Include','演算は外形だけを作ります。ステッチ穴は材料ごとの設定で決まり、ここでは変えられません。上の材料を選んで設定してください。':'An operation only makes the outline. Stitch holes come from each material’s own settings and can’t be changed here; pick a material above to set them.','ガイド線':'Guide lines','縫い線':'Stitch lines','演算の材料':'Operation materials','図形の名前':'Shape names','書き出す（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)',
+  '出力':'Include','材料に穴を並べているので、ステッチ穴は材料ごとの設定で決まり、ここでは変えられません。上の材料を選んで設定してください。演算結果で穴を設定するには、材料の「穴を並べる」をすべてオフにします。':'A material has stitch holes, so stitching comes from each material’s own settings and can’t be changed here; pick a material above. To stitch this result instead, turn “Place stitch holes” off on every material.','ガイド線':'Guide lines','縫い線':'Stitch lines','演算の材料':'Operation materials','図形の名前':'Shape names','書き出す（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)',
   '図形ごとに書き出さない設定は、パーツ欄の「書き出す」で。選んだ内容は形式ごとに覚えます。':'To leave out a single shape, untick “Export” in its part panel. The choices here are remembered per format.',
   'SVGの書き出し':'Export SVG','DXFの書き出し':'Export DXF','mm単位。出力する内容を選んで、種類ごとにグループ分け':'In mm; choose what to include, grouped by kind','R12形式。出力する内容を選んで、種類ごとにレイヤー分け':'R12; choose what to include, one layer per kind',
   'オフセット':'Offset','外側':'Outward','内側':'Inward','方向':'Direction','距離':'Distance','角の形':'Corners','丸く':'Round','尖らせる':'Sharp','元の図形':'Source shapes','元の図形から外す':'Remove from the sources',
@@ -530,7 +530,7 @@ const EN_PAT=[
   ['{0}（書き出さない）  {1}穴','{0} (not exported)  {1} holes',{0:'T'}],['{0}（書き出さない）','{0} (not exported)',{0:'T'}],['{0}（材料）  {1}穴','{0} (material)  {1} holes'],['{0}  {1}穴','{0}  {1} holes'],['{0}（材料）','{0} (material)'],['周長 {0}','Perimeter {0}'],['{0} · 連動','{0} · linked',{0:'T'}],
   ['{0} 横  {1}','{0} landscape  {1}',{0:'T'}],['{0} 縦  {1}','{0} portrait  {1}',{0:'T'}],['{0} 横','{0} landscape',{0:'T'}],['{0} 縦','{0} portrait',{0:'T'}],['図形に合わせる（{0} × {1} mm）  {2}','Fit to the shapes ({0} × {1} mm)  {2}'],['図形に合わせる（{0} × {1} mm）','Fit to the shapes ({0} × {1} mm)'],
   ['{0}枚（横{1} × 縦{2}）','{0} pages ({1} across × {2} down)'],['{0}枚','{0} page(s)'],['{0}-{1} ページ','Page {0}-{1}'],['ほか {0} 枚','{0} more'],
-  ['演算 · {0}','Operation · {0}',{0:'T'}],['{0}しました。元の図形は材料として残り、ステッチ穴は材料の設定のままです','{0} done; the originals remain as materials and keep their stitch settings',{0:{'合体':'Union','差':'Difference','交差':'Intersection','排他':'Exclusion'}}],['始点から：{0}','From start: {0}',{0:'T'}],['終点から：{0}','From end: {0}',{0:'T'}],['ピッチ：{0}','Pitch: {0}',{0:'T'}],['辺{0}：{1}','Edge {0}: {1}',{1:'T'}],['{0}の角を丸めました','Rounded the corner: {0}',{0:'T'}],['頂点{0}の角を丸めました','Rounded the corner at node {0}'],['「{0}」とつないで角を丸めました','Joined with “{0}” and rounded the corner'],
+  ['演算 · {0}','Operation · {0}',{0:'T'}],['始点から：{0}','From start: {0}',{0:'T'}],['終点から：{0}','From end: {0}',{0:'T'}],['ピッチ：{0}','Pitch: {0}',{0:'T'}],['辺{0}：{1}','Edge {0}: {1}',{1:'T'}],['{0}の角を丸めました','Rounded the corner: {0}',{0:'T'}],['頂点{0}の角を丸めました','Rounded the corner at node {0}'],['「{0}」とつないで角を丸めました','Joined with “{0}” and rounded the corner'],
   ['「{0}」はほかの図形から使われているので、つなげられません','“{0}” is used by other shapes, so it can’t be joined'],['フィレットでつなぐため、間の辺 {0} 本を消しました。','To join them, {0} edge(s) between were removed.'],
   ['角R {0}','Corner R {0}'],['角R {0}を削除','Delete corner R {0}'],['角R {0}：{1}','Corner R {0}: {1}',{1:'T'}],['頂点{0}の角R：{1}','Node {0} corner R: {1}',{1:'T'}],['頂点{0} 角R','Node {0} corner R'],
   ['頂点{0}の角Rが大きすぎます（辺の長さが足りません）','Node {0}: the corner radius is too large (the edges are too short)'],['R：{0}','R: {0}',{0:'T'}],['オフセット · {0}','Offset · {0}',{0:'T'}],['距離：{0}','Distance: {0}',{0:'T'}],
@@ -611,12 +611,12 @@ const SAMPLE={vars:[{n:'名刺W',e:'91'},{n:'名刺H',e:'55'},{n:'ゆとり',e:'
     {id:'g1',name:'背',type:'rect',kind:'guide',p:{x:'ポケット幅',y:'0',w:'背幅',h:'高さ',r:'0'},st:ST(false)},
     {id:'g2',name:'ベロ付け位置',type:'rect',kind:'guide',p:{x:'外装幅-重ね',y:'(高さ-ベロ幅)/2',w:'重ね',h:'ベロ幅',r:'0'},st:ST(false)},
     {id:'h1',name:'ホック（外装）',type:'circle',kind:'cut',p:{cx:'ベロ長-重ね-背幅-ベロ幅/2',cy:'高さ/2',d:'ホック穴'},st:ST(false)},
-    {id:'p1',name:'ポケット板（左）',type:'rect',kind:'cut',p:{x:'0',y:'高さ+間',w:'ポケット幅',h:'高さ',r:'R'},st:{...ST(true),eo:[{u:0.5,v:0,pos:'end'},{u:1,v:0.5,off:true},{u:0.5,v:1,pos:'start'}]}},
+    {id:'p1',name:'ポケット板（左）',type:'rect',kind:'cut',p:{x:'0',y:'高さ+間',w:'ポケット幅',h:'高さ',r:'R'},st:ST(false)},
     {id:'c1',name:'指かけ（左）',type:'circle',kind:'cut',p:{cx:'ポケット幅',cy:'高さ+間+高さ/2',d:'指'},st:ST(false)},
-    {id:'b1',name:'内装ポケット（左）',type:'bool',op:'diff',ops:['p1','c1'],kind:'cut',p:{},st:ST(false)},
-    {id:'p2',name:'ポケット板（右）',type:'rect',kind:'cut',p:{x:'ポケット幅+背幅',y:'高さ+間',w:'ポケット幅',h:'高さ',r:'R'},st:{...ST(true),eo:[{u:0.5,v:0,pos:'start'},{u:0,v:0.5,off:true},{u:0.5,v:1,pos:'end'}]}},
+    {id:'b1',name:'内装ポケット（左）',type:'bool',op:'diff',ops:['p1','c1'],kind:'cut',p:{},st:ST(true,{'0:0':{pos:'end'},'0:1':{off:true},'0:2':{off:true},'0:3':{off:true},'0:4':{pos:'start'}})},
+    {id:'p2',name:'ポケット板（右）',type:'rect',kind:'cut',p:{x:'ポケット幅+背幅',y:'高さ+間',w:'ポケット幅',h:'高さ',r:'R'},st:ST(false)},
     {id:'c2',name:'指かけ（右）',type:'circle',kind:'cut',p:{cx:'ポケット幅+背幅',cy:'高さ+間+高さ/2',d:'指'},st:ST(false)},
-    {id:'b2',name:'内装ポケット（右）',type:'bool',op:'diff',ops:['p2','c2'],kind:'cut',p:{},st:ST(false)},
+    {id:'b2',name:'内装ポケット（右）',type:'bool',op:'diff',ops:['p2','c2'],kind:'cut',p:{},st:ST(true,{'0:0':{pos:'start'},'0:2':{pos:'end'},'0:3':{off:true},'0:4':{off:true},'0:5':{off:true}})},
     {id:'f1',name:'ベロ',type:'poly',kind:'cut',closed:true,p:{},st:ST(true),nodes:[
       {x:'右列',y:'0'},
       {x:'右列+ベロ長-ベロ幅/2',y:'0',ho:[K_('ベロ幅/2'),'0']},
@@ -654,6 +654,8 @@ let uid=Date.now()%1e6;const newId=()=>'s'+(uid++);
 const OPS={union:'合体',diff:'差',inter:'交差',xor:'排他'};
 const byId=id=>doc.shapes.find(s=>s.id===id);
 const parentOf=id=>doc.shapes.find(s=>s.type==='bool'&&s.ops.includes(id));
+// whether any material of an operation (at any depth) has stitching on; then the operation's own stitching is not used
+const matStitchOn=b=>(b.ops||[]).some(id=>{const c=byId(id);return!!c&&(!!(c.st&&c.st.on)||c.type==='bool'&&matStitchOn(c))});
 function descendants(s,out=[]){if(s&&s.type==='bool')for(const id of s.ops){const c=byId(id);if(c){out.push(c);descendants(c,out)}}return out}
 
 // ---------- geometry ----------
@@ -1008,8 +1010,9 @@ function compute(){
     if(!ts.length)throw Error(`図形「${name}」が見つかりません`);if(ts.length>1)throw Error(`「${name}」という名前の図形が${ts.length}個あります`);
     let g;try{g=gOf(ts[0])}catch(e){throw Error(/循環/.test(e.message)?`図形「${name}」との参照が循環しています`:`図形「${name}」にエラーがあります`)}return shapeProp(ts[0],g,prop)}});
   for(const s of doc.shapes){const it={s,parent:parent[s.id]||null};try{it.g=gOf(s)}catch(e){it.err=e.message}
-    // an operation only combines outlines: stitch holes always come from each shape's own settings, materials included
-    if(it.g&&s.type!=='bool'){try{it.st=stitch(s,it.g,sEnv(s),gOf)}catch(e){it.sterr=e.message}}out.items.push(it);out.byId[s.id]=it}
+    // stitch holes come from each shape's own settings, materials included; an operation is stitched on its own outline
+    // only while none of its materials is
+    if(it.g&&(s.type!=='bool'||!matStitchOn(s))){try{it.st=stitch(s,it.g,sEnv(s),gOf)}catch(e){it.sterr=e.message}}out.items.push(it);out.byId[s.id]=it}
   return out}
 
 // ---------- shape references ----------
@@ -1129,7 +1132,7 @@ function render(){
       el('path',{d:hd,fill:'var(--stitch)','fill-opacity':.25,stroke:'var(--stitch)','stroke-width':1,'vector-effect':'non-scaling-stroke','pointer-events':'none'},sg)}
     if(!faint&&!g.isText){const bb=bboxG(g);const t=el('text',{x:bb[0],y:bb[1]-5*k,'font-size':11*k,fill:on?'var(--sel)':'var(--cut)','fill-opacity':on?1:.7,'font-family':'var(--ui)','pointer-events':'none'},gOver);
       // an operation shows the holes of its materials
-      const nh=s.type==='bool'?descendants(s).reduce((a,c)=>a+((C.byId[c.id]||{}).st?C.byId[c.id].st.n:0),0):it.st?it.st.n:0;
+      const nh=s.type==='bool'&&!it.st?descendants(s).reduce((a,c)=>a+((C.byId[c.id]||{}).st?C.byId[c.id].st.n:0),0):it.st?it.st.n:0;
       t.textContent=s.name+(mat?'（材料）':'')+(s.noexp?'（書き出さない）':'')+(nh?`  ${nh}穴`:'')}
     if(s.id===sel&&picks.length===1)drawSel(it,k)}
   if(UI.showFrame)drawFrame(k);
@@ -1249,8 +1252,9 @@ function renderPanel(){
       h+=`<div class="small">頂点のX・Yとハンドル（頂点からの相対位置）にも式が書けます。頂点をクリックで選択（Shiftで追加）してDeleteで削除、ダブルクリックで角⇔曲線、線上をダブルクリックで頂点を追加。中に橙の点がある頂点は変数の式で決まっているのでドラッグでは動きません。水色の点は、ほかの図形に連動している頂点です。</div>`}
     if(it.err)h+=`<div class="small" style="color:var(--danger)">${esc(it.err)}</div>`;
     if(s.type==='dim'&&it.g)h+=`<div class="result"><span>寸法</span><span>${fmt(it.g.dim.L)} mm</span></div><div class="small">始点・終点の丸い四角、線の中央の丸をドラッグで調整。図形の角や中心に吸着します。離れは、始点から終点へ向かって右側が正、左側が負です。</div>`;
-    if(s.type==='bool')h+=`<h2 style="margin-top:6px">ステッチ穴</h2><div class="small">演算は外形だけを作ります。ステッチ穴は材料ごとの設定で決まり、ここでは変えられません。上の材料を選んで設定してください。</div>`;
-    if(s.type!=='bool'&&s.type!=='text'&&s.type!=='dim'){h+=`<h2 style="margin-top:6px">ステッチ穴</h2><label class="check"><input type="checkbox" id="f_st" data-path="st.on"${s.st.on?' checked':''}> 穴を並べる</label>`;
+    const matOn=s.type==='bool'&&matStitchOn(s);
+    if(matOn)h+=`<h2 style="margin-top:6px">ステッチ穴</h2><div class="small">材料に穴を並べているので、ステッチ穴は材料ごとの設定で決まり、ここでは変えられません。上の材料を選んで設定してください。演算結果で穴を設定するには、材料の「穴を並べる」をすべてオフにします。</div>`;
+    if(!matOn&&s.type!=='text'&&s.type!=='dim'){h+=`<h2 style="margin-top:6px">ステッチ穴</h2><label class="check"><input type="checkbox" id="f_st" data-path="st.on"${s.st.on?' checked':''}> 穴を並べる</label>`;
       if(s.st.on){if(it.g&&it.g.closed)h+=exprRow('st.inset','縫い代',s.st.inset,env);
         h+=exprRow('st.pitch','ピッチ',s.st.pitch,env)+exprRow('st.hole','穴径',s.st.hole,env);
         h+=segRow('st.method',METHODS,s.st.method||'auto','余りの処理','stm')+segRow('st.pos',POSES,s.st.pos||'both','余りの位置','stp');
@@ -1476,9 +1480,9 @@ function makeBool(op){const ss=picks.map(byId);
   const open=ss.find(s=>{const it=C.byId[s.id];return !it.g||!it.g.closed});
   if(open){toast(`「${open.name}」は閉じた形ではないので演算に使えません`);return}
   pushUndo();const first=ss[0];
-  const b={id:newId(),name:uniqName(ss.map(s=>s.name).join(op==='diff'?' − ':op==='union'?' ＋ ':' ∩ ')),type:'bool',op,ops:ss.map(s=>s.id),kind:first.kind,p:{},st:{on:false,inset:'3',pitch:'4',hole:'1.2'}};
+  const b={id:newId(),name:uniqName(ss.map(s=>s.name).join(op==='diff'?' − ':op==='union'?' ＋ ':' ∩ ')),type:'bool',op,ops:ss.map(s=>s.id),kind:first.kind,p:{},st:{...structuredClone(first.st||{inset:'3',pitch:'4',hole:'1.2'}),on:false}};delete b.st.eo;delete b.st.edges;
   doc.shapes.push(b);setSel(b.id);render();
-  const it=C.byId[b.id];if(it.err)toast(it.err);else toast(`${OPS[op]}しました。元の図形は材料として残り、ステッチ穴は材料の設定のままです`)}
+  const it=C.byId[b.id];if(it.err)toast(it.err);else toast(`${OPS[op]}しました。元の図形は材料として残っています`)}
 // a new offset of the given shapes (combined with union when there are several), selected so the panel can adjust it
 function makeOffset(ids){const ss=ids.map(byId).filter(Boolean);if(!ss.length)return false;
   const open=ss.find(s=>{const it=C.byId[s.id];return !it||!it.g||!it.g.closed});
@@ -1571,11 +1575,12 @@ function ungroup(){const s=cur();if(!s||s.type!=='bool')return;if(blockedByRefs(
 // bake an operation or an offset into fixed polygons; a bool's materials go, an offset's sources stay
 function bake(){const s=cur();const it=C.byId[sel];if(!s||(s.type!=='bool'&&s.type!=='offset')||!it.g)return;
   const kids=s.type==='bool'?descendants(s):[];if(blockedBySrc(kids,'確定'))return;pushUndo();
-  // an operation's stitching lives on its materials: the baked shape starts from the first stitched material's settings
-  // and each of its edges takes the settings of the material edge it runs along
-  const mats=kids.map(c=>({c,st:(C.byId[c.id]||{}).st})).filter(m=>m.st),base=s.type==='bool'?(mats[0]?{...structuredClone(mats[0].c.st),on:true}:{...structuredClone(s.st),on:false}):structuredClone(s.st);delete base.eo;delete base.edges;
-  if(s.type==='offset')base.eo=structuredClone(s.st.eo||[]);
-  const news=it.g.paths.map((p,i)=>({id:i?newId():s.id,name:i?uniqName(`${s.name} (${i+1})`):s.name,type:'poly',kind:s.kind,nodes:p.map(([x,y])=>({x:num(x),y:num(y)})),closed:true,p:{},st:{...structuredClone(base),on:base.on&&(s.type==='bool'||i===0)}}));
+  // stitched on its own outline (an offset, or an operation whose materials are all unstitched): keep its settings.
+  // Otherwise the stitching lives on the materials: start from the first stitched material's settings, and each edge of
+  // the baked outline takes the settings of the material edge it runs along
+  const own=s.type!=='bool'||!matStitchOn(s),mats=own?[]:kids.map(c=>({c,st:(C.byId[c.id]||{}).st})).filter(m=>m.st);
+  const base=own?structuredClone(s.st):{...structuredClone(mats[0]?mats[0].c.st:s.st),on:!!mats[0]};if(!own){delete base.eo;delete base.edges}
+  const news=it.g.paths.map((p,i)=>({id:i?newId():s.id,name:i?uniqName(`${s.name} (${i+1})`):s.name,type:'poly',kind:s.kind,nodes:p.map(([x,y])=>({x:num(x),y:num(y)})),closed:true,p:{},st:{...structuredClone(base),on:base.on&&(!own||i===0)}}));
   doc.shapes=doc.shapes.filter(x=>!kids.includes(x));
   doc.shapes.splice(doc.shapes.indexOf(s),1,...news);setSel(s.id);render();
   if(mats.length){for(const n of news){const ni=C.byId[n.id];if(!ni||!ni.st)continue;const map=edgeMapper(mats,ni.st.ins);
