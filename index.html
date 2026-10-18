@@ -1884,11 +1884,14 @@ addEventListener('hashchange',loadFromLink);
 // the variables bar. Text follows the drawing until it is edited; edits reach the drawing only with 適用 (Mod-Enter).
 let CM=null,cm=null,cmLoad=null,codeOpen=false,codeDirty=false,codeSetting=false,codeClosePending=false,codePickId=null;
 const cj=v=>Array.isArray(v)?'['+v.map(cj).join(', ')+']':v&&typeof v==='object'?'{'+Object.entries(v).map(([k,x])=>JSON.stringify(k)+': '+cj(x)).join(', ')+'}':JSON.stringify(v);
-// one line per variable and per shape; a path's nodes get a line each
+// variables one per line; each shape written out in full (a key per line) so it can be folded from the gutter.
+// Inside a shape, small items (a node, a per-edge setting, a handle) stay on one line when they fit.
+function pj(v,ind,depth){if(v===null||typeof v!=='object')return JSON.stringify(v);const inl=cj(v),deep=depth>=2;
+  if(deep&&ind.length+inl.length<=96)return inl;
+  if(Array.isArray(v)){if(!v.length)return'[]';if(v.every(x=>x===null||typeof x!=='object'))return inl;return'[\n'+v.map(x=>ind+'  '+pj(x,ind+'  ',depth+1)).join(',\n')+'\n'+ind+']'}
+  const e=Object.entries(v);if(!e.length)return'{}';return'{\n'+e.map(([k,x])=>ind+'  '+JSON.stringify(k)+': '+pj(x,ind+'  ',depth+1)).join(',\n')+'\n'+ind+'}'}
 function docJSON(d){const L=['{','  "vars": ['];d.vars.forEach((v,i)=>L.push('    '+cj(v)+(i<d.vars.length-1?',':'')));L.push('  ],','  "shapes": [');
-  d.shapes.forEach((s,i)=>{const end=i<d.shapes.length-1?',':'';
-    if(Array.isArray(s.nodes)&&s.nodes.length){const{nodes,...rest}=s;L.push('    '+cj(rest).slice(0,-1)+', "nodes": [');nodes.forEach((n,j)=>L.push('      '+cj(n)+(j<nodes.length-1?',':'')));L.push('    ]}'+end)}
-    else L.push('    '+cj(s)+end)});
+  d.shapes.forEach((s,i)=>L.push('    '+pj(s,'    ',0)+(i<d.shapes.length-1?',':'')));
   L.push('  ]');for(const k of Object.keys(d))if(k!=='vars'&&k!=='shapes'){L[L.length-1]+=',';L.push('  '+JSON.stringify(k)+': '+cj(d[k]))}
   L.push('}');return L.join('\n')}
 const SHAPE_TYPES=['rect','circle','poly','bool','text','dim'];
@@ -1917,8 +1920,8 @@ function codeNormalize(d){const S=v=>v==null?v:typeof v==='string'?v:String(v);
     if(s.name==null)s.name=s.id}
   return migrate(d)}
 function codeText(){return cm?cm.state.doc.toString():''}
-function setCodeText(t,keepScroll=true){if(!cm)return;const top=cm.scrollDOM.scrollTop;codeSetting=true;
-  cm.dispatch({changes:{from:0,to:cm.state.doc.length,insert:t}});codeSetting=false;if(keepScroll)cm.scrollDOM.scrollTop=top}
+function setCodeText(t,keepScroll=true){if(!cm)return;const top=cm.scrollDOM.scrollTop,folded=foldedShapeIds();codeSetting=true;
+  cm.dispatch({changes:{from:0,to:cm.state.doc.length,insert:t}});refold(folded);codeSetting=false;if(keepScroll)cm.scrollDOM.scrollTop=top}
 function codeMsg(t,cls=''){const m=$('codeMsg');m.textContent=t;m.className='cfoot'+(cls?' '+cls:'')}
 function codeStatus(){if(codeDirty)codeMsg(docJSON(doc)!==codeBase?'未適用の変更があります（図面のほうも変わっています。適用すると図面の変更は上書きされます）':'未適用の変更があります。⌘Enter（Ctrl+Enter）で適用','warn');
   else codeMsg('図面と同じ内容です。書き換えて「適用」すると図面に反映されます。⌘F で検索、Ctrl+Space で補完')}
@@ -1938,8 +1941,13 @@ function applyCode(){if(!cm)return true;let d;const t=codeText();
   pushUndo();doc=codeNormalize(d);if(sel&&!byId(sel))setSel(null);picks=picks.filter(id=>byId(id));lastPanelKey=null;codeDirty=false;codeClosePending=false;
   render();const n=docJSON(doc);if(n!==t)setCodeText(n);codeBase=n;codeStatus();toast('コードを図面に反映しました（⌘Zで戻せます）');return true}
 // the selected shape's lines are tinted and scrolled into view when the selection changes
-function shapeLines(id){if(!cm||!id)return null;const st=cm.state.doc,needle=`"id": ${JSON.stringify(id)}`;
-  for(let i=1;i<=st.lines;i++){const l=st.line(i);if(l.text.includes(needle)){let e=i;if(/"nodes": \[$/.test(l.text))while(e<st.lines&&!/^\s*\]\}/.test(st.line(e).text))e++;return[i,e]}}return null}
+function shapeLines(id,state){const st=(state||cm&&cm.state);if(!st||!id)return null;const D=st.doc,needle=`      "id": ${JSON.stringify(id)}`;
+  for(let i=1;i<=D.lines;i++){const t=D.line(i).text;if(t===needle||t===needle+','){let a=i,e=i;while(a>1&&D.line(a).text!=='    {')a--;while(e<D.lines&&!/^    \},?$/.test(D.line(e).text))e++;return[a,e]}}return null}
+// which shapes are folded (by id), so a rewrite of the text can fold them again
+function foldedShapeIds(){const out=new Set;if(!cm)return out;const it=CM.foldedRanges(cm.state).iter();
+  while(it.value){const m=/\n      "id": ("(?:[^"\\]|\\.)*")/.exec('\n'+cm.state.sliceDoc(it.from,Math.min(it.to,it.from+400)));if(m)try{out.add(JSON.parse(m[1]))}catch(e){}it.next()}return out}
+function refold(ids){if(!cm||!ids.size)return;const eff=[];for(const id of ids){const r=shapeLines(id);if(!r)continue;const l=cm.state.doc.line(r[0]),f=CM.foldable(cm.state,l.from,l.to);if(f)eff.push(CM.foldEffect.of(f))}
+  if(eff.length)cm.dispatch({effects:eff})}
 let pickEffect=null,pickField=null;
 function markPick(force){if(!cm)return;const id=picks.length===1?sel:null;if(id===codePickId&&!force)return;codePickId=id;const r=shapeLines(id),st=cm.state.doc,deco=[];
   if(r)for(let i=r[0];i<=r[1];i++)deco.push(CM.Decoration.line({class:'cm-pick'}).range(st.line(i).from));
@@ -1979,7 +1987,14 @@ function codeLint(view){const diags=CM.jsonParseLinter()(view);if(diags.length)r
       if(x.k==='ref'&&x.name!==SELF&&!shapeNames.has(x.name))diags.push({from:n.from,to:n.to,severity:'warning',message:LANG==='en'?`No shape called “${x.name}”`:`図形「${x.name}」がありません`})}}});
   for(const[m,id]of codeProblems(d)){const r=id&&shapeLines(id);const at=r?view.state.doc.line(r[0]):view.state.doc.line(1);diags.push({from:at.from,to:at.to,severity:'error',message:tr(m)})}
   return diags}
-function makeEditor(){const{EditorView,EditorState,StateField,StateEffect,Decoration,basicSetup,json,linter,lintGutter,keymap,indentWithTab,HighlightStyle,syntaxHighlighting,tags,Prec}=CM;
+function foldLabel(state,range){const t=state.sliceDoc(range.from,Math.min(range.to,range.from+600)),g=k=>{const m=new RegExp('"'+k+'": ("(?:[^"\\\\]|\\\\.)*")').exec(t);try{return m?JSON.parse(m[1]):''}catch(e){return''}};
+  const name=g('name'),type=g('type');return name||type?` ${name}${type?' · '+type:''} … `:' … '}
+function makeEditor(){const{EditorView,EditorState,StateField,StateEffect,Decoration,json,linter,lintGutter,keymap,indentWithTab,HighlightStyle,syntaxHighlighting,tags,Prec}=CM;
+  const setup=[CM.lineNumbers(),CM.highlightActiveLineGutter(),CM.highlightSpecialChars(),CM.history(),
+    CM.codeFolding({preparePlaceholder:foldLabel,placeholderDOM:(view,onclick,label)=>{const e=document.createElement('span');e.className='cm-foldPlaceholder';e.textContent=label||' … ';e.title=LANG==='en'?'Unfold':'開く';e.onclick=onclick;return e}}),
+    CM.foldGutter(),CM.drawSelection(),CM.dropCursor(),EditorState.allowMultipleSelections.of(true),CM.indentOnInput(),CM.syntaxHighlighting(CM.defaultHighlightStyle,{fallback:true}),
+    CM.bracketMatching(),CM.closeBrackets(),CM.autocompletion(),CM.rectangularSelection(),CM.crosshairCursor(),CM.highlightActiveLine(),CM.highlightSelectionMatches(),
+    keymap.of([...CM.closeBracketsKeymap,...CM.defaultKeymap,...CM.searchKeymap,...CM.historyKeymap,...CM.foldKeymap,...CM.completionKeymap,...CM.lintKeymap])];
   pickEffect=StateEffect.define();
   pickField=StateField.define({create:()=>Decoration.none,update:(v,tr)=>{v=v.map(tr.changes);for(const e of tr.effects)if(e.is(pickEffect))v=e.value;return v},provide:f=>EditorView.decorations.from(f)});
   const hl=HighlightStyle.define([{tag:tags.propertyName,color:'var(--ck)'},{tag:tags.string,color:'var(--cs)'},{tag:tags.number,color:'var(--cn)'},{tag:[tags.bool,tags.null],color:'var(--cb)'},{tag:[tags.brace,tags.squareBracket,tags.separator,tags.punctuation],color:'var(--muted)'}]);
@@ -1991,8 +2006,8 @@ function makeEditor(){const{EditorView,EditorState,StateField,StateEffect,Decora
     '.cm-tooltip':{backgroundColor:'var(--panel)',color:'var(--fg)',border:'1px solid var(--line)',borderRadius:'6px',fontFamily:'var(--ui)'},
     '.cm-tooltip-autocomplete > ul > li[aria-selected]':{backgroundColor:'var(--accent-soft)',color:'var(--fg)'},'.cm-completionDetail':{color:'var(--muted)',marginLeft:'.6em',fontStyle:'normal'},
     '.cm-panels':{backgroundColor:'var(--bg)',color:'var(--fg)'},'.cm-textfield':{backgroundColor:'var(--panel)',color:'var(--fg)',border:'1px solid var(--line)'},
-    '.cm-button':{backgroundImage:'none',backgroundColor:'var(--panel)',color:'var(--fg)',border:'1px solid var(--line)'},'.cm-foldPlaceholder':{backgroundColor:'var(--bg)',border:'1px solid var(--line)',color:'var(--muted)'}});
-  cm=new EditorView({parent:$('codeHost'),state:EditorState.create({doc:'',extensions:[basicSetup,json(),EditorView.lineWrapping,syntaxHighlighting(hl),theme,pickField,
+    '.cm-button':{backgroundImage:'none',backgroundColor:'var(--panel)',color:'var(--fg)',border:'1px solid var(--line)'},'.cm-foldPlaceholder':{backgroundColor:'var(--bg)',border:'1px solid var(--line)',borderRadius:'4px',color:'var(--muted)',fontFamily:'var(--ui)',padding:'0 4px',cursor:'pointer'},'.cm-foldGutter span':{color:'var(--muted)'}});
+  cm=new EditorView({parent:$('codeHost'),state:EditorState.create({doc:'',extensions:[setup,json(),EditorView.lineWrapping,syntaxHighlighting(hl),theme,pickField,
     Prec.highest(keymap.of([{key:'Mod-Enter',run:()=>applyCode(),preventDefault:true}])),keymap.of([indentWithTab]),
     EditorState.languageData.of(()=>[{autocomplete:codeComplete}]),linter(codeLint,{delay:400}),lintGutter(),
     EditorView.updateListener.of(u=>{if(u.docChanged&&!codeSetting){codeDirty=true;codeClosePending=false;codeStatus()}})]})});
