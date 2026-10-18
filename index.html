@@ -185,6 +185,11 @@ input.err{border-color:var(--danger)}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .btns{display:flex;flex-wrap:wrap;gap:6px}
+/* panel icons: same line style as the top bar */
+.pi{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;display:block}
+.seg label .pi{display:inline-block;vertical-align:-3px}.seg.sm label .pi{display:block;margin:0 auto}
+.btn.ib{padding:5px 9px;display:inline-grid;place-items:center}.btn.ib .pi{width:18px;height:18px}.btn.ib.del:hover{color:var(--danger)}
+.crow .cl{display:grid;place-items:center;color:var(--muted)}.crow .cl .pi{width:18px;height:18px}
 .small{font-size:11px;color:var(--muted);line-height:1.5}
 .check{display:flex;gap:6px;align-items:center;cursor:pointer}
 .result{font:12px var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:7px 9px;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-variant-numeric:tabular-nums}
@@ -458,7 +463,7 @@ const EN_EXACT={
   '外形':'Size','輪郭数':'Contours','文字':'Text','寸法線':'Dimension','テキスト':'Text','矩形':'Rectangle','円':'Circle','閉じたパス':'Closed path','開いたパス':'Open path',
   '幅':'Width','高さ':'Height','角R':'Corner R','中心X':'Centre X','中心Y':'Centre Y','直径':'Diameter','文字の高さ':'Text height','回転（度）':'Rotation (°)','始点X':'Start X','始点Y':'Start Y','終点X':'End X','終点Y':'End Y','離れ':'Offset','回転中心X':'Pivot X','回転中心Y':'Pivot Y',
   '角':'Corners','四隅まとめて':'All four','個別':'Each','角の種類':'Corner type','角丸':'Round','面取り':'Chamfer','直角':'Square','左上':'Top left','右上':'Top right','右下':'Bottom right','左下':'Bottom left',
-  'R は角丸の半径、C は面取りの大きさ（角から切り落とす長さ）です。式も書けます。':'R is the rounding radius, C the chamfer size (how much is cut off the corner). Expressions work here too.',
+  '角丸のときは半径、面取りのときは角から切り落とす長さです。式も書けます。':'The radius for a round corner, or how much is cut off for a chamfer. Expressions work here too.','複製 (⌘D)':'Duplicate (⌘D)','削除 (Delete)':'Delete (Delete)',
   '閉じた形にする':'Closed shape','表を表示':'Show table','角と曲線を切り替え':'Switch corner / curve','入':'In','出':'Out',
   '頂点のX・Yとハンドル（頂点からの相対位置）にも式が書けます。頂点をクリックで選択（Shiftで追加）してDeleteで削除、ダブルクリックで角⇔曲線、線上をダブルクリックで頂点を追加。中に橙の点がある頂点は変数の式で決まっているのでドラッグでは動きません。水色の点は、ほかの図形に連動している頂点です。':'Node X / Y and handles (relative to the node) take expressions. Click a node to select it (Shift adds) and Delete removes it; double-click toggles corner / curve; double-click the line to add a node. A node with an orange dot is set by a variable expression and won’t drag; a cyan dot means it is linked to another shape.',
   '寸法':'Dimension','始点・終点の丸い四角、線の中央の丸をドラッグで調整。図形の角や中心に吸着します。離れは、始点から終点へ向かって右側が正、左側が負です。':'Drag the square handles at the ends and the round one in the middle to adjust; they snap to corners and centres. The offset is positive to the right of start → end, negative to the left.',
@@ -680,6 +685,18 @@ function selfProp(s,prop,E){const f=k=>P(s,k,E);
   return o[prop]()}
 // rectangle corners in drawing order (top-right, bottom-right, bottom-left, top-left); each is round (角丸), chamfer (面取り) or none
 const CORNER_NAMES=['左上','右上','右下','左下'];
+// panel icons (copy, flips and trash are Tabler Icons, MIT)
+const PI=(d,vb=16)=>`<svg class="pi" viewBox="0 0 ${vb} ${vb}" aria-hidden="true">${d}</svg>`;
+const ICON={
+  round:PI('<path d="M3 13V8a5 5 0 0 1 5-5h5"/>'),chamfer:PI('<path d="M3 13V7.5L7.5 3H13"/>'),none:PI('<path d="M3 13V3h10"/>'),
+  // a corner type turned to the corner it sets (0 top left, then clockwise)
+  ct:(k,i)=>PI(`<g transform="rotate(${90*i} 8 8)"><path d="${{round:'M3 13V8a5 5 0 0 1 5-5h5',chamfer:'M3 13V7.5L7.5 3H13',none:'M3 13V3h10'}[k]}"/></g>`),
+  // which corner of the rectangle: the box faint, that corner strong
+  corner:i=>PI('<rect x="2.5" y="2.5" width="11" height="11" rx="1" stroke-opacity=".35"/><path stroke="var(--accent)" stroke-width="2.4" d="'+['M2.5 7.5v-5h5','M8.5 2.5h5v5','M13.5 8.5v5h-5','M7.5 13.5h-5v-5'][i]+'"/>'),
+  copy:PI('<path d="M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/>',24),
+  flipX:PI('<path d="M12 3l0 18"/><path d="M16 7l0 10l5 0l-5 -10"/><path d="M8 7l0 10l-5 0l5 -10"/>',24),
+  flipY:PI('<path d="M3 12l18 0"/><path d="M7 16l10 0l-10 5l0 -5"/><path d="M7 8l10 0l-10 -5l0 5"/>',24),
+  trash:PI('<path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/>',24)};
 function rectCorners(x,y,w,h,cr){const D=[
     {C:[x,y],pin:r=>[x,y+r],pout:r=>[x+r,y],c:r=>[x+r,y+r],a0:180},
     {C:[x+w,y],pin:r=>[x+w-r,y],pout:r=>[x+w,y+r],c:r=>[x+w-r,y+r],a0:-90},
@@ -1236,10 +1253,10 @@ function renderPanel(){
     if(ROTATABLE(s.type)&&it.g){const c=pivotOf(it.g);h+=exprRow('p.rot','回転（度）',s.p.rot??'0',env)+exprRow('p.rcx','回転中心X',s.p.rcx??num(c[0]),env)+exprRow('p.rcy','回転中心Y',s.p.rcy??num(c[1]),env)}
     if(s.type==='rect'){const each=s.cmode==='each'&&Array.isArray(s.cs);
       h+=segRow('cmode',[['all','四隅まとめて'],['each','個別']],each?'each':'all','角','cmd');
-      if(!each)h+=segRow('ct',[['round','角丸'],['chamfer','面取り']],s.ct||'round','角の種類','cty')+exprRow('p.r','角R',s.p.r,env);
+      if(!each)h+=segRow('ct',[['round',ICON.round+' 角丸'],['chamfer',ICON.chamfer+' 面取り']],s.ct||'round','角の種類','cty')+exprRow('p.r','角R',s.p.r,env);
       else h+=`<div class="ctab">`+[0,1,2,3].map(i=>{const c=s.cs[i]||{t:'round',r:'0'},t=c.t||'round';let v,e;if(t!=='none'){try{v=evalExpr(c.r,env)}catch(x){e=x.message}}
-        return`<div class="crow"><span class="cl">${CORNER_NAMES[i]}</span><div class="seg sm" role="radiogroup" aria-label="${CORNER_NAMES[i]}の種類">${[['round','R'],['chamfer','C'],['none','なし']].map(([k,l])=>`<label title="${{round:'角丸',chamfer:'面取り',none:'直角'}[k]}"><input type="radio" name="cs${i}" data-path="cs.${i}.t" value="${k}"${t===k?' checked':''}>${l}</label>`).join('')}</div>`+
-          (t==='none'?'<span></span><span></span>':`<input type="text" data-path="cs.${i}.r" value="${esc(c.r)}" aria-label="${CORNER_NAMES[i]}の大きさ" class="${e?'err':''}" spellcheck="false" autocomplete="off"><span class="val ${e?'err':''}" title="${esc(e||'')}">${e?'エラー':'= '+fmt(v)}</span>`)+`</div>`}).join('')+`</div><div class="small">R は角丸の半径、C は面取りの大きさ（角から切り落とす長さ）です。式も書けます。</div>`}
+        return`<div class="crow"><span class="cl" role="img" title="${CORNER_NAMES[i]}" aria-label="${CORNER_NAMES[i]}">${ICON.corner(i)}</span><div class="seg sm" role="radiogroup" aria-label="${CORNER_NAMES[i]}の種類">${['round','chamfer','none'].map(k=>{const l={round:'角丸',chamfer:'面取り',none:'直角'}[k];return`<label title="${l}"><input type="radio" name="cs${i}" data-path="cs.${i}.t" value="${k}" aria-label="${l}"${t===k?' checked':''}>${ICON.ct(k,i)}</label>`}).join('')}</div>`+
+          (t==='none'?'<span></span><span></span>':`<input type="text" data-path="cs.${i}.r" value="${esc(c.r)}" aria-label="${CORNER_NAMES[i]}の大きさ" class="${e?'err':''}" spellcheck="false" autocomplete="off"><span class="val ${e?'err':''}" title="${esc(e||'')}">${e?'エラー':'= '+fmt(v)}</span>`)+`</div>`}).join('')+`</div><div class="small">角丸のときは半径、面取りのときは角から切り落とす長さです。式も書けます。</div>`}
     if(s.type==='poly'){h+=`<label class="check"><input type="checkbox" id="f_closed" data-path="closed"${s.closed?' checked':''}> 閉じた形にする</label>`;
       if(s.nodes.length>40&&showNodesFor!==s.id)h+=`<div class="small">頂点 ${s.nodes.length} 個 <button class="btn" id="bShowNodes" style="padding:2px 8px">表を表示</button></div>`;
       else{const ni=(path,v,lab)=>`<input type="text" data-path="${path}" value="${esc(v)}" aria-label="${lab}" spellcheck="false" autocomplete="off">`;
@@ -1272,7 +1289,7 @@ function renderPanel(){
         {const bad=it.st?it.st.edges.filter(x=>x.errs.length):[];if(bad.length&&!(e&&bad.length===1&&bad[0]===e))h+=`<div class="small" style="color:var(--danger)">${bad.map(x=>esc(`辺${x.i+1}：${x.errs.join(' / ')}`)).join('<br>')}</div>`}
         if(it.sterr)h+=`<div class="small" style="color:var(--danger)">${esc(it.sterr)}</div>`}}
     h+=`<div class="btns" style="margin-top:4px">`+(s.type==='bool'?`<button class="btn" id="bBake" title="材料と式を捨てて、今の形で固定します">確定</button><button class="btn" id="bUngroup" title="演算をやめて材料を元の図形に戻します">演算を解除</button>`:s.type==='offset'?`<button class="btn" id="bBake" title="式をやめて、今の形の折れ線に置き換えます（元の図形は残ります）">確定</button>`:'')+
-      `<button class="btn" id="bDup">複製</button><button class="btn" id="bMirX" title="左右反転した形を右側に複製">左右複製</button><button class="btn" id="bMirY" title="上下反転した形を下側に複製">上下複製</button><button class="btn" id="bDel">削除</button></div>`;
+      `<button class="btn ib" id="bDup" title="複製 (⌘D)" aria-label="複製">${ICON.copy}</button><button class="btn ib" id="bMirX" title="左右反転した形を右側に複製" aria-label="左右複製">${ICON.flipX}</button><button class="btn ib" id="bMirY" title="上下反転した形を下側に複製" aria-label="上下複製">${ICON.flipY}</button><button class="btn ib del" id="bDel" title="削除 (Delete)" aria-label="削除">${ICON.trash}</button></div>`;
     sec.innerHTML=h;
     $('bDup').onclick=()=>dup();$('bMirX').onclick=()=>mirrorCopy('x');$('bMirY').onclick=()=>mirrorCopy('y');$('bDel').onclick=delSel;
     if($('bParent'))$('bParent').onclick=()=>{setSel(it.parent);render()};
