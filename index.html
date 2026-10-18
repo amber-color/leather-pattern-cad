@@ -58,7 +58,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .top .share{margin-left:auto}
 /* code panel: replaces the parts panel and the variables bar while open */
 body.codemode .side.parts,body.codemode .side.vars{display:none!important}
-.side.code{grid-column:3/5;grid-row:2/4;width:min(520px,46vw);display:flex;flex-direction:column;overflow:hidden;border-left:1px solid var(--line)}
+.side.code{grid-column:3/5;grid-row:2/4;width:var(--cw,min(520px,46vw));position:relative;display:flex;flex-direction:column;overflow:hidden;border-left:1px solid var(--line)}
 .chead{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line)}
 .chead h2{flex:1;margin:0}.chead .btn{padding:4px 10px}
 .cbody{flex:1;min-height:0;overflow:hidden}.cbody .cm-editor{height:100%}
@@ -115,8 +115,8 @@ html.theme-fade,html.theme-fade *{transition:background-color .45s ease,color .4
 .stage{position:relative;background:var(--mat);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:default}
 /* relationship graph: the lower part of the stage, the drawing above it */
-body.graphmode #cv{height:56%}
-.gpane{position:absolute;left:0;right:0;bottom:0;height:44%;background:var(--panel);border-top:1px solid var(--line);display:flex;flex-direction:column;z-index:2}
+body.graphmode #cv{height:calc(100% - var(--gh,44%))}
+.gpane{position:absolute;left:0;right:0;bottom:0;height:var(--gh,44%);background:var(--panel);border-top:1px solid var(--line);display:flex;flex-direction:column;z-index:2}
 .gpane[hidden]{display:none}
 .ghead{display:flex;align-items:center;gap:10px;padding:3px 6px 3px 12px;border-bottom:1px solid var(--line)}.ghead strong{font-size:12px;font-weight:500}.ghead .small{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #gsvg{flex:1;width:100%;min-height:0;display:block;cursor:grab;touch-action:none}
@@ -132,14 +132,21 @@ body.graphmode #cv{height:56%}
 .status .osnap{display:flex;align-items:center;gap:4px;cursor:pointer}.status .osnap input{accent-color:var(--accent);margin:0}
 .status input[type=text]{font:12px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:1px 5px;width:64px}
 .status .hint{color:var(--fg);overflow:hidden;text-overflow:ellipsis;font-family:var(--ui)}
-.side{grid-row:2/4;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;box-sizing:border-box}
+.side{grid-row:2/4;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;box-sizing:border-box;position:relative}
+/* drag handles on panel edges (sizes in UI.sizes, applied as --pw --vw --cw --gh --mh on <html>); double-click resets */
+.sizer{position:absolute;z-index:5;left:-3px;top:0;bottom:0;width:7px;cursor:col-resize;touch-action:none}
+.sizer::after{content:'';position:absolute;left:3px;top:0;bottom:0;width:1px;background:var(--accent);opacity:0;transition:opacity .12s}
+.sizer:hover::after,.sizer.on::after{opacity:1}
+.gpane>.sizer{left:0;right:0;top:-3px;bottom:auto;width:auto;height:7px;cursor:row-resize}.gpane>.sizer::after{left:0;right:0;top:3px;bottom:auto;width:auto;height:1px}
+.side.vars.collapsed>.sizer{display:none}
+body.sizing,body.sizing *{cursor:inherit!important;user-select:none!important}body.sizing .side,body.sizing .vfull,body.sizing .sec{transition:none!important}
 .side.parts{grid-column:3;width:0;border-left-width:0;overflow:hidden;visibility:hidden;transition:width .24s cubic-bezier(.2,.7,.2,1),border-left-width .24s,visibility 0s .24s}
-.side.parts.open{width:300px;border-left-width:1px;visibility:visible;transition:width .24s cubic-bezier(.2,.7,.2,1),border-left-width .24s,visibility 0s}
-.side.parts .sec{width:300px;flex:none;box-sizing:border-box;height:100%;overflow-y:auto;overflow-x:hidden}
-.side.vars{grid-column:4;width:228px;position:relative;overflow:hidden;transition:width .24s cubic-bezier(.2,.7,.2,1)}
+.side.parts.open{width:var(--pw,300px);border-left-width:1px;visibility:visible;transition:width .24s cubic-bezier(.2,.7,.2,1),border-left-width .24s,visibility 0s}
+.side.parts .sec{width:var(--pw,300px);flex:none;box-sizing:border-box;height:100%;overflow-y:auto;overflow-x:hidden}
+.side.vars{grid-column:4;width:var(--vw,228px);position:relative;overflow:hidden;transition:width .24s cubic-bezier(.2,.7,.2,1)}
 .side.vars.collapsed{width:38px;overflow:hidden}
 /* the list scrolls inside .vfull, so a scrollbar narrows the content instead of pushing the right edge out of view */
-.vfull{width:228px;flex:none;box-sizing:border-box;height:100%;overflow-y:auto;overflow-x:hidden;transition:opacity .16s}
+.vfull{width:var(--vw,228px);flex:none;box-sizing:border-box;height:100%;overflow-y:auto;overflow-x:hidden;transition:opacity .16s}
 .vmini{position:absolute;top:0;left:0;bottom:0;width:38px;display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:10px;box-sizing:border-box;opacity:0;pointer-events:none;transition:opacity .16s}
 .vmini .vlabel{writing-mode:vertical-rl;letter-spacing:.3em;font-size:11px;color:var(--muted);cursor:pointer;border:none;background:none;padding:2px 0}
 .side.vars.collapsed .vfull{opacity:0;pointer-events:none}
@@ -161,7 +168,7 @@ body.graphmode #cv{height:56%}
 input[type=text],select.inp{width:100%;box-sizing:border-box;font:13px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:5px 7px}
 input[type=text]:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 input.err{border-color:var(--danger)}
-.vrow{display:grid;grid-template-columns:minmax(0,1fr) 10px 76px 16px;grid-template-areas:"name eq expr x";gap:4px;align-items:center;border-radius:6px;transition:background-color .15s,padding .15s}
+.vrow{display:grid;grid-template-columns:minmax(0,1fr) 10px minmax(76px,.8fr) 16px;grid-template-areas:"name eq expr x";gap:4px;align-items:center;border-radius:6px;transition:background-color .15s,padding .15s}
 .vrow .vname{grid-area:name}.vrow .eq{grid-area:eq}.vrow textarea{grid-area:expr}.vrow .x{grid-area:x}
 .vrow textarea{width:100%;box-sizing:border-box;font:13px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:5px 7px;resize:none;height:29px;overflow:hidden;white-space:nowrap;line-height:1.35;display:block}
 .vrow textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
@@ -219,7 +226,7 @@ input.err{border-color:var(--danger)}
    or the variables when nothing is selected. Each half scrolls inside itself. */
 @media (max-width:760px){
   html,body{height:100%;overflow:hidden}
-  .app{height:100vh;height:100dvh;grid-template-columns:minmax(0,1fr);grid-template-rows:46px auto minmax(0,1fr) 30px 44vh;grid-template-rows:46px auto minmax(0,1fr) 30px 44dvh}
+  .app{height:100vh;height:100dvh;grid-template-columns:minmax(0,1fr);grid-template-rows:46px auto minmax(0,1fr) 30px 44vh;grid-template-rows:46px auto minmax(0,1fr) 30px var(--mh,44dvh)}
   .top{grid-column:1;padding-left:max(12px,env(safe-area-inset-left,0px))}
   .top .lbl,.top .spacer,.top .brand{display:none}
   .top,.top .grp{gap:2px}.top .ibtn{width:36px}
@@ -232,6 +239,9 @@ input.err{border-color:var(--danger)}
   .side.parts .sec,.vfull{width:auto;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
   /* the variables can't be folded away here: they are the bottom half */
   .side.vars .vmini,#varsToggle{display:none!important}
+  /* on a phone every edge handle sizes the bottom half */
+  .side>.sizer{left:0;right:0;top:-3px;bottom:auto;width:auto;height:7px;cursor:row-resize}.side>.sizer::after{left:0;right:0;top:3px;bottom:auto;width:auto;height:1px}
+  .side.vars.collapsed>.sizer{display:block}
   .side.vars.collapsed .vfull{opacity:1;pointer-events:auto}
   /* 16px keeps phone browsers from zooming in when a field gets focus */
   input[type=text],textarea,select,.vrow textarea,.nrow input[type=text]{font-size:16px!important}
@@ -317,7 +327,7 @@ input.err{border-color:var(--danger)}
     <svg id="cv" xmlns="http://www.w3.org/2000/svg">
       <g id="world"><path id="gMinor" fill="none" stroke="var(--mat-minor)" stroke-width="1" vector-effect="non-scaling-stroke"/><path id="gMajor" fill="none" stroke="var(--mat-major)" stroke-width="1" vector-effect="non-scaling-stroke"/><g id="shapes"></g><g id="overlay"></g></g>
     </svg>
-    <div class="gpane" id="gpane" hidden><div class="ghead"><strong>関係図</strong><span class="small" id="gInfo"></span><button class="vtoggle" id="gClose" aria-label="関係図を閉じる" title="閉じる"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div><svg id="gsvg" aria-label="関係図"></svg></div>
+    <div class="gpane" id="gpane" hidden><div class="sizer" data-size="gh" role="separator" aria-label="関係図の高さ" title="ドラッグで高さを変更（ダブルクリックで元に戻す）"></div><div class="ghead"><strong>関係図</strong><span class="small" id="gInfo"></span><button class="vtoggle" id="gClose" aria-label="関係図を閉じる" title="閉じる"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div><svg id="gsvg" aria-label="関係図"></svg></div>
     <div class="toast" id="toast" role="status"></div>
   </main>
 
@@ -331,9 +341,11 @@ input.err{border-color:var(--danger)}
   </div>
 
   <aside class="side parts" id="partsBar" aria-label="パーツ" inert>
+    <div class="sizer" data-size="pw" role="separator" aria-label="パーツ欄の幅" title="ドラッグで幅を変更（ダブルクリックで元に戻す）"></div>
     <section class="sec" id="secProps"></section>
   </aside>
   <aside class="side vars" id="varsBar" aria-label="変数">
+    <div class="sizer" data-size="vw" role="separator" aria-label="変数バーの幅" title="ドラッグで幅を変更（ダブルクリックで元に戻す）"></div>
     <div class="vmini" id="varsMini" inert>
       <button class="vtoggle" id="varsExpand" aria-label="変数バーを広げる" title="変数バーを広げる"><svg viewBox="0 0 16 16"><path d="M10 3L5 8l5 5"/></svg></button>
       <button class="vlabel" id="varsLabel" tabindex="-1">変数</button>
@@ -351,6 +363,7 @@ input.err{border-color:var(--danger)}
     </section>
   </aside>
   <aside class="side code" id="codeBar" aria-label="コード" hidden>
+    <div class="sizer" data-size="cw" role="separator" aria-label="コード欄の幅" title="ドラッグで幅を変更（ダブルクリックで元に戻す）"></div>
     <div class="chead"><h2>コード（JSON）</h2>
       <button class="btn primary" id="codeApply" title="図面に反映（⌘Enter / Ctrl+Enter）">適用</button>
       <button class="btn" id="codeReload" title="今の図面の内容で読み込み直す">読み込み直す</button>
@@ -448,7 +461,7 @@ const LANG=(()=>{let u={};try{u=JSON.parse(localStorage.getItem('ppp-ui')||'{}')
 const EN_EXACT={
   // top bar, menus
   'ファイル':'File','新規':'New','開く':'Open','開く：保存した .json を読み込む':'Open: load a saved .json','保存':'Save','保存：型紙を .json で保存':'Save the pattern as .json',
-  '使い方':'Help','書き出し':'Export','書き出し（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)','印刷枠':'Print area','パーツ名':'Part names','パーツ名：図形の左上の名前を表示・非表示（選択中の図形は常に表示）':'Part names: show or hide the name above each part (a selected part always shows it)','パーツ名を隠しました':'Part names hidden','パーツ名を表示しました':'Part names shown','印刷枠：PDFの用紙と向きで印刷される範囲を図面に表示':'Print area: show the area the PDF paper and orientation will print',
+  '使い方':'Help','書き出し':'Export','書き出し（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)','印刷枠':'Print area','パーツ欄の幅':'Parts panel width','変数バーの幅':'Variables bar width','コード欄の幅':'Code panel width','関係図の高さ':'Graph height','ドラッグで幅を変更（ダブルクリックで元に戻す）':'Drag to resize (double-click to reset)','ドラッグで高さを変更（ダブルクリックで元に戻す）':'Drag to resize (double-click to reset)','パーツ名':'Part names','パーツ名：図形の左上の名前を表示・非表示（選択中の図形は常に表示）':'Part names: show or hide the name above each part (a selected part always shows it)','パーツ名を隠しました':'Part names hidden','パーツ名を表示しました':'Part names shown','印刷枠：PDFの用紙と向きで印刷される範囲を図面に表示':'Print area: show the area the PDF paper and orientation will print',
   'ライト / ダークを切り替え':'Switch light / dark','ライトにする':'Switch to light','ダークにする':'Switch to dark','ライトテーマにする':'Switch to the light theme','ダークテーマにする':'Switch to the dark theme',
   '共有':'Share','共有：型紙を埋め込んだURLをクリップボードにコピー':'Share: copy a URL that contains the pattern','言語を切り替え（日本語 / English）':'Switch language (日本語 / English)',
   'Parametric Pattern Plotter — 式で描くレザークラフト型紙CAD':'Parametric Pattern Plotter — a leathercraft pattern CAD driven by expressions',
@@ -2659,6 +2672,24 @@ async function openGraph(){if(graphOpen)return;graphOpen=true;document.body.clas
   if(!graphOpen)return;gState=null;requestAnimationFrame(()=>{applyView();render()})}
 function closeGraph(){graphOpen=false;gState=null;document.body.classList.remove('graphmode');$('gpane').hidden=true;$('xGraph').setAttribute('aria-pressed','false');requestAnimationFrame(()=>{applyView();render()})}
 $('xGraph').onclick=()=>graphOpen?closeGraph():openGraph();$('gClose').onclick=closeGraph;
+
+// ---------- panel sizes ----------
+// drag a panel edge to size it; the sizes are kept in UI.sizes. On a phone every side panel's handle sizes the bottom half.
+const SIZES={pw:[240,640,'px'],vw:[180,520,'px'],cw:[320,1100,'px'],gh:[15,85,'%'],mh:[20,75,'dvh']},phoneQ=matchMedia('(max-width:760px)');
+function applySizes(){const z=UI.sizes||{},st=document.documentElement.style;for(const k in SIZES){if(z[k]==null)st.removeProperty('--'+k);else st.setProperty('--'+k,z[k]+SIZES[k][2])}}
+document.querySelectorAll('.sizer').forEach(h=>{
+  h.addEventListener('pointerdown',e=>{if(e.button)return;e.preventDefault();e.stopPropagation();h.setPointerCapture(e.pointerId);
+    const k=phoneQ.matches&&h.dataset.size!=='gh'?'mh':h.dataset.size,[lo,hi]=SIZES[k],box=(k==='gh'?$('stage'):h.parentElement).getBoundingClientRect();
+    const right=box.right,stage=$('stage').getBoundingClientRect();
+    h.classList.add('on');document.body.classList.add('sizing');document.body.style.cursor=getComputedStyle(h).cursor;
+    const mv=ev=>{let v;if(k==='gh')v=(stage.bottom-ev.clientY)/stage.height*100;else if(k==='mh')v=(innerHeight-ev.clientY)/innerHeight*100;
+      // the canvas keeps at least 240px beside the side panels
+      else{v=right-ev.clientX;const others=k==='pw'&&!$('varsBar').classList.contains('collapsed')?$('varsBar').offsetWidth:0;v=Math.min(v,innerWidth-52-240-others)}
+      v=Math.round(Math.max(lo,Math.min(hi,v)));UI.sizes={...UI.sizes,[k]:v};applySizes()};
+    const up=()=>{h.classList.remove('on');document.body.classList.remove('sizing');document.body.style.cursor='';h.removeEventListener('pointermove',mv);h.removeEventListener('pointerup',up);h.removeEventListener('pointercancel',up);saveUI();render()};
+    h.addEventListener('pointermove',mv);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up)});
+  h.addEventListener('dblclick',()=>{const k=phoneQ.matches&&h.dataset.size!=='gh'?'mh':h.dataset.size;if(UI.sizes)delete UI.sizes[k];applySizes();saveUI();render()})});
+applySizes();
 
 // ---------- boot ----------
 function boot(){startI18n();if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}$('xFrame').setAttribute('aria-pressed',String(!!UI.showFrame));$('xNames').setAttribute('aria-pressed',String(!UI.hideNames));setTool('select');requestAnimationFrame(fit);loadFromLink()}

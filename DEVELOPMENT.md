@@ -93,6 +93,8 @@ Desktop grid: tool rail | canvas | parts panel (only with a selection) | variabl
 (`body.codemode`) replaces both side panels. Phones (≤760px): one screen, canvas on top, bottom 44dvh shows the parts
 panel when something is selected, else the variables (or the code panel). Touch: two-finger pinch/pan, one finger on
 the background box-selects; the first finger's action is undone when a pinch starts.
+Panel sizes: `.sizer` handles on the parts / variables / code panels and the graph pane write `UI.sizes`
+(`pw vw cw` px, `gh` %, `mh` dvh on phones) and `applySizes` sets them as CSS variables `--pw` etc. on `<html>`.
 
 ## Testing
 No test suite. Work on a copy for testing:
