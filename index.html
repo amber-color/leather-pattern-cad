@@ -18,7 +18,7 @@
   --bg:#eef0ec; --panel:#f8f9f6; --line:#d3d8cf; --fg:#1f2a24; --muted:#5f6d64;
   --accent:#b8611f; --accent-soft:#f3e1d1; --danger:#b3261e; --ok:#2f7a4b;
   --mat:#363331; --mat-minor:rgba(255,255,255,.07); --mat-major:rgba(255,255,255,.16);
-  --cut:#f4efe2; --guide:#9fc3b1; --stitch:#f0a94a; --sel:#ffb36b; --irr:#ff6f6f; --frame:#b9a7ff; --osnap:#7fe6ff;
+  --cut:#f4efe2; --guide:#9fc3b1; --stitch:#f0a94a; --sel:#ffb36b; --irr:#ff6f6f; --frame:#b9a7ff; --osnap:#7fe6ff; --ck:#8a4d1c; --cs:#1f5f8b; --cn:#b8611f; --cb:#8a3fa0;
   --ui:"IBM Plex Sans JP",system-ui,-apple-system,"Hiragino Sans",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
   color-scheme:light;
@@ -26,12 +26,12 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#141916; --panel:#1b211d; --line:#2e3832; --fg:#e4e9e3; --muted:#93a198;
   --accent:#e58a45; --accent-soft:#3a2a1d; --danger:#ef7b70; --ok:#6cc08d;
-  --mat:#262423; --mat-minor:rgba(255,255,255,.05); --mat-major:rgba(255,255,255,.12);
+  --mat:#262423; --ck:#e5a46a; --cs:#8cc4e8; --cn:#f0a94a; --cb:#d39be8; --mat-minor:rgba(255,255,255,.05); --mat-major:rgba(255,255,255,.12);
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#141916; --panel:#1b211d; --line:#2e3832; --fg:#e4e9e3; --muted:#93a198;
   --accent:#e58a45; --accent-soft:#3a2a1d; --danger:#ef7b70; --ok:#6cc08d;
-  --mat:#262423; --mat-minor:rgba(255,255,255,.05); --mat-major:rgba(255,255,255,.12);
+  --mat:#262423; --ck:#e5a46a; --cs:#8cc4e8; --cn:#f0a94a; --cb:#d39be8; --mat-minor:rgba(255,255,255,.05); --mat-major:rgba(255,255,255,.12);
   color-scheme:dark}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;overflow:hidden}
@@ -56,6 +56,14 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .top .vsep{width:1px;height:22px;background:var(--line);margin:0 6px;flex:none}
 .top .spacer{flex:1}
 .top .share{margin-left:auto}
+/* code panel: replaces the parts panel and the variables bar while open */
+body.codemode .side.parts,body.codemode .side.vars{display:none!important}
+.side.code{grid-column:3/5;grid-row:2/4;width:min(520px,46vw);display:flex;flex-direction:column;overflow:hidden;border-left:1px solid var(--line)}
+.chead{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.chead h2{flex:1;margin:0}.chead .btn{padding:4px 10px}
+.cbody{flex:1;min-height:0;overflow:hidden}.cbody .cm-editor{height:100%}
+.cfoot{min-height:18px;padding:6px 12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);line-height:1.5}
+.cfoot.warn{color:var(--accent)}.cfoot.err{color:var(--danger)}
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.45s;animation-timing-function:ease}
 html.theme-fade,html.theme-fade *{transition:background-color .45s ease,color .45s ease,border-color .45s ease,fill .45s ease,stroke .45s ease!important}
 /* the theme button shows where a click takes you: a moon in light mode, a sun in dark mode */
@@ -198,7 +206,7 @@ input.err{border-color:var(--danger)}
   .rail{grid-row:2;flex-direction:row;border-right:none;border-bottom:1px solid var(--line);overflow-x:auto;padding-left:max(8px,env(safe-area-inset-left,0px))}
   .rail .sep{width:1px;height:28px;margin:0 4px}
   .stage{grid-row:3;grid-column:1}.status{grid-column:1;grid-row:4}
-  .side,.side.parts,.side.vars{grid-row:5;grid-column:1;border-left:none!important;border-top:1px solid var(--line);width:auto!important;min-height:0;overflow:hidden;transition:none!important;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .side,.side.parts,.side.vars,.side.code{grid-row:5;grid-column:1;border-left:none!important;border-top:1px solid var(--line);width:auto!important;min-height:0;overflow:hidden;transition:none!important;padding-bottom:env(safe-area-inset-bottom,0px)}
   .side.parts:not(.open){display:none}
   .side.parts.open~.side.vars{display:none}
   .side.parts .sec,.vfull{width:auto;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
@@ -259,6 +267,7 @@ input.err{border-color:var(--danger)}
         </div></div>
       <button class="btn ibtn" id="xFrame" aria-pressed="false" title="印刷枠：PDFの用紙と向きで印刷される範囲を図面に表示" aria-label="印刷枠"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v2"/><path d="M20 16v2a2 2 0 0 1 -2 2h-2"/><path d="M8 20h-2a2 2 0 0 1 -2 -2v-2"/><path d="M4 8v-2a2 2 0 0 1 2 -2h2"/></svg></button>
       <button class="btn ibtn" id="xTheme" title="ライト / ダークを切り替え" aria-label="ライト / ダークを切り替え"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="t-moon"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454l0 .008"/></g><g class="t-sun"><path d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"/></g></svg></button>
+      <button class="btn ibtn" id="xCode" aria-pressed="false" title="コード：型紙をJSONで直接編集" aria-label="コード"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8l-4 4l4 4"/><path d="M17 8l4 4l-4 4"/><path d="M14 4l-4 16"/></svg></button>
       <button class="btn ibtn" id="xLang" title="言語を切り替え（日本語 / English）" aria-label="言語を切り替え（日本語 / English）"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.371c0 4.418 -2.239 6.629 -5 6.629"/><path d="M4 6.371h7"/><path d="M5 9c0 2.144 2.252 3.908 6 4"/><path d="M12 20l4 -9l4 9"/><path d="M19.1 18h-6.2"/><path d="M6.694 3l.793 .582"/></svg></button>
       <input type="file" id="fileIn" accept=".json,application/json" hidden>
     </div>
@@ -312,6 +321,14 @@ input.err{border-color:var(--danger)}
         <div class="small">寸法欄には <code>W-2*R</code> のような式が書けます。<code>外装.右</code> のように図形の値も参照できます。変数を変えると全パーツが追従します。</div>
       </div>
     </section>
+  </aside>
+  <aside class="side code" id="codeBar" aria-label="コード" hidden>
+    <div class="chead"><h2>コード（JSON）</h2>
+      <button class="btn primary" id="codeApply" title="図面に反映（⌘Enter / Ctrl+Enter）">適用</button>
+      <button class="btn" id="codeReload" title="今の図面の内容で読み込み直す">読み込み直す</button>
+      <button class="vtoggle" id="codeClose" aria-label="コードを閉じる" title="コードを閉じる"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
+    <div class="cbody" id="codeHost" data-noi18n></div>
+    <div class="cfoot" id="codeMsg" aria-live="polite"></div>
   </aside>
 </div>
 <div class="modal" id="pdfModal" hidden role="dialog" aria-modal="true" aria-labelledby="pdfTitle"><div class="box" style="width:min(520px,100%)">
@@ -446,6 +463,12 @@ const EN_EXACT={
   '次から確認しない':'Don’t ask again','動かす':'Move','元に戻す':'Undo','移動を取り消しました':'Move undone',
   '名前が空です':'The name is empty','数字だけの名前は使えません':'A name can’t be only digits','名前に使えない文字があります（空白や + - * / ( ) など）':'The name has characters that can’t be used (spaces, + - * / ( ) …)',
   '関数や予約された名前（sqrt・pi・自分 など）は使えません':'Function and reserved names (sqrt, pi, self …) can’t be used','同じ名前の変数がすでにあります':'Another variable already has this name',
+  'コード':'Code','コード：型紙をJSONで直接編集':'Code: edit the pattern directly as JSON','コード（JSON）':'Code (JSON)','適用':'Apply','図面に反映（⌘Enter / Ctrl+Enter）':'Apply to the drawing (⌘Enter / Ctrl+Enter)',
+  '読み込み直す':'Reload','今の図面の内容で読み込み直す':'Reload from the current drawing','コードを閉じる':'Close the code','エディタを読み込んでいます…':'Loading the editor…','エディタを読み込めませんでした（ネットワークを確認してください）':'The editor couldn’t be loaded (check the network)',
+  '未適用の変更があります（図面のほうも変わっています。適用すると図面の変更は上書きされます）':'Unapplied changes (the drawing has changed too; applying overwrites those changes)','未適用の変更があります。⌘Enter（Ctrl+Enter）で適用':'Unapplied changes. ⌘Enter (Ctrl+Enter) applies them',
+  '図面と同じ内容です。書き換えて「適用」すると図面に反映されます。⌘F で検索、Ctrl+Space で補完':'Same as the drawing. Edit and press Apply to update it. ⌘F searches, Ctrl+Space completes',
+  '未適用の変更があります。もう一度閉じると変更を捨てて閉じます':'Unapplied changes. Close again to discard them','コードを図面に反映しました（⌘Zで戻せます）':'Applied the code to the drawing (⌘Z to undo)',
+  '全体が { … } のオブジェクトになっていません':'The whole thing must be one { … } object','"vars" が配列ではありません':'"vars" must be an array','"shapes" が配列ではありません':'"shapes" must be an array','図形が { … } になっていません':'A shape isn’t a { … } object','"id" のない図形があります':'A shape has no "id"',
   '共有用のURL':'Share URL','自動でコピーできなかったので、下の文字列をコピーしてください。':'Copying automatically didn’t work; copy the text below.',
   '使い方を読み込めませんでした。':'The guide could not be loaded.','GitHub の README':'the README on GitHub','を開いてください。':'Please open it there.',
   // canvas
@@ -478,6 +501,9 @@ const EN_PAT=[
   ['演算 · {0}','Operation · {0}',{0:'T'}],['{0}個を選択中','{0} selected'],['「{0}」の材料です','A material of “{0}”'],['頂点 {0} 個','{0} nodes'],['頂点{0} {1}ハンドル X','Node {0} {1}-handle X',{1:'T'}],['頂点{0} {1}ハンドル Y','Node {0} {1}-handle Y',{1:'T'}],
   ['{0}：{1} → {2}','{0}: {1} → {2}',{0:'T'}],['ほか {0} 件','{0} more'],['ほか {0} 個のパーツ','{0} more parts'],
   ['{0}。元の名前に戻しました','{0}; the previous name is back',{0:'T'}],
+  ['JSONの書き方に誤りがあります：{0}','The JSON isn’t valid: {0}'],['{0}（ほか {1} 件）','{0} ({1} more)',{0:'T'}],['変数{0}に "n"（名前）と "e"（式）が要ります','Variable {0} needs "n" (name) and "e" (expression)'],
+  ['変数「{0}」：{1}','Variable “{0}”: {1}',{1:'T'}],['"id" が重複しています：{0}','Duplicate "id": {0}'],['"type" が不明です：{0}（{1}）','Unknown "type": {0} ({1})'],['パス「{0}」に "nodes" がありません','Path “{0}” has no "nodes"'],
+  ['演算「{0}」に "ops" がありません','Operation “{0}” has no "ops"'],['「{0}」に "p" がありません','“{0}” has no "p"'],['演算「{0}」の材料 {1} が見つかりません','Operation “{0}”: material {1} not found'],
   ['頂点{0} X','Node {0} X'],['頂点{0} Y','Node {0} Y'],['頂点{0}を削除','Delete node {0}'],['{0}の種類','{0} type',{0:'T'}],['{0}の大きさ','{0} size',{0:'T'}],
   ['どの辺にも当てはまらなくなった辺ごとの設定が {0} 件あります（図形の形が大きく変わったため）。','{0} per-edge setting(s) no longer match any edge (the shape changed a lot).'],
   ['辺 {0}（輪郭 {1}）','Edge {0} (contour {1})'],['辺 {0}','Edge {0}'],['長さ {0} mm。角がないので一周を1辺として扱います。矢印の向きが始点→終点です。','Length {0} mm. With no corners, the whole loop is one edge. The arrow points from start to end.'],
@@ -984,7 +1010,7 @@ function render(){
   drawHint(k);
   if(drag&&drag.kind==='box'&&drag.big){const x=Math.min(drag.a[0],drag.b[0]),y=Math.min(drag.a[1],drag.b[1]);
     el('rect',{x,y,width:Math.abs(drag.b[0]-drag.a[0]),height:Math.abs(drag.b[1]-drag.a[1]),fill:'var(--sel)','fill-opacity':.08,stroke:'var(--sel)','stroke-width':1,'stroke-dasharray':'4 3','vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver)}
-  renderPanel();save();}
+  renderPanel();save();if(codeOpen)syncCode();}
 function bbox(p){let a=[1e9,1e9,-1e9,-1e9];for(const[x,y]of p){a[0]=Math.min(a[0],x);a[1]=Math.min(a[1],y);a[2]=Math.max(a[2],x);a[3]=Math.max(a[3],y)}return a}
 const bboxG=g=>bbox(g.paths.flat());
 function dimText(x,y,txt,k,anchor='middle',rot=0){const t=el('text',{x,y,'font-size':11*k,fill:'var(--sel)','text-anchor':anchor,'font-family':'IBM Plex Mono, monospace','pointer-events':'none',transform:rot?`rotate(${rot} ${x} ${y})`:''},gOver);t.textContent=txt}
@@ -1852,6 +1878,129 @@ async function loadFromLink(){const h=location.hash;if(!h.startsWith('#p='))retu
   try{const d=await decodeDoc(h.slice(3));if(!d.shapes||!d.vars)throw 0;pushUndo();doc=migrate(d);setSel(null);history.replaceState(null,'',location.pathname+location.search);fit();toast('共有された型紙を開きました（⌘Zで前の作業に戻せます）',4000);return true}
   catch(e){toast('共有リンクの型紙を読み込めませんでした');history.replaceState(null,'',location.pathname+location.search);return false}}
 addEventListener('hashchange',loadFromLink);
+
+// ---------- code panel: the pattern as JSON, edited with CodeMirror ----------
+// The editor is loaded on first open (vendor/codemirror.js). While the panel is open it replaces the parts panel and
+// the variables bar. Text follows the drawing until it is edited; edits reach the drawing only with 適用 (Mod-Enter).
+let CM=null,cm=null,cmLoad=null,codeOpen=false,codeDirty=false,codeSetting=false,codeClosePending=false,codePickId=null;
+const cj=v=>Array.isArray(v)?'['+v.map(cj).join(', ')+']':v&&typeof v==='object'?'{'+Object.entries(v).map(([k,x])=>JSON.stringify(k)+': '+cj(x)).join(', ')+'}':JSON.stringify(v);
+// one line per variable and per shape; a path's nodes get a line each
+function docJSON(d){const L=['{','  "vars": ['];d.vars.forEach((v,i)=>L.push('    '+cj(v)+(i<d.vars.length-1?',':'')));L.push('  ],','  "shapes": [');
+  d.shapes.forEach((s,i)=>{const end=i<d.shapes.length-1?',':'';
+    if(Array.isArray(s.nodes)&&s.nodes.length){const{nodes,...rest}=s;L.push('    '+cj(rest).slice(0,-1)+', "nodes": [');nodes.forEach((n,j)=>L.push('      '+cj(n)+(j<nodes.length-1?',':'')));L.push('    ]}'+end)}
+    else L.push('    '+cj(s)+end)});
+  L.push('  ]');for(const k of Object.keys(d))if(k!=='vars'&&k!=='shapes'){L[L.length-1]+=',';L.push('  '+JSON.stringify(k)+': '+cj(d[k]))}
+  L.push('}');return L.join('\n')}
+const SHAPE_TYPES=['rect','circle','poly','bool','text','dim'];
+// structural problems that would break the drawing; returns [message, shape id or null]
+function codeProblems(d){const out=[];if(!d||typeof d!=='object'||Array.isArray(d))return[['全体が { … } のオブジェクトになっていません',null]];
+  if(!Array.isArray(d.vars))out.push(['"vars" が配列ではありません',null]);if(!Array.isArray(d.shapes)){out.push(['"shapes" が配列ではありません',null]);return out}
+  (d.vars||[]).forEach((v,i)=>{if(!v||typeof v.n!=='string'||v.e==null)out.push([`変数${i+1}に "n"（名前）と "e"（式）が要ります`,null]);else{const ne=varNameErrorIn(d.vars,v.n,i);if(ne)out.push([`変数「${v.n}」：${ne}`,null])}});
+  const ids=new Set;
+  for(const s of d.shapes){if(!s||typeof s!=='object'){out.push(['図形が { … } になっていません',null]);continue}
+    if(typeof s.id!=='string'||!s.id)out.push(['"id" のない図形があります',null]);else if(ids.has(s.id))out.push([`"id" が重複しています：${s.id}`,s.id]);else ids.add(s.id);
+    if(!SHAPE_TYPES.includes(s.type))out.push([`"type" が不明です：${s.type}（${SHAPE_TYPES.join(' / ')}）`,s.id]);
+    if(s.type==='poly'&&!Array.isArray(s.nodes))out.push([`パス「${s.name||s.id}」に "nodes" がありません`,s.id]);
+    if(s.type==='bool'&&!Array.isArray(s.ops))out.push([`演算「${s.name||s.id}」に "ops" がありません`,s.id]);
+    if(s.type!=='poly'&&s.type!=='bool'&&(!s.p||typeof s.p!=='object'))out.push([`「${s.name||s.id}」に "p" がありません`,s.id])}
+  for(const s of d.shapes)if(s&&s.type==='bool'&&Array.isArray(s.ops))for(const id of s.ops)if(!ids.has(id))out.push([`演算「${s.name||s.id}」の材料 ${id} が見つかりません`,s.id]);
+  return out}
+function varNameErrorIn(vars,n,i){const t=String(n).trim();if(!t)return'名前が空です';if(/^[0-9.]+$/.test(t))return'数字だけの名前は使えません';
+  if(!IDRE.test(t))return'名前に使えない文字があります（空白や + - * / ( ) など）';if(t in FN||t in CONST||t===SELF||t==='self')return'関数や予約された名前（sqrt・pi・自分 など）は使えません';
+  if(vars.some((v,j)=>j!==i&&v&&v.n===t))return'同じ名前の変数がすでにあります';return null}
+// normalise a parsed document so the rest of the app can rely on its shape
+function codeNormalize(d){const S=v=>v==null?v:typeof v==='string'?v:String(v);
+  d.vars=d.vars.map(v=>({...v,n:String(v.n).trim(),e:S(v.e)}));
+  for(const s of d.shapes){if(s.p&&typeof s.p==='object')for(const k in s.p)s.p[k]=S(s.p[k]);else s.p={};
+    if(!s.st||typeof s.st!=='object')s.st={on:false,inset:'3',pitch:'4',hole:'1.2'};
+    if(Array.isArray(s.nodes))s.nodes=s.nodes.map(n=>{const o={...n,x:S(n.x),y:S(n.y)};for(const h of['hi','ho'])if(Array.isArray(n[h]))o[h]=n[h].map(S);return o});
+    if(s.name==null)s.name=s.id}
+  return migrate(d)}
+function codeText(){return cm?cm.state.doc.toString():''}
+function setCodeText(t,keepScroll=true){if(!cm)return;const top=cm.scrollDOM.scrollTop;codeSetting=true;
+  cm.dispatch({changes:{from:0,to:cm.state.doc.length,insert:t}});codeSetting=false;if(keepScroll)cm.scrollDOM.scrollTop=top}
+function codeMsg(t,cls=''){const m=$('codeMsg');m.textContent=t;m.className='cfoot'+(cls?' '+cls:'')}
+function codeStatus(){if(codeDirty)codeMsg(docJSON(doc)!==codeBase?'未適用の変更があります（図面のほうも変わっています。適用すると図面の変更は上書きされます）':'未適用の変更があります。⌘Enter（Ctrl+Enter）で適用','warn');
+  else codeMsg('図面と同じ内容です。書き換えて「適用」すると図面に反映されます。⌘F で検索、Ctrl+Space で補完')}
+let codeBase='';
+function syncCode(){if(!cm)return;const t=docJSON(doc);
+  if(!codeDirty&&t!==codeText()){setCodeText(t);codeBase=t}codeStatus();markPick()}
+async function openCode(){if(codeOpen)return;codeOpen=true;codeClosePending=false;document.body.classList.add('codemode');$('codeBar').hidden=false;$('xCode').setAttribute('aria-pressed','true');
+  codeMsg('エディタを読み込んでいます…');requestAnimationFrame(()=>{applyView();render()});
+  try{CM=CM||await (cmLoad=cmLoad||new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='vendor/codemirror.js';sc.onload=()=>res(window.PPPCM);sc.onerror=()=>rej(Error('load'));document.head.appendChild(sc)}))}
+  catch(e){codeMsg('エディタを読み込めませんでした（ネットワークを確認してください）','err');cmLoad=null;return}
+  if(!codeOpen)return;if(!cm)makeEditor();codeDirty=false;const t=docJSON(doc);setCodeText(t,false);codeBase=t;codePickId=null;codeStatus();markPick(true);cm.focus()}
+function closeCode(force){if(!codeOpen)return;if(codeDirty&&!force&&!codeClosePending){codeClosePending=true;codeMsg('未適用の変更があります。もう一度閉じると変更を捨てて閉じます','err');return}
+  codeOpen=false;codeDirty=false;codeClosePending=false;document.body.classList.remove('codemode');$('codeBar').hidden=true;$('xCode').setAttribute('aria-pressed','false');lastPanelKey=null;requestAnimationFrame(()=>{applyView();render()})}
+function applyCode(){if(!cm)return true;let d;const t=codeText();
+  try{d=JSON.parse(t)}catch(e){codeMsg('JSONの書き方に誤りがあります：'+e.message,'err');return true}
+  const pr=codeProblems(d);if(pr.length){codeMsg(pr[0][0]+(pr.length>1?`（ほか ${pr.length-1} 件）`:''),'err');return true}
+  pushUndo();doc=codeNormalize(d);if(sel&&!byId(sel))setSel(null);picks=picks.filter(id=>byId(id));lastPanelKey=null;codeDirty=false;codeClosePending=false;
+  render();const n=docJSON(doc);if(n!==t)setCodeText(n);codeBase=n;codeStatus();toast('コードを図面に反映しました（⌘Zで戻せます）');return true}
+// the selected shape's lines are tinted and scrolled into view when the selection changes
+function shapeLines(id){if(!cm||!id)return null;const st=cm.state.doc,needle=`"id": ${JSON.stringify(id)}`;
+  for(let i=1;i<=st.lines;i++){const l=st.line(i);if(l.text.includes(needle)){let e=i;if(/"nodes": \[$/.test(l.text))while(e<st.lines&&!/^\s*\]\}/.test(st.line(e).text))e++;return[i,e]}}return null}
+let pickEffect=null,pickField=null;
+function markPick(force){if(!cm)return;const id=picks.length===1?sel:null;if(id===codePickId&&!force)return;codePickId=id;const r=shapeLines(id),st=cm.state.doc,deco=[];
+  if(r)for(let i=r[0];i<=r[1];i++)deco.push(CM.Decoration.line({class:'cm-pick'}).range(st.line(i).from));
+  const eff=[pickEffect.of(CM.Decoration.set(deco))];if(r)eff.push(CM.EditorView.scrollIntoView(st.line(r[0]).from,{y:'center'}));cm.dispatch({effects:eff})}
+// completion inside strings: variables, shapes (then their values after "."), functions, self; fixed words for a few keys
+const KEY_WORDS={type:SHAPE_TYPES,kind:['cut','guide'],op:['union','diff','inter','xor'],method:['auto','tighten','loosen'],pos:['both','start','center','end'],ct:['round','chamfer'],cmode:['all','each'],t:['round','chamfer','none','corner','smooth']};
+function propKeysOf(s){const base=['左','右','上','下','幅','高さ','中心X','中心Y'];if(!s)return base;
+  if(s.type==='circle')return base.concat('直径','半径');if(s.type==='rect'||s.type==='text')return base.concat('X','Y');
+  if(s.type==='poly')return base.concat((s.nodes||[]).flatMap((n,i)=>[`点${i+1}X`,`点${i+1}Y`]));if(s.type==='dim')return['始点X','始点Y','終点X','終点Y','長さ'];return base}
+function codeComplete(ctx){const tree=CM.syntaxTree(ctx.state);let node=tree.resolveInner(ctx.pos,-1);
+  if(node.name!=='String'&&node.name!=='PropertyName')return null;
+  if(node.name==='PropertyName')return null;
+  // which key does this string belong to?
+  let key=null,p=node.parent;if(p&&p.name==='Array')p=p.parent;if(p&&p.name==='Property'){const k=p.firstChild;if(k&&k.name==='PropertyName')key=ctx.state.sliceDoc(k.from+1,k.to-1)}
+  if(key&&KEY_WORDS[key]){const w=ctx.matchBefore(/[A-Za-z]*$/);return{from:w?w.from:ctx.pos,options:KEY_WORDS[key].map(x=>({label:x,type:'keyword'})),validFor:/^[A-Za-z]*$/}}
+  if(key==='id'||key==='name'||key==='text')return null;
+  let d=null;try{d=JSON.parse(ctx.state.doc.toString())}catch(e){}const vars=(d&&Array.isArray(d.vars)?d.vars:doc.vars),shapes=(d&&Array.isArray(d.shapes)?d.shapes:doc.shapes);
+  const dot=ctx.matchBefore(/(\[[^\]"]*\]|[\p{L}\p{N}_]+)\.[\p{L}\p{N}_]*$/u);
+  if(dot){const i=dot.text.lastIndexOf('.'),rn=dot.text.slice(0,i),name=rn.startsWith('[')?rn.slice(1,-1):rn,self=name===SELF||name==='self';
+    const s=self?null:shapes.find(x=>x&&x.name===name);if(!self&&!s)return null;
+    return{from:dot.from+i+1,options:propKeysOf(s).map(k=>({label:propOut(k),type:'property',detail:LANG==='en'&&propOut(k)!==k?k:''})),validFor:/^[\p{L}\p{N}_]*$/u}}
+  const w=ctx.matchBefore(/[\p{L}\p{N}_]*$/u);if(!w||(w.from===w.to&&!ctx.explicit))return null;
+  const opts=[];for(const v of vars)if(v&&v.n)opts.push({label:v.n,type:'variable',detail:v.n in C.env?'= '+fmt(C.env[v.n],3).replace(/\.?0+$/,''):String(v.e),boost:2});
+  for(const s of shapes)if(s&&s.name)opts.push({label:refName(s.name)+'.',type:'class',detail:LANG==='en'?'shape':'図形',boost:1});
+  opts.push({label:(LANG==='en'?'self':SELF)+'.',type:'class',detail:LANG==='en'?'this shape':'この図形'});
+  for(const f of Object.keys(FN))opts.push({label:f+'(',type:'function',detail:LANG==='en'?'function':'関数'});opts.push({label:'pi',type:'constant'});
+  return{from:w.from,options:opts,validFor:/^[\p{L}\p{N}_]*$/u}}
+// expressions are checked as they are typed: unreadable ones are errors, unknown variables are warnings
+const EXPR_KEYS=new Set(['e','x','y','w','h','r','cx','cy','d','x1','y1','x2','y2','off','size','rot','rcx','rcy','inset','pitch','hole','from','to','hi','ho']);
+function codeLint(view){const diags=CM.jsonParseLinter()(view);if(diags.length)return diags;let d=null;try{d=JSON.parse(view.state.doc.toString())}catch(e){return diags}
+  const names=new Set((Array.isArray(d.vars)?d.vars:[]).map(v=>v&&v.n)),shapeNames=new Set((Array.isArray(d.shapes)?d.shapes:[]).map(s=>s&&s.name));
+  CM.syntaxTree(view.state).iterate({enter:n=>{if(n.name!=='String')return;let p=n.node.parent;if(p&&p.name==='Array')p=p.parent;if(!p||p.name!=='Property')return;
+    const k=p.firstChild;if(!k||k.name!=='PropertyName')return;const key=view.state.sliceDoc(k.from+1,k.to-1);if(!EXPR_KEYS.has(key))return;
+    const src=view.state.sliceDoc(n.from+1,n.to-1);if(!src.trim()||key==='e'&&!src)return;let t;
+    try{t=tokenize(JSON.parse('"'+src+'"'))}catch(e){diags.push({from:n.from,to:n.to,severity:'error',message:tr(e.message)});return}
+    for(const x of t){if(x.k==='id'&&!names.has(x.v)&&!(x.v in FN)&&!(x.v in CONST))diags.push({from:n.from,to:n.to,severity:'warning',message:LANG==='en'?`No variable called ${x.v}`:`変数 ${x.v} がありません`});
+      if(x.k==='ref'&&x.name!==SELF&&!shapeNames.has(x.name))diags.push({from:n.from,to:n.to,severity:'warning',message:LANG==='en'?`No shape called “${x.name}”`:`図形「${x.name}」がありません`})}}});
+  for(const[m,id]of codeProblems(d)){const r=id&&shapeLines(id);const at=r?view.state.doc.line(r[0]):view.state.doc.line(1);diags.push({from:at.from,to:at.to,severity:'error',message:tr(m)})}
+  return diags}
+function makeEditor(){const{EditorView,EditorState,StateField,StateEffect,Decoration,basicSetup,json,linter,lintGutter,keymap,indentWithTab,HighlightStyle,syntaxHighlighting,tags,Prec}=CM;
+  pickEffect=StateEffect.define();
+  pickField=StateField.define({create:()=>Decoration.none,update:(v,tr)=>{v=v.map(tr.changes);for(const e of tr.effects)if(e.is(pickEffect))v=e.value;return v},provide:f=>EditorView.decorations.from(f)});
+  const hl=HighlightStyle.define([{tag:tags.propertyName,color:'var(--ck)'},{tag:tags.string,color:'var(--cs)'},{tag:tags.number,color:'var(--cn)'},{tag:[tags.bool,tags.null],color:'var(--cb)'},{tag:[tags.brace,tags.squareBracket,tags.separator,tags.punctuation],color:'var(--muted)'}]);
+  const theme=EditorView.theme({'&':{height:'100%',fontSize:'12.5px',backgroundColor:'var(--panel)',color:'var(--fg)'},'.cm-scroller':{fontFamily:'var(--mono)',lineHeight:'1.55'},
+    '.cm-gutters':{backgroundColor:'var(--panel)',color:'var(--muted)',borderRight:'1px solid var(--line)'},'.cm-activeLine':{backgroundColor:'color-mix(in srgb,var(--fg) 5%,transparent)'},
+    '.cm-activeLineGutter':{backgroundColor:'transparent',color:'var(--fg)'},'.cm-cursor, .cm-dropCursor':{borderLeftColor:'var(--fg)'},
+    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection':{backgroundColor:'color-mix(in srgb,var(--accent) 28%,transparent)!important'},
+    '.cm-pick':{backgroundColor:'color-mix(in srgb,var(--sel) 16%,transparent)'},'.cm-matchingBracket':{backgroundColor:'color-mix(in srgb,var(--accent) 25%,transparent)',outline:'none'},
+    '.cm-tooltip':{backgroundColor:'var(--panel)',color:'var(--fg)',border:'1px solid var(--line)',borderRadius:'6px',fontFamily:'var(--ui)'},
+    '.cm-tooltip-autocomplete > ul > li[aria-selected]':{backgroundColor:'var(--accent-soft)',color:'var(--fg)'},'.cm-completionDetail':{color:'var(--muted)',marginLeft:'.6em',fontStyle:'normal'},
+    '.cm-panels':{backgroundColor:'var(--bg)',color:'var(--fg)'},'.cm-textfield':{backgroundColor:'var(--panel)',color:'var(--fg)',border:'1px solid var(--line)'},
+    '.cm-button':{backgroundImage:'none',backgroundColor:'var(--panel)',color:'var(--fg)',border:'1px solid var(--line)'},'.cm-foldPlaceholder':{backgroundColor:'var(--bg)',border:'1px solid var(--line)',color:'var(--muted)'}});
+  cm=new EditorView({parent:$('codeHost'),state:EditorState.create({doc:'',extensions:[basicSetup,json(),EditorView.lineWrapping,syntaxHighlighting(hl),theme,pickField,
+    Prec.highest(keymap.of([{key:'Mod-Enter',run:()=>applyCode(),preventDefault:true}])),keymap.of([indentWithTab]),
+    EditorState.languageData.of(()=>[{autocomplete:codeComplete}]),linter(codeLint,{delay:400}),lintGutter(),
+    EditorView.updateListener.of(u=>{if(u.docChanged&&!codeSetting){codeDirty=true;codeClosePending=false;codeStatus()}})]})});
+  // keys typed in the editor are the editor's, not the drawing's shortcuts
+  cm.dom.addEventListener('keydown',e=>e.stopPropagation())}
+$('xCode').onclick=()=>codeOpen?closeCode():openCode();
+$('codeClose').onclick=()=>closeCode();$('codeApply').onclick=()=>applyCode();
+$('codeReload').onclick=()=>{if(!cm)return;codeDirty=false;codeClosePending=false;const t=docJSON(doc);setCodeText(t);codeBase=t;codeStatus();codePickId=null;markPick(true)};
 
 // ---------- boot ----------
 function boot(){startI18n();if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}$('xFrame').setAttribute('aria-pressed',String(!!UI.showFrame));setTool('select');requestAnimationFrame(fit);loadFromLink()}
