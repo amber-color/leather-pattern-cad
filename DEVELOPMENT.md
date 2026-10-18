@@ -14,7 +14,7 @@ Push straight to `main` when asked; there is no build step.
 - Ask before big design decisions; small UI tweaks (colours, labels, icons) are applied directly and shown with a screenshot.
 
 ## Files
-- `index.html` — the whole app (HTML + CSS + JS in one file, ~2100 lines, one IIFE `<script>`).
+- `index.html` — the whole app (HTML + CSS + JS in one file, ~2700 lines, one IIFE `<script>`).
 - `README.md` — user guide (Japanese). Also rendered in-app by the ⓘ button (`mdToHtml`, a small Markdown subset:
   headings, lists with 2-space nesting, tables, `code`, **bold**, links, and a line holding only `<img src="images/…" alt="…" width="…">`).
 - `images/` — README screenshots (taken with Playwright, Japanese UI, light theme, device scale 1.5–2).
@@ -24,6 +24,10 @@ Push straight to `main` when asked; there is no build step.
   `npm i codemirror@6 @codemirror/{lang-json,autocomplete,lint,view,state,language,search,commands} @lezer/highlight esbuild`
   then `npx esbuild codemirror.entry.js --bundle --minify --format=iife --global-name=PPPCM --legal-comments=none`, and
   keep the MIT header (first 26 lines) on top.
+- `vendor/d3.js` — d3-selection 3, d3-zoom 3, d3-shape 3 bundled the same way (`window.PPPD3`: select, selectAll,
+  pointer, zoom, zoomIdentity, linkHorizontal), loaded only when the relationship graph opens. Entry `vendor/d3.entry.js`.
+  Rebuild: `npm i d3-selection@3 d3-zoom@3 d3-shape@3 esbuild` then
+  `npx esbuild d3.entry.js --bundle --minify --format=iife --global-name=PPPD3 --legal-comments=none`, keeping the ISC header.
 - External at runtime: clipper-lib 6.4.2 (jsDelivr), IBM Plex fonts (Google Fonts). Top-bar icons are Tabler Icons paths
   inlined in the HTML; their MIT notice is an HTML comment above `<header class="top">` (no visible credit, by request).
 
@@ -71,6 +75,10 @@ with cycle detection. Variables cannot reference shapes.
 - `render()` rebuilds the panel unless a panel text field has focus with the same selection key (`lastPanelKey`).
 - bool and offset share `combine(op, outlines)`; `moveTree` lists what moves with a shape (bool materials, offset sources),
   `blockedBySrc` stops deleting a shape an offset uses.
+- Relationship graph (関係図, `body.graphmode`, pane `#gpane` under the canvas): `graphData` builds nodes (vars, shapes)
+  and edges (expr / ref / mat) and lays them out in columns by longest input chain; `graphSync` (called from `render`)
+  redraws only when the structure key changes, otherwise `updateGraph` refreshes values, previews, errors and selection.
+  Slider ranges must sit on whole steps (`gRange`) or the browser moves the value itself.
 - Avoid short global names: `L` is used as a local in many places (a helper named `L` once broke rect creation).
 
 ## i18n

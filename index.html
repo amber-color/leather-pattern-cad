@@ -114,6 +114,17 @@ html.theme-fade,html.theme-fade *{transition:background-color .45s ease,color .4
 .rail .sep{width:28px;height:1px;background:var(--line);margin:4px 0}
 .stage{position:relative;background:var(--mat);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:default}
+/* relationship graph: the lower part of the stage, the drawing above it */
+body.graphmode #cv{height:56%}
+.gpane{position:absolute;left:0;right:0;bottom:0;height:44%;background:var(--panel);border-top:1px solid var(--line);display:flex;flex-direction:column;z-index:2}
+.gpane[hidden]{display:none}
+.ghead{display:flex;align-items:center;gap:10px;padding:3px 6px 3px 12px;border-bottom:1px solid var(--line)}.ghead strong{font-size:12px;font-weight:500}.ghead .small{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#gsvg{flex:1;width:100%;min-height:0;display:block;cursor:grab;touch-action:none}
+.gn{cursor:pointer}.gn .box{fill:var(--bg);stroke:var(--line);stroke-width:1}.gn.var .box{fill:var(--accent-soft);stroke:color-mix(in srgb,var(--accent) 35%,transparent)}
+.gn .nm{font:500 11.5px var(--ui);fill:var(--fg)}.gn .vl{font:10.5px var(--mono);fill:var(--muted)}.gn .pv{fill:none;stroke:var(--fg);stroke-width:1;vector-effect:non-scaling-stroke}
+.gn.err .box{stroke:var(--danger)}.gn.sel .box{stroke:var(--sel);stroke-width:2.2}.gn input{width:100%;margin:0;accent-color:var(--accent)}
+.gl{fill:none;stroke:var(--muted);stroke-opacity:.45;stroke-width:1.3}.gl.ref{stroke-dasharray:5 3}.gl.mat{stroke-dasharray:2 3}
+#gsvg.dim .gn:not(.hi){opacity:.22}#gsvg.dim .gl:not(.hi){opacity:.08}.gl.hi{stroke:var(--accent);stroke-opacity:1;stroke-width:1.8}
 #cv.pan{cursor:grab} #cv.draw{cursor:crosshair}
 .stage{grid-row:2;grid-column:2}
 .status{grid-column:2/3;grid-row:3;display:flex;gap:16px;align-items:center;padding:0 12px;border-top:1px solid var(--line);background:var(--panel);font:12px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden}
@@ -278,6 +289,7 @@ input.err{border-color:var(--danger)}
       <button class="btn ibtn" id="xFrame" aria-pressed="false" title="印刷枠：PDFの用紙と向きで印刷される範囲を図面に表示" aria-label="印刷枠"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v2"/><path d="M20 16v2a2 2 0 0 1 -2 2h-2"/><path d="M8 20h-2a2 2 0 0 1 -2 -2v-2"/><path d="M4 8v-2a2 2 0 0 1 2 -2h2"/></svg></button>
       <button class="btn ibtn" id="xTheme" title="ライト / ダークを切り替え" aria-label="ライト / ダークを切り替え"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="t-moon"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454l0 .008"/></g><g class="t-sun"><path d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"/></g></svg></button>
       <button class="btn ibtn" id="xCode" aria-pressed="false" title="コード：型紙をJSONで直接編集" aria-label="コード"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8l-4 4l4 4"/><path d="M17 8l4 4l-4 4"/><path d="M14 4l-4 16"/></svg></button>
+      <button class="btn ibtn" id="xGraph" aria-pressed="false" title="関係図：変数とパーツのつながりを表示" aria-label="関係図"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="6" height="4" rx="1"/><rect x="3" y="16" width="6" height="4" rx="1"/><rect x="15" y="10" width="6" height="4" rx="1"/><path d="M9 6c3 0 3 6 6 6M9 18c3 0 3 -6 6 -6"/></svg></button>
       <button class="btn ibtn" id="xLang" title="言語を切り替え（日本語 / English）" aria-label="言語を切り替え（日本語 / English）"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.371c0 4.418 -2.239 6.629 -5 6.629"/><path d="M4 6.371h7"/><path d="M5 9c0 2.144 2.252 3.908 6 4"/><path d="M12 20l4 -9l4 9"/><path d="M19.1 18h-6.2"/><path d="M6.694 3l.793 .582"/></svg></button>
       <input type="file" id="fileIn" accept=".json,application/json" hidden>
     </div>
@@ -304,6 +316,7 @@ input.err{border-color:var(--danger)}
     <svg id="cv" xmlns="http://www.w3.org/2000/svg">
       <g id="world"><path id="gMinor" fill="none" stroke="var(--mat-minor)" stroke-width="1" vector-effect="non-scaling-stroke"/><path id="gMajor" fill="none" stroke="var(--mat-major)" stroke-width="1" vector-effect="non-scaling-stroke"/><g id="shapes"></g><g id="overlay"></g></g>
     </svg>
+    <div class="gpane" id="gpane" hidden><div class="ghead"><strong>関係図</strong><span class="small" id="gInfo"></span><button class="vtoggle" id="gClose" aria-label="関係図を閉じる" title="閉じる"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div><svg id="gsvg" aria-label="関係図"></svg></div>
     <div class="toast" id="toast" role="status"></div>
   </main>
 
@@ -497,6 +510,7 @@ const EN_EXACT={
   '縫わない区間':'Gap','＋ 縫わない区間':'+ Gap','位置':'Position','長さ':'Length',
   '区間は縫わない部分で、始点からの位置と長さ（mm、式も可）で指定します。':'A gap is a part left unstitched, set by its position from the start and its length (mm, expressions work).',
   '区間は縫わない部分で、始点（「終」は終点）からの位置と長さ（mm、式も可）で指定します。':'A gap is a part left unstitched, set by its position from the start (from the end when marked “end”) and its length (mm, expressions work).',
+  '関係図':'Relationships','関係図：変数とパーツのつながりを表示':'Relationships: how variables and parts connect','関係図を閉じる':'Close relationships','関係図を読み込めませんでした':'The relationship view couldn’t be loaded',
   '出力':'Include','材料に穴を並べているので、ステッチ穴は材料ごとの設定で決まり、ここでは変えられません。上の材料を選んで設定してください。演算結果で穴を設定するには、材料の「穴を並べる」をすべてオフにします。':'A material has stitch holes, so stitching comes from each material’s own settings and can’t be changed here; pick a material above. To stitch this result instead, turn “Place stitch holes” off on every material.','ガイド線':'Guide lines','縫い線':'Stitch lines','演算の材料':'Operation materials','図形の名前':'Shape names','書き出す（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)',
   '図形ごとに書き出さない設定は、パーツ欄の「書き出す」で。選んだ内容は形式ごとに覚えます。':'To leave out a single shape, untick “Export” in its part panel. The choices here are remembered per format.',
   'SVGの書き出し':'Export SVG','DXFの書き出し':'Export DXF','mm単位。出力する内容を選んで、種類ごとにグループ分け':'In mm; choose what to include, grouped by kind','R12形式。出力する内容を選んで、種類ごとにレイヤー分け':'R12; choose what to include, one layer per kind',
@@ -551,7 +565,7 @@ const EN_PAT=[
   ['{0}（書き出さない）  {1}穴','{0} (not exported)  {1} holes',{0:'T'}],['{0}（書き出さない）','{0} (not exported)',{0:'T'}],['{0}（材料）  {1}穴','{0} (material)  {1} holes'],['{0}  {1}穴','{0}  {1} holes'],['{0}（材料）','{0} (material)'],['周長 {0}','Perimeter {0}'],['{0} · 連動','{0} · linked',{0:'T'}],
   ['{0} 横  {1}','{0} landscape  {1}',{0:'T'}],['{0} 縦  {1}','{0} portrait  {1}',{0:'T'}],['{0} 横','{0} landscape',{0:'T'}],['{0} 縦','{0} portrait',{0:'T'}],['図形に合わせる（{0} × {1} mm）  {2}','Fit to the shapes ({0} × {1} mm)  {2}'],['図形に合わせる（{0} × {1} mm）','Fit to the shapes ({0} × {1} mm)'],
   ['{0}枚（横{1} × 縦{2}）','{0} pages ({1} across × {2} down)'],['{0}枚','{0} page(s)'],['{0}-{1} ページ','Page {0}-{1}'],['ほか {0} 枚','{0} more'],
-  ['演算 · {0}','Operation · {0}',{0:'T'}],['縫わない区間を除いた {0} mm を縫います（辺の長さ {1} mm）。範囲と区間の端には縫い止まりの穴が入ります。','Stitches {0} mm, leaving out the gaps (the edge is {1} mm). Range and gap ends get a stop hole.'],
+  ['演算 · {0}','Operation · {0}',{0:'T'}],['変数 {0}・パーツ {1}・つながり {2}。マウスを乗せるとつながりが光ります。パーツをクリックで選択、ホイールで拡大縮小、ドラッグで移動','{0} variables, {1} parts, {2} links. Hover to light up connections; click a part to select it; wheel to zoom, drag to pan'],['縫わない区間を除いた {0} mm を縫います（辺の長さ {1} mm）。範囲と区間の端には縫い止まりの穴が入ります。','Stitches {0} mm, leaving out the gaps (the edge is {1} mm). Range and gap ends get a stop hole.'],
   ['縫わない区間{0}の{1}：{2}','Gap {0} {1}: {2}',{1:'T',2:'T'}],['縫わない区間{0}の位置','Gap {0} position'],['区間{0}（終）','Gap {0} (end)'],['区間{0}','Gap {0}'],['縫わない区間{0}の長さ','Gap {0} length'],['縫わない区間{0}を削除','Delete gap {0}'],
   ['縫う範囲がありません。始点から・終点から・縫わない区間の合計を辺の長さ（{0} mm）より小さくしてください。','Nothing left to stitch: keep “from start” + “from end” + gaps under the edge length ({0} mm).'],['分割 · {0}','Split · {0}'],['{0}つに分割しました','Split into {0} pieces'],['「{0}」は閉じた形ではないので分割できません','“{0}” isn’t closed, so it can’t be split'],['「{0}」では切れません','“{0}” can’t cut'],
   ['分割「{0}」に "src" と "cut" が要ります','Split “{0}” needs "src" and "cut"'],['分割「{0}」の図形 {1} が見つかりません','Split “{0}”: shape {1} not found'],
@@ -1262,7 +1276,7 @@ function render(){
   drawHint(k);
   if(drag&&drag.kind==='box'&&drag.big){const x=Math.min(drag.a[0],drag.b[0]),y=Math.min(drag.a[1],drag.b[1]);
     el('rect',{x,y,width:Math.abs(drag.b[0]-drag.a[0]),height:Math.abs(drag.b[1]-drag.a[1]),fill:'var(--sel)','fill-opacity':.08,stroke:'var(--sel)','stroke-width':1,'stroke-dasharray':'4 3','vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver)}
-  renderPanel();save();if(codeOpen)syncCode();}
+  renderPanel();save();if(codeOpen)syncCode();if(graphOpen&&window.PPPD3)graphSync();}
 function bbox(p){let a=[1e9,1e9,-1e9,-1e9];for(const[x,y]of p){a[0]=Math.min(a[0],x);a[1]=Math.min(a[1],y);a[2]=Math.max(a[2],x);a[3]=Math.max(a[3],y)}return a}
 const bboxG=g=>bbox(g.paths.flat());
 function dimText(x,y,txt,k,anchor='middle',rot=0){const t=el('text',{x,y,'font-size':11*k,fill:'var(--sel)','text-anchor':anchor,'font-family':'IBM Plex Mono, monospace','pointer-events':'none',transform:rot?`rotate(${rot} ${x} ${y})`:''},gOver);t.textContent=txt}
@@ -2568,6 +2582,80 @@ function makeEditor(){const{EditorView,EditorState,StateField,StateEffect,Decora
 $('xCode').onclick=()=>codeOpen?closeCode():openCode();
 $('codeClose').onclick=()=>closeCode();$('codeApply').onclick=()=>applyCode();
 $('codeReload').onclick=()=>{if(!cm)return;codeDirty=false;codeClosePending=false;const t=docJSON(doc);setCodeText(t);codeBase=t;codeStatus();codePickId=null;markPick(true)};
+
+// ---------- relationship graph (関係図) ----------
+// variables and parts as nodes in columns, left to right in the order values flow: a node sits one column right of its
+// furthest input. Wires: an expression using a variable or another variable (solid), a reference to a part (dashed),
+// materials / sources / cutters (dotted). Numeric variables get a slider that changes the pattern live.
+let graphOpen=false,gLoad=null,gState=null;
+const GW=168,GCOL=236,GGAP=12;
+function graphData(){const nodes=[],edges=[],byKey=new Map(),add=n=>{nodes.push(n);byKey.set(n.key,n)};
+  const vnames=new Set(doc.vars.map(v=>v.n)),toks=e=>{try{return tokenize(String(e))}catch(x){return[]}};
+  doc.vars.forEach((v,i)=>add({key:'v:'+v.n,kind:'var',name:v.n,vi:i,num:isNum(v.e)}));
+  for(const s of doc.shapes)add({key:'s:'+s.id,kind:'shape',name:s.name,id:s.id});
+  const seen=new Set(),link=(a,b,t)=>{const k=a+'>'+b;if(a!==b&&byKey.has(a)&&byKey.has(b)&&!seen.has(k)){seen.add(k);edges.push({a,b,t})}};
+  for(const v of doc.vars)for(const t of toks(v.e))if(t.k==='id'&&vnames.has(t.v))link('v:'+t.v,'v:'+v.n,'expr');
+  const byName=new Map();for(const s of doc.shapes)byName.set(s.name,byName.has(s.name)?null:s);
+  for(const s of doc.shapes){for(const e of exprsOf(s))for(const t of toks(e)){if(t.k==='id'&&vnames.has(t.v))link('v:'+t.v,'s:'+s.id,'expr');
+      if(t.k==='ref'&&t.name!==SELF){const r=byName.get(t.name);if(r)link('s:'+r.id,'s:'+s.id,'ref')}}
+    for(const id of matsOf(s))link('s:'+id,'s:'+s.id,'mat');if(s.type==='offset')for(const id of s.src||[])link('s:'+id,'s:'+s.id,'mat')}
+  const ins=new Map(nodes.map(n=>[n.key,[]])),outs=new Map(nodes.map(n=>[n.key,[]]));for(const e of edges){ins.get(e.b).push(e.a);outs.get(e.a).push(e.b)}
+  // a loop's back edge is ignored when finding columns
+  const col=new Map(),busy=new Set(),dep=k=>{if(col.has(k))return col.get(k);if(busy.has(k))return 0;busy.add(k);let d=0;for(const a of ins.get(k))d=Math.max(d,dep(a)+1);busy.delete(k);col.set(k,d);return d};
+  for(const n of nodes){n.col=dep(n.key);n.h=n.kind==='var'?(n.num?56:40):44}
+  const cols=[];for(const n of nodes)(cols[n.col]=cols[n.col]||[]).push(n);
+  const place=()=>{for(const c of cols){if(!c)continue;let y=0;for(const n of c){n.y=y;y+=n.h+GGAP}}};place();
+  // fewer crossings: sort each column by the mean height of its neighbours, sweeping right then left
+  for(let sw=0;sw<6;sw++){const order=sw%2?[...cols].reverse():cols;for(const c of order){if(!c)continue;for(const n of c){const nb=(sw%2?outs:ins).get(n.key).map(k=>byKey.get(k));n.bc=nb.length?nb.reduce((a,m)=>a+m.y+m.h/2,0)/nb.length:n.y+n.h/2}c.sort((x,y)=>x.bc-y.bc);place()}}
+  for(const n of nodes)n.x=n.col*GCOL;
+  return{nodes,edges,byKey,ins,outs}}
+function graphSync(){const D=graphData(),key=D.nodes.map(n=>n.key+':'+n.col+':'+n.num).join('|')+'#'+D.edges.map(e=>e.a+'>'+e.b+e.t).join('|');
+  if(!gState||gState.key!==key)drawGraph(D,key);else gState.D=D;updateGraph()}
+function drawGraph(D,key){const d3=window.PPPD3,svg=d3.select('#gsvg'),old=gState;svg.selectAll('*').remove();
+  const root=svg.append('g'),lk=d3.linkHorizontal().x(q=>q[0]).y(q=>q[1]);
+  gState={D,key,root,t:old?old.t:null,pin:old?old.pin:null};
+  root.append('g').selectAll('path').data(D.edges).join('path').attr('class',e=>'gl '+e.t).attr('d',e=>{const a=D.byKey.get(e.a),b=D.byKey.get(e.b);return lk({source:[a.x+GW,a.y+a.h/2],target:[b.x,b.y+b.h/2]})});
+  const ng=root.append('g').selectAll('g').data(D.nodes).join('g').attr('class',n=>'gn '+n.kind).attr('transform',n=>`translate(${n.x},${n.y})`);
+  ng.append('rect').attr('class','box').attr('width',GW).attr('height',n=>n.h).attr('rx',6);
+  ng.filter(n=>n.kind==='shape').append('path').attr('class','pv');
+  ng.append('text').attr('class','nm').attr('x',n=>n.kind==='shape'?40:10).attr('y',n=>n.kind==='shape'?18:16).text(n=>n.name.length>16?n.name.slice(0,15)+'…':n.name).append('title').text(n=>n.name);
+  ng.append('text').attr('class','vl').attr('x',n=>n.kind==='shape'?40:10).attr('y',n=>n.kind==='shape'?34:31);
+  // sliders for numeric variables: half to double the value, recentred on release; one undo step per drag
+  ng.filter(n=>n.kind==='var'&&n.num).append('foreignObject').attr('x',8).attr('y',36).attr('width',GW-16).attr('height',16).append('xhtml:input').attr('type','range').attr('aria-label',n=>n.name)
+    .each(function(n){gRange(this,+doc.vars[n.vi].e)})
+    .on('pointerdown',function(ev){ev.stopPropagation();pushUndo()})
+    .on('input',function(ev,n){const v=doc.vars[n.vi];if(!v)return;v.e=num(+this.value);render()})
+    .on('change',function(ev,n){gRange(this,+this.value);renderVars(false)});
+  const hl=k=>{const on=new Set(),el=new Set();if(k){const walk=(m,dir)=>{for(const o of(dir?D.outs:D.ins).get(m)){el.add(dir?m+'>'+o:o+'>'+m);if(!on.has(o)){on.add(o);walk(o,dir)}}};on.add(k);walk(k,1);walk(k,0)}
+    svg.classed('dim',!!k);ng.classed('hi',n=>on.has(n.key));root.selectAll('.gl').classed('hi',e=>el.has(e.a+'>'+e.b))};
+  gState.hl=hl;
+  ng.on('mouseenter',(ev,n)=>hl(n.key)).on('mouseleave',()=>hl(gState.pin))
+    .on('click',(ev,n)=>{ev.stopPropagation();gState.pin=n.key;hl(n.key);if(n.kind==='shape'){setSel(n.id);lastPanelKey=null;render()}});
+  svg.on('click',()=>{gState.pin=null;hl(null)});
+  const zm=d3.zoom().scaleExtent([0.2,3]).filter(ev=>!(ev.target.closest&&ev.target.closest('input'))&&!ev.button).on('zoom',ev=>{gState.t=ev.transform;root.attr('transform',ev.transform)});
+  svg.call(zm).on('dblclick.zoom',null);
+  // first view: fit the whole graph, never larger than 1:1 nor so small the text can't be read (pan for the rest)
+  if(!gState.t){const r=svg.node().getBoundingClientRect(),w=Math.max(...D.nodes.map(n=>n.x+GW),1),h=Math.max(...D.nodes.map(n=>n.y+n.h),1),k=Math.min(1,(r.width-32)/w,(r.height-32)/h);gState.t=d3.zoomIdentity.translate(16,16).scale(Math.max(0.55,k))}
+  svg.call(zm.transform,gState.t);hl(gState.pin);
+  $('gInfo').textContent=tr(`変数 ${doc.vars.length}・パーツ ${doc.shapes.length}・つながり ${D.edges.length}。マウスを乗せるとつながりが光ります。パーツをクリックで選択、ホイールで拡大縮小、ドラッグで移動`)}
+// min and max on whole steps, or the browser snaps the value itself off the variable (91 → 91.5)
+function gRange(inp,v){const step=Number.isInteger(v)?(snapStep>=1?snapStep:1):0.1,lo=v>0?Math.floor(v/2/step)*step:v-10,hi=v>0?Math.ceil(v*2/step)*step:v+10;inp.min=num(lo);inp.max=num(hi);inp.step=step;inp.value=v}
+// values, previews, errors and the selection, without laying the graph out again
+function updateGraph(){if(!gState)return;const d3=window.PPPD3,svg=d3.select('#gsvg');
+  svg.selectAll('.gn').each(function(n){const g=d3.select(this);
+    if(n.kind==='var'){const v=doc.vars[n.vi],e=v&&C.verr[v.n];g.classed('err',!!e).select('.vl').text(e?'エラー':v?(n.num?'= ':`${v.e.length>14?v.e.slice(0,13)+'…':v.e} = `)+fmt(C.env[v.n],2):'');
+      const inp=g.select('input').node();if(inp&&document.activeElement!==inp&&v)gRange(inp,+v.e);return}
+    const it=C.byId[n.id];g.classed('err',!!(it&&it.err)).classed('sel',picks.includes(n.id));
+    g.select('.vl').text(it&&it.err?'エラー':it?TYPE_LABEL(it.s)+(it.parent?'（材料）':''):'');
+    // a small picture of the part, fitted into 24 x 22
+    let d='';if(it&&it.g){const b=bboxG(it.g),k=Math.min(24/Math.max(b[2]-b[0],1e-6),22/Math.max(b[3]-b[1],1e-6));d=it.g.paths.map(P=>'M'+P.map(q=>`${(8+(q[0]-b[0])*k).toFixed(1)} ${(n.h/2-(b[3]-b[1])*k/2+(q[1]-b[1])*k).toFixed(1)}`).join('L')+(it.g.closed?'Z':'')).join('')}
+    g.select('.pv').attr('d',d)})}
+async function openGraph(){if(graphOpen)return;graphOpen=true;document.body.classList.add('graphmode');$('gpane').hidden=false;$('xGraph').setAttribute('aria-pressed','true');$('gInfo').textContent=tr('読み込んでいます…');
+  try{if(!window.PPPD3)await(gLoad=gLoad||new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='vendor/d3.js';sc.onload=res;sc.onerror=rej;document.head.appendChild(sc)}))}
+  catch(e){gLoad=null;$('gInfo').textContent=tr('関係図を読み込めませんでした');return}
+  if(!graphOpen)return;gState=null;requestAnimationFrame(()=>{applyView();render()})}
+function closeGraph(){graphOpen=false;gState=null;document.body.classList.remove('graphmode');$('gpane').hidden=true;$('xGraph').setAttribute('aria-pressed','false');requestAnimationFrame(()=>{applyView();render()})}
+$('xGraph').onclick=()=>graphOpen?closeGraph():openGraph();$('gClose').onclick=closeGraph;
 
 // ---------- boot ----------
 function boot(){startI18n();if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}$('xFrame').setAttribute('aria-pressed',String(!!UI.showFrame));setTool('select');requestAnimationFrame(fit);loadFromLink()}
