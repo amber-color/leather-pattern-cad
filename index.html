@@ -18,7 +18,7 @@
   --bg:#eef0ec; --panel:#f8f9f6; --line:#d3d8cf; --fg:#1f2a24; --muted:#5f6d64;
   --accent:#b8611f; --accent-soft:#f3e1d1; --danger:#b3261e; --ok:#2f7a4b;
   --mat:#363331; --mat-minor:rgba(255,255,255,.07); --mat-major:rgba(255,255,255,.16);
-  --cut:#f4efe2; --guide:#9fc3b1; --stitch:#f0a94a; --sel:#ffb36b; --irr:#ff6f6f; --frame:#b9a7ff; --osnap:#7fe6ff; --ck:#8a4d1c; --cs:#1f5f8b; --cn:#b8611f; --cb:#8a3fa0;
+  --cut:#f4efe2; --lred:#ff6b5e; --lcyan:#3fd6f0; --guide:#9fc3b1; --stitch:#f0a94a; --sel:#ffb36b; --irr:#ff6f6f; --frame:#b9a7ff; --osnap:#7fe6ff; --ck:#8a4d1c; --cs:#1f5f8b; --cn:#b8611f; --cb:#8a3fa0;
   --ui:"IBM Plex Sans JP",system-ui,-apple-system,"Hiragino Sans",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
   color-scheme:light;
@@ -189,6 +189,7 @@ input.err{border-color:var(--danger)}
 .pi{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;display:block}
 .seg label .pi{display:inline-block;vertical-align:-3px}.seg.sm label .pi{display:block;margin:0 auto}
 .btn.ib{padding:5px 9px;display:inline-grid;place-items:center}.btn.ib .pi{width:18px;height:18px}.btn.ib.del:hover{color:var(--danger)}
+.lsample{width:56px;height:10px;justify-self:end;color:var(--fg)}
 .crow .cl{display:flex;align-items:center;color:var(--muted)}.crow .cl .pi{width:18px;height:18px}
 .small{font-size:11px;color:var(--muted);line-height:1.5}
 .check{display:flex;gap:6px;align-items:center;cursor:pointer}
@@ -480,6 +481,9 @@ const EN_EXACT={
   '回転した線どうしはフィレットできません':'Rotated lines can’t be filleted together','別々の図形どうしは、開いた線（直線・折れ線）のときにフィレットできます':'Separate shapes can be filleted only when both are open lines',
   '角を丸めました':'Corner rounded','2本を延長して角を丸めました':'Extended both edges and rounded the corner','フィレットできませんでした':'Couldn’t fillet','間の辺を別の線として残しました':'Kept the edges between as a separate line',
   '角Rが大きすぎます（辺の長さが足りません）':'The corner radius is too large (the edges are too short)','曲線につながる頂点は丸められません':'A node joined to a curve can’t be rounded',
+  '実線':'Solid','実線（細）':'Solid (thin)','実線（赤）':'Solid (red)','破線':'Dashed','破線（細）':'Dashed (thin)','一点鎖線（シアン）':'Dash-dot (cyan)',
+  '塗り':'Fill','斜線':'Diagonal','逆斜線':'Reverse diagonal','綾目':'Crosshatch','横線':'Horizontal','縦線':'Vertical','点':'Dots','ベタ（薄）':'Light tint','間隔':'Spacing',
+  '塗りの間隔が細かすぎます':'The fill spacing is too fine','塗りの間隔は正の値に':'Fill spacing must be positive',
   '出力':'Include','材料に穴を並べているので、ステッチ穴は材料ごとの設定で決まり、ここでは変えられません。上の材料を選んで設定してください。演算結果で穴を設定するには、材料の「穴を並べる」をすべてオフにします。':'A material has stitch holes, so stitching comes from each material’s own settings and can’t be changed here; pick a material above. To stitch this result instead, turn “Place stitch holes” off on every material.','ガイド線':'Guide lines','縫い線':'Stitch lines','演算の材料':'Operation materials','図形の名前':'Shape names','書き出す（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)',
   '図形ごとに書き出さない設定は、パーツ欄の「書き出す」で。選んだ内容は形式ごとに覚えます。':'To leave out a single shape, untick “Export” in its part panel. The choices here are remembered per format.',
   'SVGの書き出し':'Export SVG','DXFの書き出し':'Export DXF','mm単位。出力する内容を選んで、種類ごとにグループ分け':'In mm; choose what to include, grouped by kind','R12形式。出力する内容を選んで、種類ごとにレイヤー分け':'R12; choose what to include, one layer per kind',
@@ -683,6 +687,34 @@ function selfProp(s,prop,E){const f=k=>P(s,k,E);
   else if(s.type==='bool'||s.type==='offset'){const b=LOCALBB[s.id];if(!b)throw Error(s.type==='bool'?'演算結果の「自分」は、角R・ステッチ穴・回転の欄でだけ使えます':'オフセットの「自分」は、ステッチ穴の欄でだけ使えます');o=box(()=>b[0],()=>b[1],()=>b[2]-b[0],()=>b[3]-b[1])}
   if(!o||!(prop in o))throw Error(`「自分」に「${prop}」はありません（${o?Object.keys(o).map(propOut).join('・'):''}${s.type==='poly'?'・'+propOut('点1X')+'…':''}）`);
   return o[prop]()}
+// line types, named by their look. The ids cut / guide are the former 裁断線 / ガイド, so older files keep working.
+// scr: canvas colour, sw / dash: canvas stroke; col / rgb: paper colour; svgW (mm) / pdfW (pt) and dashes for export;
+// dxf: layer, colour index, linetype
+const LINES={
+  cut:{ja:'実線',scr:'var(--cut)',sw:1.4,dash:'',col:'#000',rgb:[0,0,0],svgW:0.25,svgDash:'',pdfW:0.7,pdfDash:'[]',dxf:['SOLID',7,'CONTINUOUS']},
+  thin:{ja:'実線（細）',scr:'var(--cut)',sw:0.8,dash:'',col:'#000',rgb:[0,0,0],svgW:0.1,svgDash:'',pdfW:0.3,pdfDash:'[]',dxf:['SOLID_THIN',7,'CONTINUOUS']},
+  red:{ja:'実線（赤）',scr:'var(--lred)',sw:1.4,dash:'',col:'#e02020',rgb:[0.88,0.13,0.13],svgW:0.25,svgDash:'',pdfW:0.7,pdfDash:'[]',dxf:['SOLID_RED',1,'CONTINUOUS']},
+  guide:{ja:'破線',scr:'var(--cut)',sw:1.4,dash:'6 4',col:'#000',rgb:[0,0,0],svgW:0.25,svgDash:'2 1.5',pdfW:0.7,pdfDash:'[4 3]',dxf:['DASH',7,'DASHED']},
+  dashthin:{ja:'破線（細）',scr:'var(--cut)',sw:0.8,dash:'4 3',col:'#000',rgb:[0,0,0],svgW:0.1,svgDash:'1.5 1',pdfW:0.3,pdfDash:'[3 2]',dxf:['DASH_THIN',7,'DASHED2']},
+  chain:{ja:'一点鎖線（シアン）',scr:'var(--lcyan)',sw:0.9,dash:'10 3 2 3',col:'#00a0c8',rgb:[0,0.63,0.78],svgW:0.15,svgDash:'4 1 0.8 1',pdfW:0.4,pdfDash:'[8 2 1.5 2]',dxf:['DASHDOT_CYAN',4,'DASHDOT']}};
+const lineOf=s=>LINES[s&&s.kind]||LINES.cut;
+// hatching inside a closed outline (s.fill = {t, pitch}): parallel lines clipped to it, dots on a staggered grid, or a flat tint
+const HATCHES={none:'なし',diag:'斜線',rdiag:'逆斜線',cross:'綾目',h:'横線',v:'縦線',dot:'点',fill:'ベタ（薄）'};
+function hatchOf(paths,t,pitch){const out={lines:[],dots:[],fill:t==='fill',r:Math.min(0.6,Math.max(0.15,pitch*0.1))};if(t==='fill')return out;
+  const bb=bbox(paths.flat()),tooFine=()=>Error('塗りの間隔が細かすぎます');
+  if(t==='dot'){if((bb[2]-bb[0])*(bb[3]-bb[1])/(pitch*pitch)>20000)throw tooFine();const CP=toC(paths);
+    for(let y=Math.ceil(bb[1]/pitch)*pitch,row=0;y<=bb[3];y+=pitch,row++)for(let x=Math.floor(bb[0]/pitch)*pitch+(row%2?pitch/2:0);x<=bb[2];x+=pitch){
+      const P={X:Math.round(x*CS),Y:Math.round(y*CS)};let n=0;for(const c of CP)if(ClipperLib.Clipper.PointInPolygon(P,c)===1)n++;if(n%2)out.dots.push([x,y])}
+    return out}
+  // screen y runs down, so 斜線 ／ is -45°
+  const L=[],ext=Math.hypot(bb[2]-bb[0],bb[3]-bb[1])+1,cx=(bb[0]+bb[2])/2,cy=(bb[1]+bb[3])/2;
+  for(const a of{diag:[-45],rdiag:[45],cross:[-45,45],h:[0],v:[90]}[t]||[]){const r=a*Math.PI/180,d=[Math.cos(r),Math.sin(r)],n=[-d[1],d[0]];
+    const pr=[[bb[0],bb[1]],[bb[2],bb[1]],[bb[0],bb[3]],[bb[2],bb[3]]].map(q=>q[0]*n[0]+q[1]*n[1]),lo=Math.min(...pr),hi=Math.max(...pr),c0=cx*d[0]+cy*d[1];
+    if((hi-lo)/pitch>4000)throw tooFine();
+    for(let k=Math.ceil(lo/pitch)*pitch;k<=hi;k+=pitch){const b=[n[0]*k+d[0]*c0,n[1]*k+d[1]*c0];L.push([[b[0]-d[0]*ext,b[1]-d[1]*ext],[b[0]+d[0]*ext,b[1]+d[1]*ext]])}}
+  const c=new ClipperLib.Clipper(),tree=new ClipperLib.PolyTree();c.AddPaths(toC(L),ClipperLib.PolyType.ptSubject,false);c.AddPaths(toC(paths),ClipperLib.PolyType.ptClip,true);
+  c.Execute(ClipperLib.ClipType.ctIntersection,tree,ClipperLib.PolyFillType.pftEvenOdd,ClipperLib.PolyFillType.pftEvenOdd);
+  out.lines=ClipperLib.Clipper.OpenPathsFromPolyTree(tree).map(p=>p.map(q=>[q.X/CS,q.Y/CS]));return out}
 // rectangle corners in drawing order (top-right, bottom-right, bottom-left, top-left); each is round (角丸), chamfer (面取り) or none
 const CORNER_NAMES=['左上','右上','右下','左下'];
 // panel icons (copy, flips and trash are Tabler Icons, MIT)
@@ -1026,6 +1058,7 @@ function compute(){
     if(!ts.length)throw Error(`図形「${name}」が見つかりません`);if(ts.length>1)throw Error(`「${name}」という名前の図形が${ts.length}個あります`);
     let g;try{g=gOf(ts[0])}catch(e){throw Error(/循環/.test(e.message)?`図形「${name}」との参照が循環しています`:`図形「${name}」にエラーがあります`)}return shapeProp(ts[0],g,prop)}});
   for(const s of doc.shapes){const it={s,parent:parent[s.id]||null};try{it.g=gOf(s)}catch(e){it.err=e.message}
+    if(it.g&&it.g.closed&&!it.g.isText&&s.fill&&HATCHES[s.fill.t]&&s.fill.t!=='none'){try{const pt=s.fill.t==='fill'?1:evalExpr(s.fill.pitch||'2',sEnv(s));if(!(pt>0))throw Error('塗りの間隔は正の値に');it.hatch=hatchOf(it.g.paths,s.fill.t,pt)}catch(e){it.fillerr=e.message}}
     // stitch holes come from each shape's own settings, materials included; an operation is stitched on its own outline
     // only while none of its materials is
     if(it.g&&(s.type!=='bool'||!matStitchOn(s))){try{it.st=stitch(s,it.g,sEnv(s),gOf)}catch(e){it.sterr=e.message}}out.items.push(it);out.byId[s.id]=it}
@@ -1053,6 +1086,7 @@ function exprSlots(s){const out=[];const add=(o,k)=>{if(o&&o[k]!=null&&o[k]!==''
   if(Array.isArray(s.cs))for(const c of s.cs)add(c,'r');
   if(s.nodes)for(const n of s.nodes){add(n,'x');add(n,'y');add(n,'r');for(const h of['hi','ho'])if(n[h]){add(n[h],0);add(n[h],1)}}
   if(Array.isArray(s.fl))for(const f of s.fl)add(f,'r');
+  if(s.fill)add(s.fill,'pitch');
   return out}
 const refsIn=e=>{try{return tokenize(String(e)).filter(t=>t.k==='ref')}catch(x){return[]}};
 // rewrite references to one name, keeping the rest of the text as typed
@@ -1134,11 +1168,16 @@ function render(){
       const tb=textBox(D.text.x-D.text.dir[0]*D.text.w/2,D.text.y-D.text.dir[1]*D.text.w/2,D.text.w,D.text.size,D.text.rot);el('path',{d:dOf(tb,true),fill:'transparent',stroke:'none'},grp);
       if(s.id===sel&&picks.length===1){handle(g.x1,g.y1,k,{'data-h':'d1',style:'cursor:move'});handle(g.x2,g.y2,k,{'data-h':'d2',style:'cursor:move'});handle(D.mid[0],D.mid[1],k,{'data-h':'do',style:'cursor:move',rx:4*k})}
       continue}
-    if(g.isText){const t=el('text',{x:g.x,y:g.y,'font-size':g.size,'font-family':TEXT_FONT,fill:on?'var(--sel)':s.kind==='guide'?'var(--guide)':'var(--cut)',transform:g.rot?`rotate(${g.rot} ${g.x} ${g.y})`:'','pointer-events':'none'},grp);t.textContent=g.str;
+    if(g.isText){const t=el('text',{x:g.x,y:g.y,'font-size':g.size,'font-family':TEXT_FONT,fill:on?'var(--sel)':lineOf(s).scr,transform:g.rot?`rotate(${g.rot} ${g.x} ${g.y})`:'','pointer-events':'none'},grp);t.textContent=g.str;
       el('path',{d:dOf(g.pts,true),fill:'transparent',stroke:on?'var(--sel)':'none','stroke-width':1,'stroke-dasharray':'3 2','vector-effect':'non-scaling-stroke'},grp);
       if(s.id===sel&&picks.length===1)drawSel(it,k);continue}
-    el('path',{d,'fill-rule':'evenodd',fill:g.closed&&!faint?'rgba(244,239,226,0.06)':'none',stroke:on?'var(--sel)':s.kind==='guide'?'var(--guide)':'var(--cut)',
-      'stroke-width':on?2:1.4,'stroke-dasharray':faint?'3 3':s.kind==='guide'?'6 4':'','vector-effect':'non-scaling-stroke','stroke-linejoin':'round'},grp);
+    const LN=lineOf(s);
+    if(it.hatch){const H=it.hatch,hc=on?'var(--sel)':LN.scr,A={'pointer-events':'none'};
+      if(H.fill)el('path',{d,'fill-rule':'evenodd',fill:hc,'fill-opacity':.22,stroke:'none',...A},grp);
+      if(H.lines.length)el('path',{d:H.lines.map(P=>dOf(P,false)).join(''),fill:'none',stroke:hc,'stroke-opacity':.55,'stroke-width':.8,'vector-effect':'non-scaling-stroke',...A},grp);
+      if(H.dots.length){const r=H.r;el('path',{d:H.dots.map(([x,y])=>`M${fmt(x-r,3)} ${fmt(y,3)}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0`).join(''),fill:hc,'fill-opacity':.6,stroke:'none',...A},grp)}}
+    el('path',{d,'fill-rule':'evenodd',fill:g.closed&&!faint&&!it.hatch?'rgba(244,239,226,0.06)':'none',stroke:on?'var(--sel)':LN.scr,
+      'stroke-width':on?Math.max(2,LN.sw):LN.sw,'stroke-dasharray':faint?'3 3':LN.dash,'vector-effect':'non-scaling-stroke','stroke-linejoin':'round'},grp);
     el('path',{d,fill:'none',stroke:'transparent','stroke-width':12,'vector-effect':'non-scaling-stroke'},grp);
     if(it.st){const sg=faint?el('g',{'pointer-events':'none',opacity:s.noexp?.45:1},gShapes):grp;
       for(const e of it.st.edges){if(!faint)el('path',{d:dOf(e.pts,false),fill:'none',stroke:'var(--guide)','stroke-opacity':.3,'stroke-width':1,'stroke-dasharray':'1 4','vector-effect':'non-scaling-stroke','pointer-events':'none'},sg);
@@ -1233,7 +1272,12 @@ function renderPanel(){
     h+=`<h2>パーツ <span class="pill">${TYPE_LABEL(s)}</span></h2>
     <div class="row"><label for="f_name">名前</label><input type="text" id="f_name" data-path="name" value="${esc(s.name)}"><span></span></div>`;
     h+=`<label class="check"><input type="checkbox" id="f_exp" data-path="exp"${s.noexp?'':' checked'}> 書き出す（PDF・SVG・DXF）</label>`;
-    if(!it.parent&&s.type!=='dim')h+=`<div class="row"><label for="f_kind">線種</label><select class="inp" id="f_kind" data-path="kind"><option value="cut"${s.kind==='cut'?' selected':''}>裁断線</option><option value="guide"${s.kind==='guide'?' selected':''}>ガイド</option></select><span></span></div>`;
+    if(!it.parent&&s.type!=='dim'){const LN=lineOf(s),k=LINES[s.kind]?s.kind:'cut',sc=LN.col==='#000'?'currentColor':LN.col;
+      h+=`<div class="row"><label for="f_kind">線種</label><select class="inp" id="f_kind" data-path="kind">${Object.entries(LINES).map(([v,l])=>`<option value="${v}"${k===v?' selected':''}>${l.ja}</option>`).join('')}</select><svg class="lsample" viewBox="0 0 56 10" aria-hidden="true"><line x1="2" y1="5" x2="54" y2="5" stroke="${sc}" stroke-width="${LN.sw*1.2}" stroke-dasharray="${LN.dash}"/></svg></div>`;
+      if(it.g&&it.g.closed&&!it.g.isText){const ft=s.fill&&HATCHES[s.fill.t]?s.fill.t:'none';
+        h+=`<div class="row"><label for="f_fill">塗り</label><select class="inp" id="f_fill" data-path="fill.t">${Object.entries(HATCHES).map(([v,l])=>`<option value="${v}"${ft===v?' selected':''}>${l}</option>`).join('')}</select><span></span></div>`;
+        if(ft!=='none'&&ft!=='fill')h+=exprRow('fill.pitch','間隔',s.fill.pitch||'2',env);
+        if(it.fillerr)h+=`<div class="small" style="color:var(--danger)">${esc(it.fillerr)}</div>`}}
     if(s.type==='bool'){
       h+=`<div class="row"><label for="f_op">演算</label><select class="inp" id="f_op" data-path="op">${Object.entries(OPS).map(([k,v])=>`<option value="${k}"${s.op===k?' selected':''}>${v}</option>`).join('')}</select><span></span></div>
       <div class="small">材料（上から順に演算。差は1番目から残りを引きます）</div>
@@ -1312,7 +1356,7 @@ function renderPanel(){
 function refreshVals(sec){const env=sel&&byId(sel)?C.envFor(byId(sel)):C.env;sec.querySelectorAll('input[data-path]').forEach(inp=>{const p=inp.dataset.path;
   if(/^nodes\.\d+\.r$/.test(p)&&!inp.value.trim()){inp.title='';inp.classList.remove('err');return}
   if(/^nodes\./.test(p)){try{inp.title='= '+fmt(evalExpr(inp.value,env),2);inp.classList.remove('err')}catch(e){inp.title=e.message;inp.classList.add('err')}return}
-  if(!/^(p|st|cs|edge|fl)\./.test(p)||inp.type!=='text')return;
+  if(!/^(p|st|cs|edge|fl|fill)\./.test(p)||inp.type!=='text')return;
   let span=inp.nextElementSibling;if(span&&!span.classList.contains('val'))span=span.querySelector('.val')||span;if(/^edge\./.test(p)&&!inp.value.trim()){const it=C.byId[sel];span.textContent='= '+fmt(p.endsWith('.pitch')?(it&&it.st?it.st.pitch:0):0);span.className='val';inp.classList.remove('err');return}
   try{const v=evalExpr(inp.value,env);span.textContent='= '+fmt(v);span.className='val';inp.classList.remove('err')}catch(e){span.textContent='エラー';span.className='val err';span.title=e.message;inp.classList.add('err')}});
   const it=C.byId[sel];if(it&&it.st){if($('stRes'))$('stRes').innerHTML=stResult(it.st);const e=selEdge&&it.st.edges.find(x=>x.key===selEdge.key);if(e&&$('edRes'))$('edRes').innerHTML=edResult(e);if(e&&$('edMsg'))$('edMsg').innerHTML=edMsg(e)}}
@@ -1357,7 +1401,7 @@ function renameShape(s,v){v=v.replace(/[\[\]]/g,'');s.name=v;const E=nameEdit;if
 $('secProps').addEventListener('input',e=>{const t=e.target,p=t.dataset.path;if(!p)return;const s=cur();if(!s)return;
   if(t.type==='checkbox'){pushUndo();if(p==='exp'){if(t.checked)delete s.noexp;else s.noexp=true}else if(p==='closed')s.closed=t.checked;else if(p==='st.on')s.st.on=t.checked;
     else if(p==='edge.on'){const e=curEdge();if(e)edgeSet(s,e,'off',t.checked?'':true)}lastPanelKey=null;render();return}
-  if(t.tagName==='SELECT'){pushUndo();s[p]=t.value;lastPanelKey=null;render();return}
+  if(t.tagName==='SELECT'){pushUndo();if(p==='fill.t'){if(t.value==='none')delete s.fill;else s.fill={pitch:'2',...(s.fill||{}),t:t.value}}else s[p]=t.value;lastPanelKey=null;render();return}
   if(p.startsWith('edge.')){const e=curEdge();if(!e)return;if(t.type==='radio')pushUndo();edgeSet(s,e,p.slice(5),t.value);if(t.type==='radio')lastPanelKey=null;render();return}
   if(t.type==='radio'){pushUndo();
     if(p==='cmode'&&t.value==='each'&&!Array.isArray(s.cs))s.cs=[0,1,2,3].map(()=>({t:s.ct||'round',r:s.p.r}));
@@ -1466,6 +1510,8 @@ function mirrorShape(c,axis,A2){const X=axis==='x',has=e=>e!=null&&String(e).tri
   else if(c.type==='text'){if(X)p.x=MW(p.x,(LANG==='en'?'self':SELF)+'.'+propOut('幅'));else p.y=combE(M(p.y),p.size,1,0.75);if(has(p.rot))p.rot=neg(p.rot)}
   else if(c.type==='dim'){if(X){p.x1=M(p.x1);p.x2=M(p.x2)}else{p.y1=M(p.y1);p.y2=M(p.y2)}p.off=neg(p.off)}
   if(ROTATABLE(c.type)&&has(p.rot)){p.rot=neg(p.rot);if(X&&has(p.rcx))p.rcx=M(p.rcx);if(!X&&has(p.rcy))p.rcy=M(p.rcy)}
+  // a mirrored diagonal hatch leans the other way
+  if(c.fill){const sw={diag:'rdiag',rdiag:'diag'};if(sw[c.fill.t])c.fill.t=sw[c.fill.t]}
   if(Array.isArray(c.fl))for(const f of c.fl){if(X)f.u=+(1-f.u).toFixed(4);else f.v=+(1-f.v).toFixed(4)}
   // per-edge stitch settings follow the mirrored edges, whose direction is now reversed
   const st=c.st;if(st){const sw={start:'end',end:'start'};if(sw[st.pos])st.pos=sw[st.pos];
@@ -1505,7 +1551,7 @@ function makeOffset(ids){const ss=ids.map(byId).filter(Boolean);if(!ss.length)re
   const open=ss.find(s=>{const it=C.byId[s.id];return !it||!it.g||!it.g.closed});
   if(open){toast(`「${open.name}」は閉じた形ではないのでオフセットできません`);return false}
   pushUndo();const first=ss[0];
-  const o={id:newId(),name:uniqName(ss.length===1?first.name+nm(' のオフセット'):nm('オフセット')),type:'offset',src:ss.map(s=>s.id),op:'union',side:'out',join:'round',kind:first.kind==='guide'?'guide':'cut',p:{d:'3'},st:{on:false,inset:'縫い代',pitch:'ピッチ',hole:'穴'}};
+  const o={id:newId(),name:uniqName(ss.length===1?first.name+nm(' のオフセット'):nm('オフセット')),type:'offset',src:ss.map(s=>s.id),op:'union',side:'out',join:'round',kind:LINES[first.kind]?first.kind:'cut',p:{d:'3'},st:{on:false,inset:'縫い代',pitch:'ピッチ',hole:'穴'}};
   fixStitchDefaults(o);doc.shapes.push(o);setSel(o.id);setTool('select');
   const it=C.byId[o.id];toast(it&&it.err?it.err:'オフセットしました。方向・距離・角の形はパネルで変えられます');return true}
 // ---- fillet tool: pick two straight edges that aren't parallel; they run to their crossing (extended or trimmed) and the corner
@@ -1976,8 +2022,8 @@ new ResizeObserver(()=>applyView()).observe($('stage'));
 
 // ---------- export ----------
 // what goes into PDF / SVG / DXF: chosen per format in the export dialog (UI.exp), and per shape with s.noexp
-const EXP_KEYS=[['cut','裁断線'],['guide','ガイド線'],['holes','ステッチ穴'],['line','縫い線'],['mat','演算の材料'],['dim','寸法線'],['text','テキスト'],['names','図形の名前']];
-const EXP_DEFAULT={cut:true,guide:true,holes:true,line:false,mat:false,dim:true,text:true,names:false};
+const EXP_KEYS=[...Object.entries(LINES).map(([k,l])=>[k,l.ja]),['holes','ステッチ穴'],['line','縫い線'],['mat','演算の材料'],['dim','寸法線'],['text','テキスト'],['names','図形の名前']];
+const EXP_DEFAULT={cut:true,thin:true,red:true,guide:true,dashthin:true,chain:true,holes:true,line:false,mat:false,dim:true,text:true,names:false};
 const expOpts=f=>({...EXP_DEFAULT,...((UI.exp||{})[f]||{})});
 const NAME_SIZE=3;
 // each item: out (draw the shape itself), mat (a material of an operation, drawn faint and dashed), st (stitch holes),
@@ -1989,7 +2035,7 @@ function exportItems(opt=EXP_DEFAULT,reuse){if(!reuse)C=compute();const items=[]
     if(mat){let a=it.parent,off=false;while(a){const as=byId(a);if(!as||as.noexp){off=true;break}a=(C.byId[a]||{}).parent}if(off||g.isDim||g.isText)continue}
     const o={s,g,mat,out:false,st:null,line:null,name:null};
     if(g.isDim)o.out=opt.dim;else if(g.isText)o.out=opt.text;
-    else{o.out=mat?opt.mat:s.kind==='guide'?opt.guide:opt.cut;
+    else{o.out=mat?opt.mat:opt[LINES[s.kind]?s.kind:'cut']!==false;if(o.out&&!mat&&it.hatch)o.hatch=it.hatch;
       if(it.st){if(opt.holes)o.st=it.st;if(opt.line){const L=it.st.edges.filter(e=>e.on&&e.sub).map(e=>e.sub);if(L.length)o.line=L}}
       if(!mat&&opt.names&&s.name){const b=bboxG(g);o.name={str:s.name,x:b[0],y:b[1]-1.2}}}
     if(o.out||o.st||o.line||o.name)items.push(o)}
@@ -2001,31 +2047,45 @@ function exportItems(opt=EXP_DEFAULT,reuse){if(!reuse)C=compute();const items=[]
   return{items,bb}}
 function buildSVG(opt){const{items,bb}=exportItems(opt);const m=5,x0=bb[0]-m,y0=bb[1]-m,w=bb[2]-bb[0]+2*m,h=bb[3]-bb[1]+2*m;
   let o=`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${fmt(w,3)}mm" height="${fmt(h,3)}mm" viewBox="${fmt(x0,3)} ${fmt(y0,3)} ${fmt(w,3)} ${fmt(h,3)}">\n`;
-  const groups={cut:'',guide:'',mat:'',stitch:'',line:'',text:'',dim:'',names:''};
-  for(const{s,g,st,out,mat,line,name}of items){const id=esc(s.name);let e;
+  const groups={mat:'',stitch:'',line:'',text:'',dim:'',names:''},lg={};
+  for(const{s,g,st,out,mat,line,name,hatch}of items){const id=esc(s.name);let e;const LN=lineOf(s);
     if(line)groups.line+=`<path d="${line.map(P=>dOf(P,false)).join('')}"><title>${id}</title></path>\n`;
     if(name)groups.names+=`<text x="${fmt(name.x,3)}" y="${fmt(name.y,3)}" font-size="${NAME_SIZE}">${esc(name.str)}</text>\n`;
     if(st)for(const[x,y]of st.holes)groups.stitch+=`<circle cx="${fmt(x,3)}" cy="${fmt(y,3)}" r="${fmt(st.hole/2,3)}"/>\n`;
     if(!out)continue;
     if(g.isDim){const D=g.dim;groups.dim+=`<g><title>${id}</title><path d="${D.lines.map(([a,b])=>`M${fmt(a[0],3)} ${fmt(a[1],3)}L${fmt(b[0],3)} ${fmt(b[1],3)}`).join('')}"/><path fill="#444" stroke="none" d="${D.arrows.map(t=>dOf(t,true)).join('')}"/><text x="${fmt(D.text.x,3)}" y="${fmt(D.text.y,3)}" font-size="${fmt(D.text.size,3)}" text-anchor="middle" fill="#444" stroke="none" transform="rotate(${fmt(D.text.rot,3)} ${fmt(D.text.x,3)} ${fmt(D.text.y,3)})">${D.text.str}</text></g>\n`;continue}
-    if(g.isText){groups.text+=`<text x="${fmt(g.x,3)}" y="${fmt(g.y,3)}" font-size="${fmt(g.size,3)}"${g.rot?` transform="rotate(${fmt(g.rot,3)} ${fmt(g.x,3)} ${fmt(g.y,3)})"`:''} fill="${s.kind==='guide'?'#2c6fbb':'#000'}">${esc(g.str)}</text>\n`;continue}
+    if(g.isText){groups.text+=`<text x="${fmt(g.x,3)}" y="${fmt(g.y,3)}" font-size="${fmt(g.size,3)}"${g.rot?` transform="rotate(${fmt(g.rot,3)} ${fmt(g.x,3)} ${fmt(g.y,3)})"`:''} fill="${LN.col}">${esc(g.str)}</text>\n`;continue}
+    // hatching sits in the shape's line group, solid and finer than the outline
+    if(hatch){if(hatch.fill)e=`<path fill-rule="evenodd" d="${dPaths(g.paths,true)}" fill="${LN.col}" fill-opacity="0.2" stroke="none"/>\n`;
+      else{e='';if(hatch.lines.length)e+=`<path d="${hatch.lines.map(P=>dOf(P,false)).join('')}" stroke-dasharray="none" stroke-width="${fmt(LN.svgW*0.5,3)}"/>\n`;
+        if(hatch.dots.length)e+=`<path d="${hatch.dots.map(([x,y])=>`M${fmt(x-hatch.r,3)} ${fmt(y,3)}a${hatch.r} ${hatch.r} 0 1 0 ${2*hatch.r} 0a${hatch.r} ${hatch.r} 0 1 0 ${-2*hatch.r} 0`).join('')}" fill="${LN.col}" stroke="none"/>\n`}
+      const k=LINES[s.kind]?s.kind:'cut';lg[k]=(lg[k]||'')+e}
     if(s.type==='rect')e=`<path d="${rectPathD(g)}"><title>${id}</title></path>\n`;
     else if(s.type==='circle')e=`<circle cx="${fmt(g.cx,3)}" cy="${fmt(g.cy,3)}" r="${fmt(g.d/2,3)}"><title>${id}</title></circle>\n`;
     else e=`<path fill-rule="evenodd" d="${s.type==='poly'?nodesD(g.fnodes||g.nodes,g.closed):dPaths(g.paths,g.closed)}"><title>${id}</title></path>\n`;
-    groups[mat?'mat':s.kind==='guide'?'guide':'cut']+=e}
-  o+=`<g id="cut" fill="none" stroke="#000" stroke-width="0.25">\n${groups.cut}</g>\n<g id="stitch" fill="none" stroke="#c0392b" stroke-width="0.15">\n${groups.stitch}</g>\n<g id="guide" fill="none" stroke="#2c6fbb" stroke-width="0.2" stroke-dasharray="2 1.5">\n${groups.guide}</g>\n`+
+    if(mat)groups.mat+=e;else{const k=LINES[s.kind]?s.kind:'cut';lg[k]=(lg[k]||'')+e}}
+  for(const[k,L]of Object.entries(LINES))if(lg[k])o+=`<g id="${L.dxf[0].toLowerCase().replace(/_/g,'-')}" fill="none" stroke="${L.col}" stroke-width="${L.svgW}"${L.svgDash?` stroke-dasharray="${L.svgDash}"`:''}>\n${lg[k]}</g>\n`;
+  o+=`<g id="stitch" fill="none" stroke="#c0392b" stroke-width="0.15">\n${groups.stitch}</g>\n`+
     (groups.mat?`<g id="material" fill="none" stroke="#999" stroke-width="0.15" stroke-dasharray="1.5 1">\n${groups.mat}</g>\n`:'')+(groups.line?`<g id="stitch-line" fill="none" stroke="#c0392b" stroke-width="0.15" stroke-dasharray="1 1">\n${groups.line}</g>\n`:'')+
     (groups.names?`<g id="names" fill="#555" font-family="sans-serif">\n${groups.names}</g>\n`:'')+`<g id="text" font-family="sans-serif">\n${groups.text}</g>\n<g id="dim" fill="none" stroke="#444" stroke-width="0.15" font-family="sans-serif">\n${groups.dim}</g>\n</svg>\n`;return o}
 function buildDXF(opt){const{items}=exportItems(opt);const L=[];const add=(...a)=>L.push(...a.map(String));const n=v=>fmt(v,4);
   add(0,'SECTION',2,'HEADER',9,'$ACADVER',1,'AC1009',9,'$INSUNITS',70,4,0,'ENDSEC');
-  add(0,'SECTION',2,'TABLES',0,'TABLE',2,'LAYER',70,8);
-  for(const[nm,c]of[['CUT',7],['STITCH',1],['GUIDE',5],['TEXT',3],['DIM',8],['MATERIAL',9],['STITCHLINE',6],['NAME',3]])add(0,'LAYER',2,nm,70,0,62,c,6,'CONTINUOUS');
+  // dashed line types for the layers that need them (lengths in mm)
+  const LT=[['CONTINUOUS','Solid line',[]],['DASHED','__ __ __',[4,-3]],['DASHED2','_ _ _',[3,-2]],['DASHDOT','__ . __ .',[8,-2,0,-2]]];
+  add(0,'SECTION',2,'TABLES',0,'TABLE',2,'LTYPE',70,LT.length);
+  for(const[nm,desc,el]of LT)add(0,'LTYPE',2,nm,70,0,3,desc,72,65,73,el.length,40,n(el.reduce((a,v)=>a+Math.abs(v),0)),...el.flatMap(v=>[49,n(v)]));
+  add(0,'ENDTAB');
+  const layers=[...Object.values(LINES).flatMap(L=>[[L.dxf[0],L.dxf[1],L.dxf[2]],[L.dxf[0]+'_HATCH',L.dxf[1],'CONTINUOUS']]),['STITCH',1,'CONTINUOUS'],['TEXT',3,'CONTINUOUS'],['DIM',8,'CONTINUOUS'],['MATERIAL',9,'DASHED'],['STITCHLINE',6,'CONTINUOUS'],['NAME',3,'CONTINUOUS']];
+  add(0,'TABLE',2,'LAYER',70,layers.length);
+  for(const[nm,c,lt]of layers)add(0,'LAYER',2,nm,70,0,62,c,6,lt);
   add(0,'ENDTAB',0,'ENDSEC',0,'SECTION',2,'ENTITIES');
   const poly=(layer,verts,closed)=>{add(0,'POLYLINE',8,layer,66,1,70,closed?1:0,10,0,20,0,30,0);for(const[x,y,b]of verts){add(0,'VERTEX',8,layer,10,n(x),20,n(-y),30,0);if(b)add(42,n(b))}add(0,'SEQEND',8,layer)};
   const circ=(layer,x,y,r)=>add(0,'CIRCLE',8,layer,10,n(x),20,n(-y),30,0,40,n(r));
   // non-ASCII characters are written as \U+XXXX so Japanese survives in R12 readers
   const dxfStr=t=>[...t].map(ch=>{const c=ch.codePointAt(0);return c<128?ch:'\\U+'+c.toString(16).toUpperCase().padStart(4,'0')}).join('');
-  for(const{s,g,st,out,mat,line,name}of items){const layer=mat?'MATERIAL':s.kind==='guide'?'GUIDE':'CUT';
+  for(const{s,g,st,out,mat,line,name,hatch}of items){const layer=mat?'MATERIAL':lineOf(s).dxf[0];
+    // hatching as plain lines and small circles (R12 has no hatch); a flat tint is not written
+    if(hatch){for(const P of hatch.lines)poly(layer+'_HATCH',P,false);for(const[x,y]of hatch.dots)circ(layer+'_HATCH',x,y,hatch.r)}
     if(line)for(const P of line)poly('STITCHLINE',P,false);
     if(name)add(0,'TEXT',8,'NAME',10,n(name.x),20,n(-name.y),30,0,40,n(NAME_SIZE*0.72),1,dxfStr(name.str));
     if(st)for(const[hx,hy]of st.holes)circ('STITCH',hx,hy,st.hole/2);
@@ -2065,7 +2125,12 @@ function buildPDF(o,opt){const{items,bb}=exportItems(opt);const K=72/25.4;
     const mask=(m,x,y,size,rot,col)=>{const a=rot*Math.PI/180,cs=Math.cos(a),sn=Math.sin(a),Rt=(px,py)=>{const dx=px-x,dy=py-y;return T(x+dx*cs-dy*sn,y+dx*sn+dy*cs)};
       const top=y-size,BL=Rt(x,top+m.m.hmm),BR=Rt(x+m.m.wmm,top+m.m.hmm),TL=Rt(x,top);
       return`q ${col} rg ${F(BR[0]-BL[0])} ${F(BR[1]-BL[1])} ${F(TL[0]-BL[0])} ${F(TL[1]-BL[1])} ${F(BL[0])} ${F(BL[1])} cm /${m.name} Do Q\n`};
-    for(const{s:sh,g,st,out,mat,line,name}of items){
+    const circF=(x,y,r)=>circ(x,y,r).replace(/ S\n$/,' f\n');
+    for(const{s:sh,g,st,out,mat,line,name,hatch}of items){
+      if(hatch){const c=lineOf(sh).rgb,P=q=>{const[x,y]=T(q[0],q[1]);return F(x)+' '+F(y)};
+        if(hatch.fill)s+=`${c.map(v=>F(v+(1-v)*0.8)).join(' ')} rg\n`+g.paths.map(p=>p.map((q,i)=>P(q)+(i?' l':' m')).join('\n')+' h').join('\n')+' f*\n';
+        if(hatch.lines.length){s+=`${c.map(F).join(' ')} RG [] 0 d ${F(lineOf(sh).pdfW*0.5)} w\n`;for(const L of hatch.lines)s+=`${P(L[0])} m ${P(L.at(-1))} l S\n`}
+        if(hatch.dots.length){s+=`${c.map(F).join(' ')} rg\n`;for(const[x,y]of hatch.dots){const[px,py]=T(x,y);s+=circF(px,py,hatch.r*K)}}}
       if(name)s+=mask(masks.get('n:'+sh.id),name.x,name.y,NAME_SIZE,0,'0.33 0.33 0.33');
       if(line){s+='0.75 0.2 0.15 RG [1.5 1.5] 0 d 0.35 w\n';for(const P of line)s+=P.map((q,i)=>{const[x,y]=T(q[0],q[1]);return`${F(x)} ${F(y)} ${i?'l':'m'}`}).join('\n')+' S\n'}
       if(st){s+='[] 0 d 0.75 0.2 0.15 RG 0.4 w\n';for(const[hx,hy]of st.holes){const[x,y]=T(hx,hy);s+=circ(x,y,st.hole/2*K)}}
@@ -2075,8 +2140,9 @@ function buildPDF(o,opt){const{items,bb}=exportItems(opt);const K=72/25.4;
         // Helvetica widths: digits 0.556 em, point 0.278 em
         const fs=D.text.size*K,tw=[...D.text.str].reduce((w,ch)=>w+(ch==='.'?0.278:0.556),0)*D.text.size,st=[D.text.x-D.text.dir[0]*tw/2,D.text.y-D.text.dir[1]*tw/2],[sx,sy]=T(st[0],st[1]),a=-D.text.rot*Math.PI/180;
         s+=`BT /F1 ${F(fs)} Tf ${F(Math.cos(a))} ${F(Math.sin(a))} ${F(-Math.sin(a))} ${F(Math.cos(a))} ${F(sx)} ${F(sy)} Tm (${D.text.str}) Tj ET\n`;continue}
-      if(g.isText){const m=masks.get(sh.id);if(m)s+=mask(m,g.x,g.y,g.size,g.rot,sh.kind==='guide'?'0.25 0.45 0.75':'0 0 0');continue}
-      if(mat)s+='0.6 0.6 0.6 RG [2 2] 0 d 0.4 w\n';else if(sh.kind==='guide')s+='0.25 0.45 0.75 RG [4 3] 0 d 0.5 w\n';else s+='0 0 0 RG [] 0 d 0.7 w\n';
+      const LN=lineOf(sh);
+      if(g.isText){const m=masks.get(sh.id);if(m)s+=mask(m,g.x,g.y,g.size,g.rot,LN.rgb.map(F).join(' '));continue}
+      if(mat)s+='0.6 0.6 0.6 RG [2 2] 0 d 0.4 w\n';else s+=`${LN.rgb.map(F).join(' ')} RG ${LN.pdfDash} 0 d ${LN.pdfW} w\n`;
       if(sh.type==='circle'){const[x,y]=T(g.cx,g.cy);s+=circ(x,y,g.d/2*K)}
       else if(sh.type==='poly'){const N=g.fnodes||g.nodes,P=q=>{const[x,y]=T(q[0],q[1]);return F(x)+' '+F(y)};s+=P([N[0].x,N[0].y])+' m\n';
         for(let i=0;i<(g.closed?N.length:N.length-1);i++){const c=segCtrl(N,i);s+=c.line?P(c.p3)+' l\n':`${P(c.p1)} ${P(c.p2)} ${P(c.p3)} c\n`}s+=g.closed?'h S\n':'S\n'}
@@ -2121,15 +2187,18 @@ $('xPdf').onclick=()=>openExport('pdf');
 const pdfChanged=()=>{const o=pdfOpts();UI.pdfSize=o.size;UI.pdfOrient=o.orient;saveUI();updatePdfInfo();render()};
 $('pdfSize').onchange=pdfChanged;$('pdfOrient').addEventListener('change',pdfChanged);
 function renderPdfPreview(L,items,bb){const{pw,ph,aw,ah,cols,rows,M}=L,max=12,shown=Math.min(cols*rows,max);let h='',n=0;
-  const art=items.map(({s,g,st,out,mat,line,name})=>{let o='';
+  const art=items.map(it=>{const{s,g,st,out,mat,line,name}=it;let o='';
     if(name)o+=`<text x="${name.x}" y="${name.y}" font-size="${NAME_SIZE}" fill="#555">${esc(name.str)}</text>`;
     if(line)o+=`<path d="${line.map(P=>dOf(P,false)).join('')}" fill="none" stroke="#c0392b" stroke-width="0.3" stroke-dasharray="1.5 1.5"/>`;
     if(st)o+=`<path d="${st.holes.map(([x,y])=>`M${x-0.6} ${y}a0.6 0.6 0 1 0 1.2 0a0.6 0.6 0 1 0 -1.2 0`).join('')}" fill="#c0392b"/>`;
     if(!out)return o;
-    if(g.isText)return o+`<text x="${g.x}" y="${g.y}" font-size="${g.size}" fill="${s.kind==='guide'?'#2c6fbb':'#000'}"${g.rot?` transform="rotate(${g.rot} ${g.x} ${g.y})"`:''}>${esc(g.str)}</text>`;
+    const LN=lineOf(s);
+    if(g.isText)return o+`<text x="${g.x}" y="${g.y}" font-size="${g.size}" fill="${LN.col}"${g.rot?` transform="rotate(${g.rot} ${g.x} ${g.y})"`:''}>${esc(g.str)}</text>`;
     if(g.isDim){const D=g.dim;return o+`<path d="${D.lines.map(([a,b])=>`M${a[0]} ${a[1]}L${b[0]} ${b[1]}`).join('')}" stroke="#444" stroke-width="0.25" fill="none"/><text x="${D.text.x}" y="${D.text.y}" font-size="${D.text.size}" text-anchor="middle" fill="#444" transform="rotate(${D.text.rot} ${D.text.x} ${D.text.y})">${D.text.str}</text>`}
-    const col=mat?'#999':s.kind==='guide'?'#2c6fbb':'#000';
-    return o+`<path d="${dPaths(g.paths,g.closed)}" fill="none" stroke="${col}" stroke-width="${mat?0.35:0.5}"${mat?' stroke-dasharray="2 1.5"':s.kind==='guide'?' stroke-dasharray="3 2"':''}/>`}).join('');
+    const col=mat?'#999':LN.col,H=it.hatch;
+    if(H){if(H.fill)o+=`<path fill-rule="evenodd" d="${dPaths(g.paths,true)}" fill="${col}" fill-opacity="0.2"/>`;if(H.lines.length)o+=`<path d="${H.lines.map(P=>dOf(P,false)).join('')}" stroke="${col}" stroke-width="0.2" fill="none"/>`;
+      if(H.dots.length)o+=`<path d="${H.dots.map(([x,y])=>`M${x-H.r} ${y}a${H.r} ${H.r} 0 1 0 ${2*H.r} 0a${H.r} ${H.r} 0 1 0 ${-2*H.r} 0`).join('')}" fill="${col}"/>`}
+    return o+`<path d="${dPaths(g.paths,g.closed)}" fill="none" stroke="${col}" stroke-width="${mat?0.35:LN.svgW*2}"${mat?' stroke-dasharray="2 1.5"':LN.svgDash?` stroke-dasharray="${LN.svgDash.split(' ').map(v=>v*1.5).join(' ')}"`:''}/>`}).join('');
   for(let r=0;r<rows&&n<shown;r++)for(let c=0;c<cols&&n<shown;c++,n++){const ox=bb[0]+c*aw,oy=bb[1]+r*ah,id='pv'+n;
     h+=`<figure><svg viewBox="0 0 ${pw} ${ph}" role="img" aria-label="${c+1}-${r+1} ページ"><defs><clipPath id="${id}"><rect x="${M}" y="${M}" width="${aw}" height="${ah}"/></clipPath></defs>
       <rect x="${M}" y="${M}" width="${aw}" height="${ah}" fill="none" stroke="#bbb" stroke-width="0.6" stroke-dasharray="4 3"/>
@@ -2255,6 +2324,7 @@ function codeNormalize(d){const S=v=>v==null?v:typeof v==='string'?v:String(v);
   d.vars=d.vars.map(v=>({...v,n:String(v.n).trim(),e:S(v.e)}));
   for(const s of d.shapes){if(s.p&&typeof s.p==='object')for(const k in s.p)s.p[k]=S(s.p[k]);else s.p={};
     if(!s.st||typeof s.st!=='object')s.st={on:false,inset:'3',pitch:'4',hole:'1.2'};
+    if(s.fill&&typeof s.fill==='object')s.fill={...s.fill,pitch:S(s.fill.pitch??'2')};else delete s.fill;
     if(Array.isArray(s.fl))s.fl=s.fl.filter(f=>f&&typeof f==='object').map(f=>({...f,u:+f.u||0,v:+f.v||0,r:S(f.r)}));
     if(Array.isArray(s.nodes))s.nodes=s.nodes.map(n=>{const o={...n,x:S(n.x),y:S(n.y)};if(n.r!=null)o.r=S(n.r);for(const h of['hi','ho'])if(Array.isArray(n[h]))o[h]=n[h].map(S);return o});
     if(s.name==null)s.name=s.id}
@@ -2293,7 +2363,7 @@ function markPick(force){if(!cm)return;const id=picks.length===1?sel:null;if(id=
   if(r)for(let i=r[0];i<=r[1];i++)deco.push(CM.Decoration.line({class:'cm-pick'}).range(st.line(i).from));
   const eff=[pickEffect.of(CM.Decoration.set(deco))];if(r)eff.push(CM.EditorView.scrollIntoView(st.line(r[0]).from,{y:'center'}));cm.dispatch({effects:eff})}
 // completion inside strings: variables, shapes (then their values after "."), functions, self; fixed words for a few keys
-const KEY_WORDS={type:SHAPE_TYPES,kind:['cut','guide'],op:['union','diff','inter','xor'],side:['out','in'],join:['round','miter'],method:['auto','tighten','loosen'],pos:['both','start','center','end'],ct:['round','chamfer'],cmode:['all','each'],t:['round','chamfer','none','corner','smooth']};
+const KEY_WORDS={type:SHAPE_TYPES,kind:Object.keys(LINES),op:['union','diff','inter','xor'],side:['out','in'],join:['round','miter'],method:['auto','tighten','loosen'],pos:['both','start','center','end'],ct:['round','chamfer'],cmode:['all','each'],t:['round','chamfer','none','corner','smooth',...Object.keys(HATCHES).filter(k=>k!=='none')]};
 function propKeysOf(s){const base=['左','右','上','下','幅','高さ','中心X','中心Y'];if(!s)return base;
   if(s.type==='circle')return base.concat('直径','半径');if(s.type==='rect'||s.type==='text')return base.concat('X','Y');
   if(s.type==='poly')return base.concat((s.nodes||[]).flatMap((n,i)=>[`点${i+1}X`,`点${i+1}Y`]));if(s.type==='dim')return['始点X','始点Y','終点X','終点Y','長さ'];return base}

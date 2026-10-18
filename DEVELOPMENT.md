@@ -29,7 +29,9 @@ Push straight to `main` when asked; there is no build step.
 
 ## Data model (what `.json` files, share links and the code panel hold)
 `doc = {vars:[{n,e}], shapes:[…]}`; every dimension is an expression string.
-- shape: `{id,name,type,kind:'cut'|'guide',p:{…},st:{on,inset,pitch,hole,method?,pos?,eo?}}`
+- shape: `{id,name,type,kind,p:{…},st:{on,inset,pitch,hole,method?,pos?,eo?},fill?:{t,pitch}}`; `kind` is a line type from
+  `LINES` (cut 実線, thin, red, guide 破線, dashthin, chain — cut/guide are the old 裁断線/ガイド ids), `fill.t` a hatch from
+  `HATCHES` (`hatchOf` clips lines / places dots in world coordinates, used by canvas and all exports)
 - types: `rect` (x,y,w,h,r; `ct` round|chamfer; `cmode:'each'` + `cs[4]{t,r}`), `circle` (cx,cy,d),
   `poly` (`nodes:[{x,y,t?,hi?,ho?,r?}]`, `closed`; `r` rounds a corner node — `filletNodes` turns it into two tangent
   points and a two-piece Bézier arc in `g.fnodes`, while `g.nodes` stays as written for editing and references), `bool` (`op` union|diff|inter|xor, `ops:[ids]`, materials stay as shapes),
