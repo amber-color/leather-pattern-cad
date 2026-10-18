@@ -491,6 +491,9 @@ const EN_EXACT={
   '元の図形や切る線を動かしたり変数を変えたりすると、分割も作り直されます。ピースをドラッグすると、元の図形と切る線ごと動きます（ほかのピースも一緒に動きます）。':'Moving the source or the cutting lines, or changing variables, rebuilds the split. Dragging a piece moves the source and cutters with it (and so the other pieces).',
   'この分割のピースをすべて消して、元の図形と切る線に戻します':'Remove every piece of this split and return to the source and cutting lines',
   '切る図形と、切る線（または図形）を選んでください':'Select the shape to cut and the cutting lines (or shapes)','切れませんでした（線が図形を横切っていません）':'Nothing was cut (the lines don’t cross the shape)','分割を解除しました':'Split undone',
+  '矩形をパスに変換します。式は残るので変数を変えても形が追従し、線の上をダブルクリックで頂点を足せます':'Convert the rectangle to a path. Its expressions stay, so it still follows the variables; double-click the line to add nodes',
+  '円をパスに変換します。式は残るので変数を変えても形が追従し、線の上をダブルクリックで頂点を足せます':'Convert the circle to a path. Its expressions stay, so it still follows the variables; double-click the line to add nodes',
+  'パスに変換しました。線の上をダブルクリックで頂点を足せます':'Converted to a path; double-click the line to add nodes','エラーのある図形は変換できません':'A shape with an error can’t be converted',
   '出力':'Include','材料に穴を並べているので、ステッチ穴は材料ごとの設定で決まり、ここでは変えられません。上の材料を選んで設定してください。演算結果で穴を設定するには、材料の「穴を並べる」をすべてオフにします。':'A material has stitch holes, so stitching comes from each material’s own settings and can’t be changed here; pick a material above. To stitch this result instead, turn “Place stitch holes” off on every material.','ガイド線':'Guide lines','縫い線':'Stitch lines','演算の材料':'Operation materials','図形の名前':'Shape names','書き出す（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)',
   '図形ごとに書き出さない設定は、パーツ欄の「書き出す」で。選んだ内容は形式ごとに覚えます。':'To leave out a single shape, untick “Export” in its part panel. The choices here are remembered per format.',
   'SVGの書き出し':'Export SVG','DXFの書き出し':'Export DXF','mm単位。出力する内容を選んで、種類ごとにグループ分け':'In mm; choose what to include, grouped by kind','R12形式。出力する内容を選んで、種類ごとにレイヤー分け':'R12; choose what to include, one layer per kind',
@@ -1386,13 +1389,13 @@ function renderPanel(){
         if(it.sterr)h+=`<div class="small" style="color:var(--danger)">${esc(it.sterr)}</div>`}}
     // two rows that both run edge to edge: path conversion (and undoing the operation / split), then the icon buttons
     const conv=`<button class="btn" id="bBake" title="式と元の図形とのつながりをやめ、今の形のパスに置き換えます（元に戻すには ⌘Z）">パスに変換</button>`;
-    const row1=s.type==='bool'?conv+`<button class="btn" id="bUngroup" title="演算をやめて材料を元の図形に戻します">演算を解除</button>`:s.type==='offset'?conv:s.type==='piece'?conv+`<button class="btn" id="bUnsplit" title="この分割のピースをすべて消して、元の図形と切る線に戻します">分割を解除</button>`:'';
+    const row1=s.type==='rect'||s.type==='circle'?`<button class="btn" id="bToPath" title="${s.type==='rect'?'矩形':'円'}をパスに変換します。式は残るので変数を変えても形が追従し、線の上をダブルクリックで頂点を足せます">パスに変換</button>`:s.type==='bool'?conv+`<button class="btn" id="bUngroup" title="演算をやめて材料を元の図形に戻します">演算を解除</button>`:s.type==='offset'?conv:s.type==='piece'?conv+`<button class="btn" id="bUnsplit" title="この分割のピースをすべて消して、元の図形と切る線に戻します">分割を解除</button>`:'';
     if(row1)h+=`<div class="btnrow" style="margin-top:4px">${row1}</div>`;
     h+=`<div class="btnrow"${row1?'':' style="margin-top:4px"'}><button class="btn ib" id="bDup" title="複製 (⌘D)" aria-label="複製">${ICON.copy}</button><button class="btn ib" id="bMirX" title="左右反転した形を右側に複製" aria-label="左右複製">${ICON.flipX}</button><button class="btn ib" id="bMirY" title="上下反転した形を下側に複製" aria-label="上下複製">${ICON.flipY}</button><button class="btn ib del" id="bDel" title="削除 (Delete)" aria-label="削除">${ICON.trash}</button></div>`;
     sec.innerHTML=h;
     $('bDup').onclick=()=>dup();$('bMirX').onclick=()=>mirrorCopy('x');$('bMirY').onclick=()=>mirrorCopy('y');$('bDel').onclick=delSel;
     if($('bParent'))$('bParent').onclick=()=>{setSel(it.parent);render()};
-    if($('bBake'))$('bBake').onclick=bake;if($('bUngroup'))$('bUngroup').onclick=ungroup;if($('bUnsplit'))$('bUnsplit').onclick=unsplit;
+    if($('bBake'))$('bBake').onclick=bake;if($('bUngroup'))$('bUngroup').onclick=ungroup;if($('bUnsplit'))$('bUnsplit').onclick=unsplit;if($('bToPath'))$('bToPath').onclick=toPath;
     if($('bEdgeX'))$('bEdgeX').onclick=()=>{selEdge=null;render()};
     if($('bBetweenKeep'))$('bBetweenKeep').onclick=keepBetween;if($('bBetweenDrop'))$('bBetweenDrop').onclick=()=>{pendingBetween=null;lastPanelKey=null;render()};
     sec.querySelectorAll('[data-fldel]').forEach(b=>b.onclick=()=>{pushUndo();s.fl.splice(+b.dataset.fldel,1);if(!s.fl.length)delete s.fl;lastPanelKey=null;render()});
@@ -1602,6 +1605,37 @@ function makeBool(op){const ss=picks.map(byId);
   const b={id:newId(),name:uniqName(ss.map(s=>s.name).join(op==='diff'?' − ':op==='union'?' ＋ ':' ∩ ')),type:'bool',op,ops:ss.map(s=>s.id),kind:first.kind,p:{},st:{...structuredClone(first.st||{inset:'3',pitch:'4',hole:'1.2'}),on:false}};delete b.st.eo;delete b.st.edges;
   doc.shapes.push(b);setSel(b.id);render();
   const it=C.byId[b.id];if(it.err)toast(it.err);else toast(`${OPS[op]}しました。元の図形は材料として残っています`)}
+// a rectangle or circle as a closed path that keeps its expressions: corners and quarter points become nodes written
+// from the shape's own fields (X+幅 …), rounded corners a node radius, chamfers two nodes, a circle four Bézier nodes.
+// 自分.… in the fields is written out from the other fields (falling back to its current number), and references to
+// values a path doesn't have (X / Y, 直径 / 半径) are rewritten to ones it has
+const scaleE=(e,f)=>{const L=lin(e);if(L){L.c*=f;for(const k in L.t)L.t[k]*=f;return linStr(L)}return`${num(f)}*(${e})`};
+function toPath(){const s=cur();if(!s||(s.type!=='rect'&&s.type!=='circle'))return;const it=C.byId[s.id];if(!it||!it.g){toast('エラーのある図形は変換できません');return}
+  const p=s.p,env=C.envFor(s),rect=s.type==='rect';
+  const map=rect?{X:p.x,Y:p.y,左:p.x,上:p.y,幅:p.w,高さ:p.h,右:combE(p.x,p.w),下:combE(p.y,p.h),中心X:combE(p.x,p.w,1,0.5),中心Y:combE(p.y,p.h,1,0.5)}
+    :{中心X:p.cx,中心Y:p.cy,直径:p.d,幅:p.d,高さ:p.d,半径:scaleE(p.d,0.5),左:combE(p.cx,p.d,-1,0.5),右:combE(p.cx,p.d,1,0.5),上:combE(p.cy,p.d,-1,0.5),下:combE(p.cy,p.d,1,0.5)};
+  const unself=e=>{let src=String(e);for(let n=0;n<6;n++){let t;try{t=tokenize(src)}catch(x){return null}const sr=t.filter(k=>k.k==='ref'&&k.name===SELF);if(!sr.length){const L=lin(src);return L?linStr(L):src}
+      for(const k of sr.reverse()){if(!(k.prop in map))return null;src=src.slice(0,k.at)+`(${map[k.prop]})`+src.slice(k.end)}}return null};
+  const F=e=>unself(e)??num(evalExpr(e,env));
+  let nodes;
+  if(rect){const X=F(p.x),Y=F(p.y),W=F(p.w),H=F(p.h),R=combE(X,W),B=combE(Y,H),each=s.cmode==='each'&&Array.isArray(s.cs);
+    const pts=[[X,Y],[R,Y],[R,B],[X,B]],dir=[[[0,1],[1,0]],[[-1,0],[0,1]],[[0,-1],[-1,0]],[[1,0],[0,-1]]];
+    nodes=[0,1,2,3].flatMap(i=>{const c=each?s.cs[i]||{}:{t:s.ct||'round',r:p.r},t=c.t||'round';let v=0;try{v=t==='none'?0:evalExpr(c.r,env)}catch(x){}
+      const[x,y]=pts[i];if(!(v>0))return[{x,y}];const r=F(c.r);if(t==='round')return[{x,y,r}];
+      // a chamfer: the two points it cuts at, in drawing order
+      return dir[i].map(([dx,dy])=>({x:dx?combE(x,r,dx):x,y:dy?combE(y,r,dy):y}))})}
+  else{const cx=F(p.cx),cy=F(p.cy),d=F(p.d),k=scaleE(d,0.27615),nk=scaleE(d,-0.27615);
+    nodes=[{x:cx,y:combE(cy,d,-1,0.5),hi:[nk,'0'],ho:[k,'0']},{x:combE(cx,d,1,0.5),y:cy,hi:['0',nk],ho:['0',k]},{x:cx,y:combE(cy,d,1,0.5),hi:[k,'0'],ho:[nk,'0']},{x:combE(cx,d,-1,0.5),y:cy,hi:['0',k],ho:['0',nk]}].map(n=>({...n,t:'smooth'}))}
+  pushUndo();
+  const o={id:s.id,name:s.name,type:'poly',kind:s.kind,closed:true,nodes,p:{},st:s.st};for(const key of['rot','rcx','rcy'])if(p[key]!=null&&String(p[key]).trim()!=='')o.p[key]=F(p[key]);
+  for(const key of['fill','noexp'])if(s[key]!=null)o[key]=s[key];
+  // other shapes' references to values the path won't have
+  const R0=refName(s.name)+'.',swap=rect?{X:'左',Y:'上'}:{直径:'幅',半径:null};
+  for(const x of doc.shapes){if(x===s)continue;for(const[ob,key]of exprSlots(x)){let t;try{t=tokenize(String(ob[key]))}catch(e){continue}let src=String(ob[key]);
+    for(const r of t.filter(r=>r.k==='ref'&&r.name===s.name&&r.prop in swap).reverse())src=swap[r.prop]?src.slice(0,r.dot+1)+propOut(swap[r.prop])+src.slice(r.end):src.slice(0,r.at)+`(${R0}${propOut('幅')}/2)`+src.slice(r.end);
+    ob[key]=src}}
+  doc.shapes.splice(doc.shapes.indexOf(s),1,o);lastPanelKey=null;render();
+  const ni=C.byId[o.id];toast(ni&&ni.err?ni.err:'パスに変換しました。線の上をダブルクリックで頂点を足せます')}
 function dropUnused(ids){for(const id of ids){const c=byId(id);if(!c||doc.shapes.some(o=>o.type==='bool'&&o.ops.includes(id)||o.type==='offset'&&(o.src||[]).includes(id)||pieceUses(o,id))||refUsers([c]).length)continue;
   doc.shapes=doc.shapes.filter(x=>x!==c)}}
 // split the first shape along the others (open lines or outlines): one piece per part, each its own shape with the
