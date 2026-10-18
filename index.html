@@ -185,6 +185,7 @@ input.err{border-color:var(--danger)}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .btns{display:flex;flex-wrap:wrap;gap:6px}
+.btnrow{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px}
 /* panel icons: same line style as the top bar */
 .pi{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;display:block}
 .seg label .pi{display:inline-block;vertical-align:-3px}.seg.sm label .pi{display:block;margin:0 auto}
@@ -472,8 +473,8 @@ const EN_EXACT={
   'ステッチ穴':'Stitch holes','穴を並べる':'Place stitch holes','縫い代':'Margin','ピッチ':'Pitch','穴径':'Hole size','余りの処理':'Remainder','余りの位置':'Remainder at','自動':'Auto','詰める':'Tighter gap','空ける':'Wider gap',
   '両端':'Both ends','始点':'Start','中央':'Middle','終点':'End','既定':'Default','穴数':'Holes','縫い長さ':'Stitch length','縫う辺':'Stitched edges','不揃い':'Uneven','穴':'Holes',
   'ピッチは変えずに、角から角までの辺ごとに余りを処理します。縫い線（点線）をクリックすると、その辺だけの設定ができます。':'The pitch never changes; any remainder is handled per edge, corner to corner. Click a stitch line (dotted) to set that edge on its own.',
-  'この辺を縫う':'Stitch this edge','始点から':'From start','終点から':'From end','辺の選択を解除':'Deselect the edge','削除':'Delete','確定':'Bake','演算を解除':'Ungroup','複製':'Duplicate','左右複製':'Mirror L↔R','上下複製':'Mirror T↕B',
-  '材料と式を捨てて、今の形で固定します':'Drop the materials and expressions and keep the current shape','演算をやめて材料を元の図形に戻します':'Undo the operation and turn the materials back into shapes',
+  'この辺を縫う':'Stitch this edge','始点から':'From start','終点から':'From end','辺の選択を解除':'Deselect the edge','削除':'Delete','パスに変換':'Convert to path','演算を解除':'Ungroup','複製':'Duplicate','左右複製':'Mirror L↔R','上下複製':'Mirror T↕B',
+  '演算をやめて材料を元の図形に戻します':'Undo the operation and turn the materials back into shapes',
   'R はその頂点の角を丸める半径です（フィレット。空欄なら角のまま）。':'R rounds that node’s corner (fillet); leave it empty for a sharp corner.','角R（フィレットで丸めた角）':'Corner radii (fillets)','外れ':'Lost',
   '「外れ」の角Rは、形が変わってどの角にも当てはまらなくなっています。':'“Lost” radii no longer match any corner (the shape changed).','別の線として残す':'Keep as a separate line','消したままにする':'Leave them removed',
   '平行な線分はフィレットできません':'Parallel edges can’t be filleted','2本の線分の交点が遠すぎます':'The two edges meet too far away','R が大きすぎます（線分が接点まで届きません）':'R is too large (an edge doesn’t reach its tangent point)',
@@ -488,7 +489,7 @@ const EN_EXACT={
   '分割 (K)':'Split (K)','分割':'Split','分割を解除':'Unsplit','切る線・図形':'Cutting lines / shapes','ピース':'Piece','切る線が見つかりません':'A cutting line is missing','分割した形が残りません':'Nothing is left after the split',
   '分割する図形をクリックし、続けて切る線（または図形）をクリックして Enter。最初にクリックした図形が切られます（Esc で選び直し）':'Click the shape to split, then the cutting lines (or shapes), and press Enter. The first shape clicked is the one cut (Esc to start over)',
   '元の図形や切る線を動かしたり変数を変えたりすると、分割も作り直されます。ピースをドラッグすると、元の図形と切る線ごと動きます（ほかのピースも一緒に動きます）。':'Moving the source or the cutting lines, or changing variables, rebuilds the split. Dragging a piece moves the source and cutters with it (and so the other pieces).',
-  '式をやめて、今の形の折れ線に置き換えます':'Drop the expressions and replace it with a polygon of its current shape','この分割のピースをすべて消して、元の図形と切る線に戻します':'Remove every piece of this split and return to the source and cutting lines',
+  'この分割のピースをすべて消して、元の図形と切る線に戻します':'Remove every piece of this split and return to the source and cutting lines',
   '切る図形と、切る線（または図形）を選んでください':'Select the shape to cut and the cutting lines (or shapes)','切れませんでした（線が図形を横切っていません）':'Nothing was cut (the lines don’t cross the shape)','分割を解除しました':'Split undone',
   '出力':'Include','材料に穴を並べているので、ステッチ穴は材料ごとの設定で決まり、ここでは変えられません。上の材料を選んで設定してください。演算結果で穴を設定するには、材料の「穴を並べる」をすべてオフにします。':'A material has stitch holes, so stitching comes from each material’s own settings and can’t be changed here; pick a material above. To stitch this result instead, turn “Place stitch holes” off on every material.','ガイド線':'Guide lines','縫い線':'Stitch lines','演算の材料':'Operation materials','図形の名前':'Shape names','書き出す（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)',
   '図形ごとに書き出さない設定は、パーツ欄の「書き出す」で。選んだ内容は形式ごとに覚えます。':'To leave out a single shape, untick “Export” in its part panel. The choices here are remembered per format.',
@@ -496,7 +497,7 @@ const EN_EXACT={
   'オフセット':'Offset','外側':'Outward','内側':'Inward','方向':'Direction','距離':'Distance','角の形':'Corners','丸く':'Round','尖らせる':'Sharp','元の図形':'Source shapes','元の図形から外す':'Remove from the sources',
   '元の図形（上から順に演算。差は1番目から残りを引きます）':'Source shapes (applied top to bottom; difference takes the rest away from the first)',
   '角の形は、外側では出っ張った角、内側では凹んだ角に効きます。元の図形を変えるとオフセットも作り直され、オフセットをドラッグすると元の図形ごと動きます。':'Corners applies to the outer corners when offsetting outward and to the inner corners when offsetting inward. The offset is rebuilt whenever its sources change; dragging it moves the sources with it.',
-  '式をやめて、今の形の折れ線に置き換えます（元の図形は残ります）':'Drop the expressions and replace it with a polygon of its current shape (the sources stay)',
+  
   'オフセットしました。方向・距離・角の形はパネルで変えられます':'Offset made. Change the direction, distance and corners in the panel',
   '左右反転した形を右側に複製':'Copy flipped left–right, to the right','上下反転した形を下側に複製':'Copy flipped top–bottom, below','エラー':'Error',
   // PDF, modals
@@ -519,7 +520,7 @@ const EN_EXACT={
   '端点':'Endpoint','中点':'Midpoint','中心':'Centre','四分点':'Quadrant','交点':'Intersection','線上':'On edge','延長':'Aligned',
   // toasts
   '頂点は2個以上必要です':'A path needs at least two nodes','エラーのある図形は反転できません':'A shape with an error can’t be mirrored','左右反転した形を右に複製しました':'Copied, flipped left–right, to the right','上下反転した形を下に複製しました':'Copied, flipped top–bottom, below',
-  '確定しました。式は消え、座標が固定されています':'Baked: the expressions are gone and the coordinates are fixed','材料は演算結果ごと選んでください':'Select materials through their operation result',
+  'パスに変換しました。式と連動はなくなりました':'Converted to a path; its expressions and links are gone','式と元の図形とのつながりをやめ、今の形のパスに置き換えます（元に戻すには ⌘Z）':'Drop the expressions and the links to the source shapes and replace it with a path of its current shape (⌘Z to undo)','材料は演算結果ごと選んでください':'Select materials through their operation result',
   '縫う範囲が式で決まっているので、パネルで編集してください':'The stitched range is set by an expression; edit it in the panel','回転が式で決まっているので、パネルで編集してください':'The rotation is set by an expression; edit it in the panel',
   '離れが式で決まっているので、パネルで編集してください':'The offset is set by an expression; edit it in the panel','この点は変数の式で決まっているので、パネルで編集してください':'This point is set by a variable expression; edit it in the panel',
   'この頂点は変数の式で決まっているので、パネルで編集してください':'This node is set by a variable expression; edit it in the panel','このハンドルは式で決まっているので、パネルで編集してください':'This handle is set by an expression; edit it in the panel',
@@ -546,7 +547,7 @@ const EN_PAT=[
   ['{0}枚（横{1} × 縦{2}）','{0} pages ({1} across × {2} down)'],['{0}枚','{0} page(s)'],['{0}-{1} ページ','Page {0}-{1}'],['ほか {0} 枚','{0} more'],
   ['演算 · {0}','Operation · {0}',{0:'T'}],['分割 · {0}','Split · {0}'],['{0}つに分割しました','Split into {0} pieces'],['「{0}」は閉じた形ではないので分割できません','“{0}” isn’t closed, so it can’t be split'],['「{0}」では切れません','“{0}” can’t cut'],
   ['分割「{0}」に "src" と "cut" が要ります','Split “{0}” needs "src" and "cut"'],['分割「{0}」の図形 {1} が見つかりません','Split “{0}”: shape {1} not found'],
-  ['{0}は {1} ほか{2}件 の元の図形なので{3}できません','{0} is used by {1} and {2} more, so it can’t be {3}',{3:{'削除':'deleted','演算を解除':'ungrouped','確定':'baked'}}],['{0}は {1} の元の図形なので{2}できません','{0} is used by {1}, so it can’t be {2}',{2:{'削除':'deleted','演算を解除':'ungrouped','確定':'baked'}}],['始点から：{0}','From start: {0}',{0:'T'}],['終点から：{0}','From end: {0}',{0:'T'}],['ピッチ：{0}','Pitch: {0}',{0:'T'}],['辺{0}：{1}','Edge {0}: {1}',{1:'T'}],['{0}の角を丸めました','Rounded the corner: {0}',{0:'T'}],['頂点{0}の角を丸めました','Rounded the corner at node {0}'],['「{0}」とつないで角を丸めました','Joined with “{0}” and rounded the corner'],
+  ['{0}は {1} ほか{2}件 の元の図形なので{3}できません','{0} is used by {1} and {2} more, so it can’t be {3}',{3:{'削除':'deleted','演算を解除':'ungrouped','パスに変換':'converted to a path'}}],['{0}は {1} の元の図形なので{2}できません','{0} is used by {1}, so it can’t be {2}',{2:{'削除':'deleted','演算を解除':'ungrouped','パスに変換':'converted to a path'}}],['始点から：{0}','From start: {0}',{0:'T'}],['終点から：{0}','From end: {0}',{0:'T'}],['ピッチ：{0}','Pitch: {0}',{0:'T'}],['辺{0}：{1}','Edge {0}: {1}',{1:'T'}],['{0}の角を丸めました','Rounded the corner: {0}',{0:'T'}],['頂点{0}の角を丸めました','Rounded the corner at node {0}'],['「{0}」とつないで角を丸めました','Joined with “{0}” and rounded the corner'],
   ['「{0}」はほかの図形から使われているので、つなげられません','“{0}” is used by other shapes, so it can’t be joined'],['フィレットでつなぐため、間の辺 {0} 本を消しました。','To join them, {0} edge(s) between were removed.'],
   ['角R {0}','Corner R {0}'],['角R {0}を削除','Delete corner R {0}'],['角R {0}：{1}','Corner R {0}: {1}',{1:'T'}],['頂点{0}の角R：{1}','Node {0} corner R: {1}',{1:'T'}],['頂点{0} 角R','Node {0} corner R'],
   ['頂点{0}の角Rが大きすぎます（辺の長さが足りません）','Node {0}: the corner radius is too large (the edges are too short)'],['R：{0}','R: {0}',{0:'T'}],['オフセット · {0}','Offset · {0}',{0:'T'}],['距離：{0}','Distance: {0}',{0:'T'}],
@@ -1383,8 +1384,11 @@ function renderPanel(){
           h+=`</div>`}
         {const bad=it.st?it.st.edges.filter(x=>x.errs.length):[];if(bad.length&&!(e&&bad.length===1&&bad[0]===e))h+=`<div class="small" style="color:var(--danger)">${bad.map(x=>esc(`辺${x.i+1}：${x.errs.join(' / ')}`)).join('<br>')}</div>`}
         if(it.sterr)h+=`<div class="small" style="color:var(--danger)">${esc(it.sterr)}</div>`}}
-    h+=`<div class="btns" style="margin-top:4px">`+(s.type==='bool'?`<button class="btn" id="bBake" title="材料と式を捨てて、今の形で固定します">確定</button><button class="btn" id="bUngroup" title="演算をやめて材料を元の図形に戻します">演算を解除</button>`:s.type==='offset'?`<button class="btn" id="bBake" title="式をやめて、今の形の折れ線に置き換えます（元の図形は残ります）">確定</button>`:s.type==='piece'?`<button class="btn" id="bBake" title="式をやめて、今の形の折れ線に置き換えます">確定</button><button class="btn" id="bUnsplit" title="この分割のピースをすべて消して、元の図形と切る線に戻します">分割を解除</button>`:'')+
-      `<button class="btn ib" id="bDup" title="複製 (⌘D)" aria-label="複製">${ICON.copy}</button><button class="btn ib" id="bMirX" title="左右反転した形を右側に複製" aria-label="左右複製">${ICON.flipX}</button><button class="btn ib" id="bMirY" title="上下反転した形を下側に複製" aria-label="上下複製">${ICON.flipY}</button><button class="btn ib del" id="bDel" title="削除 (Delete)" aria-label="削除">${ICON.trash}</button></div>`;
+    // two rows that both run edge to edge: path conversion (and undoing the operation / split), then the icon buttons
+    const conv=`<button class="btn" id="bBake" title="式と元の図形とのつながりをやめ、今の形のパスに置き換えます（元に戻すには ⌘Z）">パスに変換</button>`;
+    const row1=s.type==='bool'?conv+`<button class="btn" id="bUngroup" title="演算をやめて材料を元の図形に戻します">演算を解除</button>`:s.type==='offset'?conv:s.type==='piece'?conv+`<button class="btn" id="bUnsplit" title="この分割のピースをすべて消して、元の図形と切る線に戻します">分割を解除</button>`:'';
+    if(row1)h+=`<div class="btnrow" style="margin-top:4px">${row1}</div>`;
+    h+=`<div class="btnrow"${row1?'':' style="margin-top:4px"'}><button class="btn ib" id="bDup" title="複製 (⌘D)" aria-label="複製">${ICON.copy}</button><button class="btn ib" id="bMirX" title="左右反転した形を右側に複製" aria-label="左右複製">${ICON.flipX}</button><button class="btn ib" id="bMirY" title="上下反転した形を下側に複製" aria-label="上下複製">${ICON.flipY}</button><button class="btn ib del" id="bDel" title="削除 (Delete)" aria-label="削除">${ICON.trash}</button></div>`;
     sec.innerHTML=h;
     $('bDup').onclick=()=>dup();$('bMirX').onclick=()=>mirrorCopy('x');$('bMirY').onclick=()=>mirrorCopy('y');$('bDel').onclick=delSel;
     if($('bParent'))$('bParent').onclick=()=>{setSel(it.parent);render()};
@@ -1584,7 +1588,7 @@ function blockedByRefs(gone,verb){const ids=new Set(gone.map(x=>x.id));
 function blockedBySrc(gone,verb){const ids=new Set(gone.map(x=>x.id)),uses=(o,id)=>o.type==='offset'&&(o.src||[]).includes(id)||pieceUses(o,id);
   const users=doc.shapes.filter(o=>!ids.has(o.id)&&[...ids].some(id=>uses(o,id)));if(!users.length)return false;
   const used=gone.filter(x=>users.some(o=>uses(o,x.id))),un=users.slice(0,4).map(u=>u.name);
-  if(LANG==='en'){toast(`${used.map(n=>`“${n.name}”`).join(', ')} ${used.length>1?'are used':'is used'} by ${un.join(', ')}${users.length>4?` and ${users.length-4} more`:''}, so it can’t be ${{削除:'deleted',演算を解除:'ungrouped',確定:'baked'}[verb]}`,5000);return true}
+  if(LANG==='en'){toast(`${used.map(n=>`“${n.name}”`).join(', ')} ${used.length>1?'are used':'is used'} by ${un.join(', ')}${users.length>4?` and ${users.length-4} more`:''}, so it can’t be ${{削除:'deleted',演算を解除:'ungrouped',パスに変換:'converted to a path'}[verb]}`,5000);return true}
   toast(`${used.map(n=>`「${n.name}」`).join('')}は ${un.join('、')}${users.length>4?` ほか${users.length-4}件`:''} の元の図形なので${verb}できません`,5000);return true}
 function delSel(){const targets=picks.map(byId).filter(Boolean);if(!targets.length)return;
   const gone=[...new Set(targets.flatMap(t=>[t,...descendants(t)]))];if(blockedByRefs(gone,'削除')||blockedBySrc(gone,'削除'))return;pushUndo();
@@ -1702,7 +1706,7 @@ function ungroup(){const s=cur();if(!s||s.type!=='bool')return;if(blockedByRefs(
   doc.shapes=doc.shapes.filter(x=>x!==s);picks=kids.filter(id=>byId(id));sel=picks[0]||null;render()}
 // bake an operation or an offset into fixed polygons; a bool's materials go, an offset's sources stay
 function bake(){const s=cur();const it=C.byId[sel];if(!s||(s.type!=='bool'&&s.type!=='offset'&&s.type!=='piece')||!it.g)return;
-  const kids=s.type==='bool'?descendants(s):[];if(blockedBySrc(kids,'確定'))return;pushUndo();
+  const kids=s.type==='bool'?descendants(s):[];if(blockedBySrc(kids,'パスに変換'))return;pushUndo();
   const srcs=s.type==='piece'?matsOf(s).map(byId).filter(Boolean):kids;
   // stitched on its own outline (an offset, or an operation whose materials are all unstitched): keep its settings.
   // Otherwise the stitching lives on the materials: start from the first stitched material's settings, and each edge of
@@ -1718,7 +1722,7 @@ function bake(){const s=cur();const it=C.byId[sel];if(!s||(s.type!=='bool'&&s.ty
   if(mats.length){for(const n of news){const ni=C.byId[n.id];if(!ni||!ni.st)continue;const map=edgeMapper(mats,ni.st.ins);
       n.st.eo=ni.st.edges.map(e=>{const o=map(e.pts);return Object.keys(o).length?{u:+e.mid[0].toFixed(4),v:+e.mid[1].toFixed(4),...o}:null}).filter(Boolean)}
     lastPanelKey=null;render()}
-  toast('確定しました。式は消え、座標が固定されています')}
+  toast('パスに変換しました。式と連動はなくなりました')}
 
 // ---------- interaction ----------
 let draft=null,drag=null,spaceDown=false;
