@@ -462,7 +462,7 @@ const EN_EXACT={
   '← 演算に戻る':'← Back to the operation','名前':'Name','線種':'Line','裁断線':'Cut line','ガイド':'Guide','演算':'Operation','材料（上から順に演算。差は1番目から残りを引きます）':'Materials (applied top to bottom; difference takes the rest away from the first)',
   '外形':'Size','輪郭数':'Contours','文字':'Text','寸法線':'Dimension','テキスト':'Text','矩形':'Rectangle','円':'Circle','閉じたパス':'Closed path','開いたパス':'Open path',
   '幅':'Width','高さ':'Height','角R':'Corner R','中心X':'Centre X','中心Y':'Centre Y','直径':'Diameter','文字の高さ':'Text height','回転（度）':'Rotation (°)','始点X':'Start X','始点Y':'Start Y','終点X':'End X','終点Y':'End Y','離れ':'Offset','回転中心X':'Pivot X','回転中心Y':'Pivot Y',
-  '角':'Corners','四隅まとめて':'All four','まとめて':'All four','個別':'Each','角の種類':'Corner type','角丸':'Round','面取り':'Chamfer','直角':'Square','左上':'Top left','右上':'Top right','右下':'Bottom right','左下':'Bottom left',
+  '角':'Corners','四隅まとめて':'All four','四隅共通':'All four','個別':'Each','角の種類':'Corner type','角丸':'Round','面取り':'Chamfer','直角':'Square','左上':'Top left','右上':'Top right','右下':'Bottom right','左下':'Bottom left',
   '角丸のときは半径、面取りのときは角から切り落とす長さです。式も書けます。':'The radius for a round corner, or how much is cut off for a chamfer. Expressions work here too.','複製 (⌘D)':'Duplicate (⌘D)','削除 (Delete)':'Delete (Delete)',
   '閉じた形にする':'Closed shape','表を表示':'Show table','角と曲線を切り替え':'Switch corner / curve','入':'In','出':'Out',
   '頂点のX・Yとハンドル（頂点からの相対位置）にも式が書けます。頂点をクリックで選択（Shiftで追加）してDeleteで削除、ダブルクリックで角⇔曲線、線上をダブルクリックで頂点を追加。中に橙の点がある頂点は変数の式で決まっているのでドラッグでは動きません。水色の点は、ほかの図形に連動している頂点です。':'Node X / Y and handles (relative to the node) take expressions. Click a node to select it (Shift adds) and Delete removes it; double-click toggles corner / curve; double-click the line to add a node. A node with an orange dot is set by a variable expression and won’t drag; a cyan dot means it is linked to another shape.',
@@ -1253,7 +1253,7 @@ function renderPanel(){
     for(const key in s.p)if(s.type!=='offset'&&!(s.type==='rect'&&key==='r')&&!(ROTATABLE(s.type)&&/^(rot|rcx|rcy)$/.test(key)))h+=exprRow('p.'+key,LABELS[key]||key,s.p[key],env);
     if(ROTATABLE(s.type)&&it.g){const c=pivotOf(it.g);h+=exprRow('p.rot','回転（度）',s.p.rot??'0',env)+exprRow('p.rcx','回転中心X',s.p.rcx??num(c[0]),env)+exprRow('p.rcy','回転中心Y',s.p.rcy??num(c[1]),env)}
     if(s.type==='rect'){const each=s.cmode==='each'&&Array.isArray(s.cs);
-      h+=segRow('cmode',[['all','まとめて'],['each','個別']],each?'each':'all','角','cmd');
+      h+=segRow('cmode',[['all','四隅共通'],['each','個別']],each?'each':'all','角','cmd');
       if(!each)h+=segRow('ct',[['round',ICON.round+' 角丸'],['chamfer',ICON.chamfer+' 面取り']],s.ct||'round','角の種類','cty')+exprRow('p.r','角R',s.p.r,env);
       else h+=`<div class="ctab">`+[0,1,2,3].map(i=>{const c=s.cs[i]||{t:'round',r:'0'},t=c.t||'round';let v,e;if(t!=='none'){try{v=evalExpr(c.r,env)}catch(x){e=x.message}}
         return`<div class="crow"><span class="cl" role="img" title="${CORNER_NAMES[i]}" aria-label="${CORNER_NAMES[i]}">${ICON.corner(i)}</span><div class="seg sm" role="radiogroup" aria-label="${CORNER_NAMES[i]}の種類">${['round','chamfer','none'].map(k=>{const l={round:'角丸',chamfer:'面取り',none:'直角'}[k];return`<label title="${l}"><input type="radio" name="cs${i}" data-path="cs.${i}.t" value="${k}" aria-label="${l}"${t===k?' checked':''}>${ICON.ct(k,i)}</label>`}).join('')}</div>`+
