@@ -84,6 +84,10 @@ Shape references: `外装.右`, `[名前（記号入り）].上`, `ベロ.点3X`
 everywhere (`right`, `width`, `centerX`, `pt3X`, `self`); Japanese is canonical, `propIn`/`propOut` convert.
 `compute()` gives each shape an env from `selfEnv` (guarded per field, so self-loops are errors); `$ref` resolves shapes
 with cycle detection. Variables cannot reference shapes.
+Panel and variable expression fields get a suggestion list as you type (`sgItems`/`sgShow`/`sgPick`): variables,
+shapes (then their values after the dot), functions, pi. A variable's field only offers the variables above it. Picks go in
+through `execCommand('insertText')` so the field's own undo keeps working; keys are handled in the capture phase and left
+alone while an IME is composing.
 
 ## Things that are easy to break
 - Snapping writes references (`exOf`/`eyOf`); alignment guides never create references; rotated shapes are snapped

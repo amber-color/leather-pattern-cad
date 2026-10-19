@@ -159,6 +159,9 @@ body.sizing,body.sizing *{cursor:inherit!important;user-select:none!important}bo
 #varsTitle{cursor:help;border-bottom:1px dotted var(--muted)}#varsTitle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* the expression guide shown on hovering 変数 */
 .vhelp{position:fixed;z-index:60;width:min(340px,calc(100vw - 32px));max-height:calc(100vh - 80px);overflow:auto;box-sizing:border-box;padding:12px 14px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.22);font-size:12px;line-height:1.55}
+.sugg{position:fixed;z-index:70;min-width:160px;max-width:min(300px,calc(100vw - 16px));max-height:240px;overflow:auto;box-sizing:border-box;padding:3px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.2);font-size:12.5px}
+.sugg[hidden]{display:none}.sugg div{display:flex;align-items:baseline;gap:10px;padding:4px 8px;border-radius:4px;cursor:pointer;white-space:nowrap}
+.sugg div[aria-selected="true"]{background:var(--accent-soft)}.sugg b{font:12.5px var(--mono);font-weight:400;overflow:hidden;text-overflow:ellipsis}.sugg span{margin-left:auto;color:var(--muted);font-size:11px}
 .vhelp[hidden]{display:none}.vhelp h3{margin:10px 0 4px;font-size:11px;letter-spacing:.08em;color:var(--muted);font-weight:500}.vhelp h3:first-child{margin-top:0}
 .vhelp p{margin:0 0 4px}.vhelp code{font:11.5px var(--mono);background:var(--bg);border-radius:3px;padding:0 3px}.vhelp dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0}.vhelp dt{white-space:nowrap}.vhelp dd{margin:0;color:var(--muted)}
 .vbody{display:flex;flex-direction:column;gap:8px}
@@ -425,6 +428,7 @@ input.err{border-color:var(--danger)}
 
 <input type="file" id="uFile" accept="image/*" hidden>
 <div class="vhelp" id="varHelp" role="tooltip" data-noi18n hidden></div>
+<div class="sugg" id="sugg" role="listbox" aria-label="候補" data-noi18n hidden></div>
 <script>
 (()=>{
 // ---------- expression evaluator ----------
@@ -2891,6 +2895,67 @@ $('uFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)
 
 // ---------- hidden parts ----------
 $('sHidden').onclick=()=>{pushUndo();for(const x of doc.shapes)delete x.hide;lastPanelKey=null;render();toast('すべて表示しました')};
+
+// ---------- suggestions in expression fields ----------
+// typing a name in a panel or variable expression offers the variables, shapes (then their values after the dot),
+// functions and pi that fit; ↑↓ pick, Enter / Tab put it in, Esc closes. A variable's expression only offers the
+// variables above it (they are evaluated in order) and no shapes.
+const SG={el:null,list:[],i:0,from:0,picking:false};
+function sgField(el){if(!el)return null;
+  if(el.tagName==='TEXTAREA'&&el.dataset.vi!==undefined&&el.closest('#vars'))return'var';
+  if(el.tagName==='INPUT'&&el.type==='text'&&el.dataset.path&&el.closest('#secProps')&&!/^(name|text)$/.test(el.dataset.path))return'shape';return null}
+const sgNum=v=>'= '+fmt(v,3).replace(/\.?0+$/,'');
+function sgItems(el){const kind=sgField(el),pos=el.selectionStart,before=el.value.slice(0,pos),en=LANG==='en',out=[];
+  if(el.selectionEnd!==pos)return null;
+  const add=(label,ins,detail,rank)=>out.push({label,ins,detail,rank});
+  // after a shape's name and a dot: that shape's values
+  const dm=kind==='shape'&&/(\[[^\]]*\]|[\p{L}\p{N}_]+)[.．]([\p{L}\p{N}_]*)$/u.exec(before);
+  if(dm){const rn=dm[1],name=rn.startsWith('[')?rn.slice(1,-1).trim():rn,self=name===SELF||name==='self',s=self?cur():doc.shapes.find(x=>x.name===name);
+    if(!s)return null;const w=dm[2];
+    for(const k of propKeysOf(s)){const lab=propOut(k);let v=null;try{v=self?C.envFor(s).$self(k):C.env.$ref(name,k)}catch(e){}
+      add(lab,lab,v==null?'':sgNum(v),0)}
+    return{from:pos-w.length,word:w,list:sgFilter(out,w)}}
+  // inside an unclosed [ : shape names
+  const bm=kind==='shape'&&/\[([^\]]*)$/.exec(before);
+  if(bm){const w=bm[1];for(const x of doc.shapes)if(x.name)add(x.name,x.name+'].',en?'shape':'図形',1);return{from:pos-w.length,word:w,list:sgFilter(out,w)}}
+  const wm=/[\p{L}\p{N}_]+$/u.exec(before);if(!wm||!/[\p{L}_]/u.test(wm[0])||/[.．]$/.test(before.slice(0,wm.index)))return null;const w=wm[0];
+  const vars=kind==='var'?doc.vars.slice(0,+el.dataset.vi):doc.vars;
+  for(const v of vars)if(v.n)add(v.n,v.n,v.n in C.env?sgNum(C.env[v.n]):String(v.e),0);
+  if(kind==='shape'){for(const x of doc.shapes)if(x.name&&x.id!==sel)add(x.name,refName(x.name)+'.',en?'shape':'図形',1);add(en?'self':SELF,(en?'self':SELF)+'.',en?'this shape':'この図形',1)}
+  for(const f of Object.keys(FN))add(f,f+'(',en?'function':'関数',2);add('pi','pi',sgNum(Math.PI),2);
+  return{from:wm.index,word:w,list:sgFilter(out,w)}}
+// a name that is exactly what was typed comes first, then those that start with it, then those that contain it; at most 8
+function sgFilter(list,w){const l=w.toLowerCase(),seen=new Set();
+  const r=list.map(o=>{const n=o.label.toLowerCase();return{...o,m:n===l?0:n.startsWith(l)?1:n.includes(l)?2:-1}}).filter(o=>o.m>=0&&!seen.has(o.ins)&&seen.add(o.ins))
+    .sort((a,b)=>a.m-b.m||a.rank-b.rank);
+  return r.length===1&&r[0].label===w&&r[0].ins===w?[]:r.slice(0,8)}
+function sgHide(){if(!SG.el)return;$('sugg').hidden=true;SG.el.removeAttribute('aria-activedescendant');SG.el=null}
+function sgShow(el){const r=sgItems(el);if(!r||!r.list.length)return sgHide();
+  Object.assign(SG,{el,list:r.list,i:0,from:r.from});const box=$('sugg');
+  box.innerHTML=r.list.map((o,i)=>`<div role="option" id="sg${i}" data-i="${i}" aria-selected="${i===0}"><b>${esc(o.label)}</b><span>${esc(o.detail)}</span></div>`).join('');
+  box.hidden=false;const b=el.getBoundingClientRect(),h=box.offsetHeight,w=box.offsetWidth;
+  box.style.left=Math.max(8,Math.min(b.left,innerWidth-w-8))+'px';box.style.top=(b.bottom+4+h>innerHeight-8&&b.top-4-h>8?b.top-4-h:b.bottom+4)+'px';
+  el.setAttribute('aria-activedescendant','sg0')}
+function sgPick(i){const el=SG.el,o=SG.list[i];if(!el||!o)return;const pos=el.selectionStart,v=el.value;
+  // typed in through the editing command so the field's own undo (⌘Z while typing) still works
+  el.setSelectionRange(SG.from,pos);SG.picking=true;let done=false;try{done=document.execCommand('insertText',false,o.ins)}catch(e){}SG.picking=false;
+  if(!done){el.value=v.slice(0,SG.from)+o.ins+v.slice(pos);const c=SG.from+o.ins.length;el.setSelectionRange(c,c);el.dispatchEvent(new Event('input',{bubbles:true}))}
+  // a shape leads straight on to its values
+  if(/[.．]$/.test(o.ins))sgShow(el);else sgHide()}
+function sgMove(d){const n=SG.list.length;SG.i=(SG.i+d+n)%n;const box=$('sugg');
+  box.querySelectorAll('[role=option]').forEach((x,i)=>x.setAttribute('aria-selected',i===SG.i));box.children[SG.i].scrollIntoView({block:'nearest'});
+  SG.el.setAttribute('aria-activedescendant','sg'+SG.i)}
+document.addEventListener('input',e=>{if(sgField(e.target)&&e.isTrusted&&!SG.picking)sgShow(e.target)});
+document.addEventListener('keydown',e=>{if(!SG.el||e.target!==SG.el||composing(e))return;
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();e.stopImmediatePropagation();sgMove(e.key==='ArrowDown'?1:-1)}
+  else if((e.key==='Enter'||e.key==='Tab')&&!e.shiftKey&&!e.metaKey&&!e.ctrlKey){e.preventDefault();e.stopImmediatePropagation();sgPick(SG.i)}
+  else if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();sgHide()}
+  else if(e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='Home'||e.key==='End')sgHide()},true);
+document.addEventListener('focusout',e=>{if(e.target===SG.el)sgHide()});
+document.addEventListener('scroll',e=>{if(SG.el&&!$('sugg').contains(e.target))sgHide()},true);
+addEventListener('resize',sgHide);
+$('sugg').setAttribute('aria-label',LANG==='en'?'Suggestions':'候補');
+$('sugg').addEventListener('mousedown',e=>{e.preventDefault();const o=e.target.closest('[data-i]');if(o)sgPick(+o.dataset.i)});
 
 // ---------- copy / paste (⌘C / ⌘V) ----------
 // the selection with its materials and sources, plus the variables they use, as JSON text on the clipboard
