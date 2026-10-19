@@ -153,6 +153,11 @@ body.sizing,body.sizing *{cursor:inherit!important;user-select:none!important}bo
 .side.vars.collapsed .vmini{opacity:1;pointer-events:auto;transition-delay:.08s}
 .vhead{display:flex;align-items:center;gap:6px}
 .vhead h2{flex:1}
+#varsTitle{cursor:help;border-bottom:1px dotted var(--muted)}#varsTitle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* the expression guide shown on hovering 変数 */
+.vhelp{position:fixed;z-index:60;width:min(340px,calc(100vw - 32px));max-height:calc(100vh - 80px);overflow:auto;box-sizing:border-box;padding:12px 14px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.22);font-size:12px;line-height:1.55}
+.vhelp[hidden]{display:none}.vhelp h3{margin:10px 0 4px;font-size:11px;letter-spacing:.08em;color:var(--muted);font-weight:500}.vhelp h3:first-child{margin-top:0}
+.vhelp p{margin:0 0 4px}.vhelp code{font:11.5px var(--mono);background:var(--bg);border-radius:3px;padding:0 3px}.vhelp dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0}.vhelp dt{white-space:nowrap}.vhelp dd{margin:0;color:var(--muted)}
 .vbody{display:flex;flex-direction:column;gap:8px}
 .vtoggle{width:26px;height:26px;padding:0;display:grid;place-items:center;flex:none;border:none;background:none;color:var(--muted);cursor:pointer;border-radius:4px}
 .vtoggle:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
@@ -352,13 +357,12 @@ input.err{border-color:var(--danger)}
     </div>
     <section class="sec vfull" id="varsFull">
       <div class="vhead">
-        <h2>変数</h2>
-        <button class="btn" id="addVar" style="padding:3px 8px">＋ 追加</button>
+        <h2><span id="varsTitle" tabindex="0" aria-describedby="varHelp">変数</span></h2>
+        <button class="btn" id="addVar" style="padding:3px 9px" aria-label="変数を追加" title="変数を追加">＋</button>
         <button class="vtoggle" id="varsToggle" aria-expanded="true" title="変数バーを折りたたむ"><svg viewBox="0 0 16 16"><path d="M6 3l5 5-5 5"/></svg></button>
       </div>
       <div class="vbody">
         <div id="vars" style="display:flex;flex-direction:column;gap:5px"></div>
-        <div class="small">寸法欄には <code>W-2*R</code> のような式が書けます。<code>外装.右</code> のように図形の値も参照できます。変数を変えると全パーツが追従します。</div>
       </div>
     </section>
   </aside>
@@ -405,6 +409,7 @@ input.err{border-color:var(--danger)}
   <div class="btns"><button class="btn primary" id="mCopy">コピー</button><button class="btn" id="mSave">テキストで保存</button><button class="btn" id="mClose">閉じる</button></div>
 </div></div>
 
+<div class="vhelp" id="varHelp" role="tooltip" data-noi18n hidden></div>
 <script>
 (()=>{
 // ---------- expression evaluator ----------
@@ -481,7 +486,7 @@ const EN_EXACT={
   '平行でない2本の線分を順にクリック。交わっていなくても延長してつなぎ、クリックした側を残して角を丸めます（R は下の欄。Esc で選び直し）':'Click two edges that aren’t parallel. They are extended (or trimmed) to meet even if they don’t cross, and the corner is rounded, keeping the side you clicked (R is in the field below; Esc picks again)',
   'オフセットする図形をクリック。複数まとめるときは Shift＋クリックで選んで Enter（図形を選んでからこのツールを押しても作れます）':'Click the shape to offset. For several at once, Shift-click them and press Enter (or select shapes first, then pick this tool)',
   // variables bar
-  '変数':'Variables','＋ 追加':'+ Add','変数バーを広げる':'Expand the variables bar','変数バーを折りたたむ':'Collapse the variables bar','変数名':'Variable name',
+  '変数':'Variables','＋ 追加':'+ Add','変数を追加':'Add a variable','変数バーを広げる':'Expand the variables bar','変数バーを折りたたむ':'Collapse the variables bar','変数名':'Variable name',
   '寸法欄には':'Dimension fields take expressions such as ','のような式が書けます。':'. Other shapes’ values work too, as in ','のように図形の値も参照できます。変数を変えると全パーツが追従します。':'. Change a variable and every part follows.',
   'まだどこにも使われていません':'Not used anywhere yet','外装.右':'外装.right',
   // part panel
@@ -2725,6 +2730,34 @@ document.querySelectorAll('.sizer').forEach(h=>{
     h.addEventListener('pointermove',mv);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up)});
   h.addEventListener('dblclick',()=>{const k=phoneQ.matches&&h.dataset.size!=='gh'?'mh':h.dataset.size;if(UI.sizes)delete UI.sizes[k];applySizes();saveUI();render()})});
 applySizes();
+
+// ---------- expression guide (hover / focus on 変数) ----------
+const HELP={ja:[
+  ['書けるもの','<p>寸法・位置・角R・縫い代などの欄と変数には、数値の代わりに式が書けます。変数を変えると全パーツが追従します。</p>'],
+  ['計算',[['<code>+ - * /</code>','足す・引く・掛ける・割る（<code>×</code> も可）'],['<code>^</code>','べき乗　<code>2^3</code> = 8'],['<code>( )</code>','先に計算　<code>(W-2*R)/2</code>'],['<code>-W</code>','符号の反転'],['<code>12</code> <code>0.5</code>','数値（全角数字も可）']]],
+  ['定数と関数',[['<code>pi</code>','円周率'],['<code>sqrt(x)</code>','平方根'],['<code>abs(x)</code>','絶対値'],['<code>min(a,b,…)</code> <code>max(a,b,…)</code>','最小・最大'],['<code>round(x)</code>','四捨五入'],['<code>floor(x)</code> <code>ceil(x)</code>','切り捨て・切り上げ'],['<code>sin(x)</code> <code>cos(x)</code> <code>tan(x)</code>','角度は度で'],['<code>atan(x)</code>','結果は度']]],
+  ['変数','<p>変数名をそのまま書きます（<code>W+間</code>）。変数の式では、それより上の変数を使えます。図形は参照できません。</p>'],
+  ['図形の値　<code>名前.値</code>',[['<code>左 右 上 下</code>','外形の端（Y は上が正）'],['<code>幅 高さ 中心X 中心Y</code>','外形の大きさと中心'],['<code>X Y</code>','矩形の左下・テキストの基準点'],['<code>直径 半径</code>','円'],['<code>点1X 点1Y …</code>','パスの頂点'],['<code>始点X 始点Y 終点X 終点Y 長さ</code>','寸法線']]],
+  ['そのほか',[['<code>[名前].右</code>','名前に記号や空白がある図形'],['<code>自分.幅</code>','その図形自身の値（角R・縫い代・回転中心など）']]]],
+ en:[
+  ['What you can write','<p>Dimension, position, corner R, margin and similar fields, and variables, take expressions instead of numbers. Change a variable and every part follows.</p>'],
+  ['Arithmetic',[['<code>+ - * /</code>','add, subtract, multiply, divide (<code>×</code> works too)'],['<code>^</code>','power: <code>2^3</code> = 8'],['<code>( )</code>','grouping: <code>(W-2*R)/2</code>'],['<code>-W</code>','negation'],['<code>12</code> <code>0.5</code>','numbers (full-width digits work)']]],
+  ['Constants and functions',[['<code>pi</code>','π'],['<code>sqrt(x)</code>','square root'],['<code>abs(x)</code>','absolute value'],['<code>min(a,b,…)</code> <code>max(a,b,…)</code>','smallest, largest'],['<code>round(x)</code>','round'],['<code>floor(x)</code> <code>ceil(x)</code>','round down, up'],['<code>sin(x)</code> <code>cos(x)</code> <code>tan(x)</code>','angles in degrees'],['<code>atan(x)</code>','result in degrees']]],
+  ['Variables','<p>Write a variable’s name (<code>W+gap</code>). A variable’s expression can use the variables above it, but not shapes.</p>'],
+  ['Shape values: <code>name.value</code>',[['<code>left right top bottom</code>','edges of the outline (Y up)'],['<code>width height centerX centerY</code>','size and centre of the outline'],['<code>X Y</code>','a rectangle’s bottom-left corner, a text’s anchor'],['<code>diameter radius</code>','circles'],['<code>pt1X pt1Y …</code>','path nodes'],['<code>startX startY endX endY length</code>','dimensions']]],
+  ['Also',[['<code>[name].right</code>','a shape whose name has symbols or spaces'],['<code>self.width</code>','the shape’s own values (corner R, margin, rotation centre…)']]]]};
+function fillHelp(){$('varHelp').innerHTML=(HELP[LANG]||HELP.ja).map(([h,b])=>`<h3>${h}</h3>`+(typeof b==='string'?b:`<dl>${b.map(([t,d])=>`<dt>${t}</dt><dd>${d}</dd>`).join('')}</dl>`)).join('')}
+let helpHide=null,helpAt=0;
+function showHelp(){clearTimeout(helpHide);const box=$('varHelp');if(box.hidden)helpAt=performance.now();if(!box.innerHTML)fillHelp();box.hidden=false;box.style.maxHeight='';const t=$('varsTitle').getBoundingClientRect(),bar=$('varsBar').getBoundingClientRect(),w=box.offsetWidth,h=box.offsetHeight;
+  // beside the variables bar on a desktop, above the bottom half on a phone
+  if(phoneQ.matches){box.style.left='16px';box.style.maxHeight=Math.max(120,t.top-16)+'px';box.style.top=Math.max(8,t.top-8-Math.min(h,t.top-16))+'px'}
+  else{box.style.left=Math.max(8,bar.left-w-8)+'px';box.style.top=Math.max(54,Math.min(t.top,innerHeight-h-8))+'px'}}
+const hideHelp=()=>{clearTimeout(helpHide);helpHide=setTimeout(()=>{$('varHelp').hidden=true},120)};
+for(const el of[$('varsTitle'),$('varHelp')]){el.addEventListener('mouseenter',showHelp);el.addEventListener('mouseleave',hideHelp)}
+$('varsTitle').addEventListener('focus',showHelp);$('varsTitle').addEventListener('blur',hideHelp);
+// a tap also sends mouseenter just before the click, so a click right after the guide opened keeps it open
+$('varsTitle').addEventListener('click',()=>{if($('varHelp').hidden)showHelp();else if(performance.now()-helpAt>400)$('varHelp').hidden=true});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('varHelp').hidden){$('varHelp').hidden=true}},true);
 
 // ---------- boot ----------
 function boot(){startI18n();if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}$('xFrame').setAttribute('aria-pressed',String(!!UI.showFrame));$('xNames').setAttribute('aria-pressed',String(!UI.hideNames));setTool('select');requestAnimationFrame(fit);loadFromLink()}
