@@ -39,6 +39,12 @@ Push straight to `main` when asked; there is no build step.
   negate y, rot and rcy (rect: top = -(y+h)); `shapeProp` / `selfProp` return y values negated (上 = -min y);
   writes go through `eyOf` (num(-y)), `shiftLeaf` / `shiftPivot` (move by -dy), and the handle / draw / node code.
   Stitch `eo` / `fl` / piece anchors `u,v` are in internal bbox terms and did not change.
+- `doc.under` = underlay placement `{x, y (bottom-left), w, ar, op, hide?, lock?}`; the picture (`underSrc`, a shrunk JPEG data
+  URL) is kept in IndexedDB (`IDB`, key `under`), written into a saved .json as `under.img`, taken out again on open, and never
+  put in a share link. `<image id="underImg">` is the first child of `#world` (below the grid).
+- Shape flags `hide` (not drawn, not hit, not snapped to; exports unchanged) and `lock` (no drag, handles or delete).
+- ⌘C / ⌘V use the copy / paste events: `clipOf` (selection + `moveTree` + used variables) and `pasteClip` (new ids, unique
+  names, references between pasted shapes rewritten by `remapRefs`, moved 10 mm).
 - A path's `p.x, p.y` is its origin (empty = 0): `placedNodes` adds it to the nodes, moving a path (`shiftLeaf`) changes only
   the origin, and node values written from the canvas go through `nodeX` / `nodeY` / `nodeXE` / `nodeYE` (relative to it).
   `自分.点1X` reads the node field as written (relative); other shapes' `L.点1X` read the placed value.

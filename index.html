@@ -156,7 +156,9 @@ body.sizing,body.sizing *{cursor:inherit!important;user-select:none!important}bo
 #varsTitle{cursor:help;border-bottom:1px dotted var(--muted)}#varsTitle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* the expression guide shown on hovering 変数 */
 .vhelp{position:fixed;z-index:60;width:min(340px,calc(100vw - 32px));max-height:calc(100vh - 80px);overflow:auto;box-sizing:border-box;padding:12px 14px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.22);font-size:12px;line-height:1.55}
-.vhelp[hidden]{display:none}.vhelp h3{margin:10px 0 4px;font-size:11px;letter-spacing:.08em;color:var(--muted);font-weight:500}.vhelp h3:first-child{margin-top:0}
+.vhelp[hidden]{display:none}
+.upop{position:fixed;z-index:56;width:min(300px,calc(100vw - 32px));box-sizing:border-box;padding:12px 14px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.22);display:flex;flex-direction:column;gap:8px}
+.upop[hidden]{display:none}.upop .uhead{display:flex;align-items:center;justify-content:space-between}.upop p{margin:0}.vhelp h3{margin:10px 0 4px;font-size:11px;letter-spacing:.08em;color:var(--muted);font-weight:500}.vhelp h3:first-child{margin-top:0}
 .vhelp p{margin:0 0 4px}.vhelp code{font:11.5px var(--mono);background:var(--bg);border-radius:3px;padding:0 3px}.vhelp dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0}.vhelp dt{white-space:nowrap}.vhelp dd{margin:0;color:var(--muted)}
 .vbody{display:flex;flex-direction:column;gap:8px}
 .vtoggle{width:26px;height:26px;padding:0;display:grid;place-items:center;flex:none;border:none;background:none;color:var(--muted);cursor:pointer;border-radius:4px}
@@ -303,6 +305,7 @@ input.err{border-color:var(--danger)}
         </div></div>
       <button class="btn ibtn" id="xFrame" aria-pressed="false" title="印刷枠：PDFの用紙と向きで印刷される範囲を図面に表示" aria-label="印刷枠"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v2"/><path d="M20 16v2a2 2 0 0 1 -2 2h-2"/><path d="M8 20h-2a2 2 0 0 1 -2 -2v-2"/><path d="M4 8v-2a2 2 0 0 1 2 -2h2"/></svg></button>
       <button class="btn ibtn" id="xNames" aria-pressed="true" title="パーツ名：図形の左上の名前を表示・非表示（選択中の図形は常に表示）" aria-label="パーツ名"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 7.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3z"/></svg></button>
+      <button class="btn ibtn" id="xUnder" aria-expanded="false" title="下絵：写真やスキャンを実寸に合わせて背景に置く" aria-label="下絵"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z"/><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5"/><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3"/></svg></button>
       <button class="btn ibtn" id="xTheme" title="ライト / ダークを切り替え" aria-label="ライト / ダークを切り替え"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="t-moon"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454l0 .008"/></g><g class="t-sun"><path d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"/></g></svg></button>
       <button class="btn ibtn" id="xCode" aria-pressed="false" title="コード：型紙をJSONで直接編集" aria-label="コード"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8l-4 4l4 4"/><path d="M17 8l4 4l-4 4"/><path d="M14 4l-4 16"/></svg></button>
       <button class="btn ibtn" id="xGraph" aria-pressed="false" title="関係図：変数とパーツのつながりを表示" aria-label="関係図"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="6" height="4" rx="1"/><rect x="3" y="16" width="6" height="4" rx="1"/><rect x="15" y="10" width="6" height="4" rx="1"/><path d="M9 6c3 0 3 6 6 6M9 18c3 0 3 -6 6 -6"/></svg></button>
@@ -317,6 +320,7 @@ input.err{border-color:var(--danger)}
     <button class="tool" data-tool="circle" title="円 (C)"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.5"/></svg><kbd>C</kbd></button>
     <button class="tool" data-tool="line" title="直線・折れ線 (L)"><svg viewBox="0 0 20 20"><path d="M3 15l4-9 6 6 4-8"/></svg><kbd>L</kbd></button>
     <button class="tool" data-tool="dim" title="寸法線 (D)"><svg viewBox="0 0 20 20"><path d="M3 6v9M17 6v9M3 10.5h14"/><path d="M3 10.5l3-1.8v3.6zM17 10.5l-3-1.8v3.6z" fill="currentColor" stroke="none"/></svg><kbd>D</kbd></button>
+    <button class="tool" data-tool="measure" title="計測 (M)"><svg viewBox="0 0 20 20"><path d="M2.5 14.5l12-12 3 3-12 12z"/><path d="M5.5 11.5l1.5 1.5M8 9l1 1M10.5 6.5l1.5 1.5M13 4l1 1"/></svg><kbd>M</kbd></button>
     <button class="tool" data-tool="text" title="テキスト (T)"><svg viewBox="0 0 20 20"><path d="M4 5V3.5h12V5M10 3.5v13M7.5 16.5h5"/></svg><kbd>T</kbd></button>
     <button class="tool" data-tool="poly" title="ベジェ曲線 (P)"><svg viewBox="0 0 20 20"><path d="M3 16C5 6 11 4 17 4"/><path d="M8 7.5l6-3" stroke-width="1"/><circle cx="8" cy="7.5" r="1.3"/><circle cx="14" cy="4.5" r="1.3"/></svg><kbd>P</kbd></button>
     <button class="tool" data-tool="offset" title="オフセット (O)"><svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="13" rx="4"/><rect x="6.5" y="7.5" width="7" height="5" rx=".5" stroke-width="1.2"/></svg><kbd>O</kbd></button>
@@ -330,7 +334,7 @@ input.err{border-color:var(--danger)}
 
   <main class="stage" id="stage">
     <svg id="cv" xmlns="http://www.w3.org/2000/svg">
-      <g id="world"><path id="gMinor" fill="none" stroke="var(--mat-minor)" stroke-width="1" vector-effect="non-scaling-stroke"/><path id="gMajor" fill="none" stroke="var(--mat-major)" stroke-width="1" vector-effect="non-scaling-stroke"/><g id="gAxes" pointer-events="none"></g><g id="shapes"></g><g id="overlay"></g></g>
+      <g id="world"><image id="underImg" preserveAspectRatio="none" pointer-events="none" style="display:none"/><path id="gMinor" fill="none" stroke="var(--mat-minor)" stroke-width="1" vector-effect="non-scaling-stroke"/><path id="gMajor" fill="none" stroke="var(--mat-major)" stroke-width="1" vector-effect="non-scaling-stroke"/><g id="gAxes" pointer-events="none"></g><g id="shapes"></g><g id="overlay"></g></g>
     </svg>
     <div class="gpane" id="gpane" hidden><div class="sizer" data-size="gh" role="separator" aria-label="関係図の高さ" title="ドラッグで高さを変更（ダブルクリックで元に戻す）"></div><div class="ghead"><strong>関係図</strong><span class="small" id="gInfo"></span><button class="vtoggle" id="gClose" aria-label="関係図を閉じる" title="閉じる"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div><svg id="gsvg" aria-label="関係図"></svg></div>
     <div class="toast" id="toast" role="status"></div>
@@ -342,6 +346,7 @@ input.err{border-color:var(--danger)}
     <label>スナップ <select id="snap"><option value="0">なし</option><option value="0.5">0.5</option><option value="1" selected>1</option><option value="5">5</option></select> mm</label>
     <label class="osnap" title="図形の端点・中点・中心・交点などに吸着します（S で切り替え。Ctrl / ⌘ を押している間は一時的に無効）"><input type="checkbox" id="osnap"> 図形スナップ</label>
     <label id="fRBox" hidden>R <input type="text" id="fR" value="3" aria-label="フィレットの半径" spellcheck="false" autocomplete="off"> mm</label>
+    <button class="btn" id="sHidden" style="padding:0 8px" hidden></button>
     <span class="hint" id="sHint"></span>
   </div>
 
@@ -409,6 +414,22 @@ input.err{border-color:var(--danger)}
   <div class="btns"><button class="btn primary" id="mCopy">コピー</button><button class="btn" id="mSave">テキストで保存</button><button class="btn" id="mClose">閉じる</button></div>
 </div></div>
 
+<div class="upop" id="underPop" role="dialog" aria-label="下絵" hidden>
+  <div class="uhead"><b>下絵</b><button class="vtoggle" id="uClose" aria-label="閉じる" title="閉じる"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
+  <p class="small">写真やスキャンを読み込み、写っている2点の実寸で大きさを合わせます。作図の目安なので書き出しには出ません。</p>
+  <div class="btnrow"><button class="btn" id="uLoad">画像を読み込む</button></div>
+  <input type="file" id="uFile" accept="image/*" hidden>
+  <div id="uCtl" style="display:flex;flex-direction:column;gap:8px">
+    <div class="btnrow"><label class="check"><input type="checkbox" id="uShow"> 表示</label><label class="check"><input type="checkbox" id="uLock"> ロック</label></div>
+    <div class="row"><label for="uOp">濃さ</label><input type="range" id="uOp" min="10" max="100" step="5"><span id="uOpV" class="small"></span></div>
+    <div class="row"><label for="uW">幅</label><input type="text" id="uW" spellcheck="false" autocomplete="off"><span class="small">mm</span></div>
+    <div class="row"><label for="uX">X</label><input type="text" id="uX" spellcheck="false" autocomplete="off"><span class="small">mm（左下）</span></div>
+    <div class="row"><label for="uY">Y</label><input type="text" id="uY" spellcheck="false" autocomplete="off"><span class="small">mm</span></div>
+    <div class="row"><label for="uLen">実寸</label><input type="text" id="uLen" value="100" spellcheck="false" autocomplete="off"><span class="small">mm</span></div>
+    <div class="btnrow"><button class="btn" id="uScale" title="画像の上で2点をクリックすると、その間が「実寸」の長さになるよう拡大縮小します">2点で大きさ合わせ</button><button class="btn" id="uMove" title="画像の上の点をクリックし、次に置きたい場所をクリック（スナップが効きます）">点で位置合わせ</button></div>
+    <div class="btnrow"><button class="btn del" id="uDel">下絵を外す</button></div>
+  </div>
+</div>
 <div class="vhelp" id="varHelp" role="tooltip" data-noi18n hidden></div>
 <script>
 (()=>{
@@ -464,6 +485,7 @@ const fmt=(v,d=1)=>(Math.round(v*10**d)/10**d).toFixed(d);
 const LANG=(()=>{let u={};try{u=JSON.parse(localStorage.getItem('ppp-ui')||'{}')||{}}catch(e){}
   if(u.lang==='ja'||u.lang==='en')return u.lang;const l=(navigator.languages&&navigator.languages[0])||navigator.language||'ja';return/^ja/i.test(l)?'ja':'en'})();
 const EN_EXACT={
+  '下絵：写真やスキャンを実寸に合わせて背景に置く':'Underlay: a photo or scan placed full-size behind the drawing','下絵':'Underlay','写真やスキャンを読み込み、写っている2点の実寸で大きさを合わせます。作図の目安なので書き出しには出ません。':'Load a photo or scan and size it by the real distance between two points in it. It is a drawing aid and is never exported.','画像を読み込む':'Load an image','画像を差し替える':'Replace the image','表示':'Show','ロック':'Lock','濃さ':'Opacity','mm（左下）':'mm (bottom left)','実寸':'Real size','2点で大きさ合わせ':'Scale by 2 points','点で位置合わせ':'Move by a point','下絵を外す':'Remove the underlay','画像の上で2点をクリックすると、その間が「実寸」の長さになるよう拡大縮小します':'Click two points on the image; it is scaled so they are “Real size” apart','画像の上の点をクリックし、次に置きたい場所をクリック（スナップが効きます）':'Click a point on the image, then where it should go (snapping applies)','計測 (M)':'Measure (M)','2点をクリックすると距離・角度・ΔX・ΔYを表示（図形スナップが効きます）。もう一度クリックで測り直し、Escで終了':'Click two points to see the distance, angle, ΔX and ΔY (object snap applies). Click again to measure anew; Esc to finish','表示する':'Show','非表示にする（書き出しには影響しません）':'Hide (exports are not affected)','非表示':'Hide','ロックを解除':'Unlock','ロック：図形の上で動かしたり消したりできないようにする':'Lock: can’t be moved or deleted on the canvas','まとめて表示':'Show all','まとめて非表示':'Hide all','まとめてロック解除':'Unlock all','まとめてロック':'Lock all','ロック中のパーツは図形の上で編集できません（パーツ欄の鍵で解除）':'A locked part can’t be edited on the canvas (unlock it in the parts panel)','ロック中のパーツは動かせません（パーツ欄の鍵で解除）':'A locked part can’t be moved (unlock it in the parts panel)','ロック中のパーツは削除できません（パーツ欄の鍵で解除）':'A locked part can’t be deleted (unlock it in the parts panel)','すべて表示しました':'Everything is shown','画像を読み込めませんでした':'Couldn’t read that image','下絵を置きました。「2点で大きさ合わせ」で実寸に合わせてください':'Underlay placed. Use “Scale by 2 points” to bring it to full size','実寸を mm で入れてください':'Enter the real size in mm','下絵の上で、実寸が分かる2点をクリック（Escでやめる）':'Click two points on the underlay whose real distance you know (Esc to cancel)','下絵の上の点をクリックし、次にその点を置きたい場所をクリック（Escでやめる）':'Click a point on the underlay, then where it should go (Esc to cancel)','同じ点です':'Those are the same point','下絵を動かしました':'Underlay moved','下絵は共有リンクに含まれません':'The underlay isn’t included in share links',
   // top bar, menus
   'ファイル':'File','新規':'New','開く':'Open','開く：保存した .json を読み込む':'Open: load a saved .json','保存':'Save','保存：型紙を .json で保存':'Save the pattern as .json',
   '使い方':'Help','書き出し':'Export','書き出し（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)','印刷枠':'Print area','クリックで指定':'Pick on canvas','キャンバスをクリックして回転中心を決めます（グリッド・図形スナップが効きます）':'Click on the canvas to set the rotation centre (grid and object snap apply)','回転中心にする点をクリック（Escでやめる）':'Click the point to rotate around (Esc to cancel)','回転中心を設定しました':'Rotation centre set','パーツ欄の幅':'Parts panel width','変数バーの幅':'Variables bar width','コード欄の幅':'Code panel width','関係図の高さ':'Graph height','ドラッグで幅を変更（ダブルクリックで元に戻す）':'Drag to resize (double-click to reset)','ドラッグで高さを変更（ダブルクリックで元に戻す）':'Drag to resize (double-click to reset)','パーツ名':'Part names','パーツ名：図形の左上の名前を表示・非表示（選択中の図形は常に表示）':'Part names: show or hide the name above each part (a selected part always shows it)','パーツ名を隠しました':'Part names hidden','パーツ名を表示しました':'Part names shown','印刷枠：PDFの用紙と向きで印刷される範囲を図面に表示':'Print area: show the area the PDF paper and orientation will print',
@@ -581,6 +603,7 @@ const EN_EXACT={
 };
 // [Japanese with {0}…, English, optional {index:{ja:en}} for words that read differently inside the sentence]
 const EN_PAT=[
+  ['非表示 {0} · すべて表示','Hidden {0} · show all'],['下絵を {0}% にしました','Underlay scaled to {0}%'],['{0}個をコピーしました','Copied {0}'],['{0}個を貼り付けました（変数 {1}個も追加）','Pasted {0} (and {1} variables)'],['{0}個を貼り付けました','Pasted {0}'],['面積の合計 {0} cm²（{1} デシ）','Total area {0} cm² ({1} dm²)'],['面積 {0} cm²（{1} デシ）','Area {0} cm² ({1} dm²)'],['計測：{0}','Measure: {0}'],
   ['{0}（書き出さない）  {1}穴','{0} (not exported)  {1} holes',{0:'T'}],['{0}（書き出さない）','{0} (not exported)',{0:'T'}],['{0}（材料）  {1}穴','{0} (material)  {1} holes'],['{0}  {1}穴','{0}  {1} holes'],['{0}（材料）','{0} (material)'],['周長 {0}','Perimeter {0}'],['{0} · 連動','{0} · linked',{0:'T'}],
   ['{0} 横  {1}','{0} landscape  {1}',{0:'T'}],['{0} 縦  {1}','{0} portrait  {1}',{0:'T'}],['{0} 横','{0} landscape',{0:'T'}],['{0} 縦','{0} portrait',{0:'T'}],['図形に合わせる（{0} × {1} mm）  {2}','Fit to the shapes ({0} × {1} mm)  {2}'],['図形に合わせる（{0} × {1} mm）','Fit to the shapes ({0} × {1} mm)'],
   ['{0}枚（横{1} × 縦{2}）','{0} pages ({1} across × {2} down)'],['{0}枚','{0} page(s)'],['{0}-{1} ページ','Page {0}-{1}'],['ほか {0} 枚','{0} more'],
@@ -703,7 +726,7 @@ migrate(doc);
 const num=v=>String(+(+v).toFixed(3));
 let picks=[],tool='select',snapStep=1;
 // pendingBetween: after a fillet dropped the edges between two picked edges of a path, the choice to keep them as a line
-let sel=null,selEdge=null,selNodes=[],pendingBetween=null,pivotPick=null;const setSel=id=>{sel=id;picks=id?[id]:[];selEdge=null;selNodes=[];if(pendingBetween&&pendingBetween.id!==id)pendingBetween=null};
+let sel=null,selEdge=null,selNodes=[],pendingBetween=null,pivotPick=null,measure=null,underPick=null,underSrc=null;const setSel=id=>{sel=id;picks=id?[id]:[];selEdge=null;selNodes=[];if(pendingBetween&&pendingBetween.id!==id)pendingBetween=null};
 const view={tx:0,ty:0,s:3};
 let undoS=[],redoS=[];
 function pushUndo(){undoS.push(JSON.stringify(doc));if(undoS.length>100)undoS.shift();redoS=[]}
@@ -784,6 +807,10 @@ const ICON={
   flipX:PI('<path d="M12 3l0 18"/><path d="M16 7l0 10l5 0l-5 -10"/><path d="M8 7l0 10l-5 0l5 -10"/>',24),
   flipY:PI('<path d="M3 12l18 0"/><path d="M7 16l10 0l-10 5l0 -5"/><path d="M7 8l10 0l-10 -5l0 5"/>',24),
   pivot:PI('<circle cx="8" cy="8" r="3.2"/><path d="M8 1.5v3M8 11.5v3M1.5 8h3M11.5 8h3"/>'),
+  eye:PI('<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/>',24),
+  eyeOff:PI('<path d="M10.585 10.587a2 2 0 0 0 2.829 2.828"/><path d="M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87"/><path d="M3 3l18 18"/>',24),
+  lock:PI('<path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z"/><path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0"/><path d="M8 11v-4a4 4 0 1 1 8 0v4"/>',24),
+  unlock:PI('<path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z"/><path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0"/><path d="M8 11v-5a4 4 0 0 1 8 0"/>',24),
   trash:PI('<path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/>',24)};
 function rectCorners(x,y,w,h,cr){const D=[
     {C:[x,y],pin:r=>[x,y+r],pout:r=>[x+r,y],c:r=>[x+r,y+r],a0:180},
@@ -1261,7 +1288,8 @@ function drawGrid(){
   $('gAxes').innerHTML=A('var(--ax-x)',`M0 0H${L}M${L-a} ${-w}L${L} 0L${L-a} ${w}`)+A('var(--ax-y)',`M0 0V${-L}M${-w} ${-L+a}L0 ${-L}L${w} ${-L+a}`)
     +`<circle r="${2*k}" fill="var(--cut)" fill-opacity=".7"/><text x="${L+4*k}" y="${f*0.35}" font-size="${f}" fill="var(--ax-x)" font-family="IBM Plex Mono, monospace">X</text><text x="${-f*0.3}" y="${-L-5*k}" font-size="${f}" fill="var(--ax-y)" font-family="IBM Plex Mono, monospace">Y</text>`}
 function render(){
-  C=compute();gShapes.textContent='';gOver.textContent='';
+  C=compute();gShapes.textContent='';gOver.textContent='';drawUnder();
+  {const n=doc.shapes.filter(x=>x.hide).length,b=$('sHidden');b.hidden=!n;if(n)b.textContent=`非表示 ${n} · すべて表示`}
   if(sel&&!byId(sel))setSel(null);picks=picks.filter(id=>byId(id));
   {const sc=byId(sel);if(!sc||sc.type!=='poly'||picks.length!==1)selNodes=[];else selNodes=selNodes.filter(i=>i<sc.nodes.length)}
   if(selEdge){const si=C.byId[sel];if(selEdge.id!==sel||picks.length!==1||!si||!si.st||!si.st.edges.some(e=>e.key===selEdge.key))selEdge=null}
@@ -1270,8 +1298,10 @@ function render(){
   const picked=i=>picks.includes(i.s.id)||i.s.id===sel;
   const order=C.items.filter(i=>i.parent&&!picked(i)).concat(C.items.filter(i=>!i.parent&&!picked(i)),C.items.filter(picked));
   for(const it of order){const s=it.s,g=it.g;if(!g)continue;const on=picks.includes(s.id),mat=!!it.parent;
+    // a hidden part is left out (shown faint only while it is selected, so it can be shown again)
+    if(s.hide&&!on&&s.id!==sel)continue;
     const faint=mat&&s.id!==sel;
-    const grp=el('g',{'data-id':s.id,'pointer-events':faint?'none':'auto',opacity:faint?.35:s.noexp&&!on?.45:1},gShapes);
+    const grp=el('g',{'data-id':s.id,'pointer-events':faint?'none':'auto',opacity:faint||s.hide?.35:s.noexp&&!on?.45:1},gShapes);
     const d=dPaths(g.paths,g.closed);
     if(g.isDim){const D=g.dim,col=on?'var(--sel)':'var(--guide)';
       el('path',{d:D.lines.map(([a,b])=>`M${a[0]} ${a[1]}L${b[0]} ${b[1]}`).join(''),stroke:col,'stroke-width':1,fill:'none','vector-effect':'non-scaling-stroke','pointer-events':'none'},grp);
@@ -1308,6 +1338,7 @@ function render(){
   if(draft)drawDraft(k);
   if(tool==='fillet')drawFillet(k);
   drawHint(k);
+  if(tool==='measure'&&measure)drawMeasure(measure,k);if(underPick)drawUnderPick(k);
   if(pivotPick&&pivotPick.q)drawPivotMark(pivotPick.q,k);
   if(drag&&drag.kind==='box'&&drag.big){const x=Math.min(drag.a[0],drag.b[0]),y=Math.min(drag.a[1],drag.b[1]);
     el('rect',{x,y,width:Math.abs(drag.b[0]-drag.a[0]),height:Math.abs(drag.b[1]-drag.a[1]),fill:'var(--sel)','fill-opacity':.08,stroke:'var(--sel)','stroke-width':1,'stroke-dasharray':'4 3','vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver)}
@@ -1331,7 +1362,7 @@ function drawEdges(it,k){if(!it.st)return;
         el('rect',{x:ends[0][0]-4.5*k,y:ends[0][1]-4.5*k,width:9*k,height:9*k,rx:4.5*k,fill:'var(--panel)',stroke:'var(--stitch)','stroke-width':2,'vector-effect':'non-scaling-stroke','data-h':'ra',style:'cursor:grab',class:'h'},gOver);
         el('rect',{x:ends[1][0]-4.5*k,y:ends[1][1]-4.5*k,width:9*k,height:9*k,rx:4.5*k,fill:'var(--panel)',stroke:'var(--stitch)','stroke-width':2,'vector-effect':'non-scaling-stroke','data-h':'rb',style:'cursor:grab',class:'h'},gOver)}}
   }}
-function drawSel(it,k){const s=it.s,g=it.g;if(g.isText)return;drawEdges(it,k);
+function drawSel(it,k){const s=it.s,g=it.g;if(g.isText)return;drawEdges(it,k);if(s.lock)return;
   if(ROTATABLE(s.type)&&!it.parent){const bb=bboxG(g),hx=(bb[0]+bb[2])/2,hy=bb[1]-26*k;
     el('line',{x1:hx,y1:bb[1],x2:hx,y2:hy,stroke:'var(--sel)','stroke-width':1,'stroke-dasharray':'2 2','vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver);
     el('circle',{cx:hx,cy:hy,r:5*k,fill:'var(--mat)',stroke:'var(--sel)','stroke-width':1.5,'vector-effect':'non-scaling-stroke',class:'h','data-h':'rot',style:'cursor:grab'},gOver);
@@ -1377,17 +1408,21 @@ function renderPanel(){
   lastPanelKey=key;
   if(picks.length>1){
     const list=picks.map((id,i)=>`<li>${i===0?'<span class="pill">本体</span> ':''}${esc(byId(id).name)}</li>`).join('');
-    sec.innerHTML=`<h2>${picks.length}個を選択中</h2><ol class="small" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px">${list}</ol>
+    const tot=picks.reduce((t,id)=>{const a=areaOf(C.byId[id]);return a==null?t:t+a},0),allH=picks.every(id=>byId(id).hide),allL=picks.every(id=>byId(id).lock);
+    sec.innerHTML=`<h2>${picks.length}個を選択中</h2>${tot?`<div class="small">${areaText(tot,true)}</div>`:''}<div class="btnrow"><button class="btn" id="mHide">${allH?'まとめて表示':'まとめて非表示'}</button><button class="btn" id="mLock">${allL?'まとめてロック解除':'まとめてロック'}</button></div><ol class="small" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px">${list}</ol>
       <div class="small">Shift＋クリックで選択を追加・解除。最初に選んだ図形が「本体」になります（範囲選択では作図順）。ドラッグでまとめて移動できます。</div>
       <div class="btns"><button class="btn" data-op="union">合体</button><button class="btn" data-op="diff">差（本体から引く）</button><button class="btn" data-op="inter">交差</button><button class="btn" data-op="xor">排他</button></div>
       <div class="small">元の図形は「材料」として式付きのまま残り、変数を変えると結果も作り直されます。</div>`;
-    sec.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>makeBool(b.dataset.op))}
+    sec.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>makeBool(b.dataset.op));
+    $('mHide').onclick=()=>{pushUndo();for(const id of picks){const x=byId(id);if(allH)delete x.hide;else x.hide=true}lastPanelKey=null;render()};
+    $('mLock').onclick=()=>{pushUndo();for(const id of picks){const x=byId(id);if(allL)delete x.lock;else x.lock=true}lastPanelKey=null;render()}}
   else if(!it){sec.innerHTML=`<h2>パーツ</h2><p class="empty">パーツを選ぶと寸法を式で編集できます。背景を左ドラッグで範囲選択、Shift＋クリックで追加選択。複数選ぶと合体・差などの演算ができます。</p>`}
   else{const s=it.s,env=C.envFor(s);let h='';
     if(it.parent){const p=byId(it.parent);h+=`<div class="result" style="grid-template-columns:1fr auto;align-items:center"><span style="color:var(--fg)">「${esc(p.name)}」の材料です</span><button class="btn" id="bParent" style="padding:3px 8px">← 演算に戻る</button></div>`}
     if(pendingBetween&&pendingBetween.id===s.id)h+=`<div class="result" style="grid-template-columns:1fr;color:var(--fg)"><span>フィレットでつなぐため、間の辺 ${pendingBetween.nodes.length-1} 本を消しました。</span><div class="btns"><button class="btn" id="bBetweenKeep">別の線として残す</button><button class="btn" id="bBetweenDrop">消したままにする</button></div></div>`;
     h+=`<h2>パーツ <span class="pill">${TYPE_LABEL(s)}</span></h2>
     <div class="row"><label for="f_name">名前</label><input type="text" id="f_name" data-path="name" value="${esc(s.name)}"><span></span></div>`;
+    {const a=areaOf(it);if(a!=null)h+=`<div class="small">${areaText(a)}</div>`}
     h+=`<label class="check"><input type="checkbox" id="f_exp" data-path="exp"${s.noexp?'':' checked'}> 書き出す（PDF・SVG・DXF）</label>`;
     if(!it.parent&&s.type!=='dim'){const LN=lineOf(s),k=LINES[s.kind]?s.kind:'cut',sc=LN.col==='#000'?'currentColor':LN.col;
       h+=`<div class="row"><label for="f_kind">線種</label><select class="inp" id="f_kind" data-path="kind">${Object.entries(LINES).map(([v,l])=>`<option value="${v}"${k===v?' selected':''}>${l.ja}</option>`).join('')}</select><svg class="lsample" viewBox="0 0 56 10" aria-hidden="true"><line x1="2" y1="5" x2="54" y2="5" stroke="${sc}" stroke-width="${LN.sw*1.2}" stroke-dasharray="${LN.dash}"/></svg></div>`;
@@ -1465,8 +1500,10 @@ function renderPanel(){
     const conv=`<button class="btn" id="bBake" title="式と元の図形とのつながりをやめ、今の形のパスに置き換えます（元に戻すには ⌘Z）">パスに変換</button>`;
     const row1=s.type==='rect'||s.type==='circle'?`<button class="btn" id="bToPath" title="${s.type==='rect'?'矩形':'円'}をパスに変換します。式は残るので変数を変えても形が追従し、線の上をダブルクリックで頂点を足せます">パスに変換</button>`:s.type==='bool'?conv+`<button class="btn" id="bUngroup" title="演算をやめて材料を元の図形に戻します">演算を解除</button>`:s.type==='offset'?conv:s.type==='piece'?conv+`<button class="btn" id="bUnsplit" title="この分割のピースをすべて消して、元の図形と切る線に戻します">分割を解除</button>`:'';
     if(row1)h+=`<div class="btnrow" style="margin-top:4px">${row1}</div>`;
-    h+=`<div class="btnrow"${row1?'':' style="margin-top:4px"'}><button class="btn ib" id="bDup" title="複製 (⌘D)" aria-label="複製">${ICON.copy}</button><button class="btn ib" id="bMirX" title="左右反転した形を右側に複製" aria-label="左右複製">${ICON.flipX}</button><button class="btn ib" id="bMirY" title="上下反転した形を下側に複製" aria-label="上下複製">${ICON.flipY}</button><button class="btn ib del" id="bDel" title="削除 (Delete)" aria-label="削除">${ICON.trash}</button></div>`;
+    h+=`<div class="btnrow"${row1?'':' style="margin-top:4px"'}><button class="btn ib" id="bDup" title="複製 (⌘D)" aria-label="複製">${ICON.copy}</button><button class="btn ib" id="bMirX" title="左右反転した形を右側に複製" aria-label="左右複製">${ICON.flipX}</button><button class="btn ib" id="bMirY" title="上下反転した形を下側に複製" aria-label="上下複製">${ICON.flipY}</button><button class="btn ib" id="bHide" aria-pressed="${!!s.hide}" title="${s.hide?'表示する':'非表示にする（書き出しには影響しません）'}" aria-label="非表示">${s.hide?ICON.eyeOff:ICON.eye}</button><button class="btn ib" id="bLock" aria-pressed="${!!s.lock}" title="${s.lock?'ロックを解除':'ロック：図形の上で動かしたり消したりできないようにする'}" aria-label="ロック">${s.lock?ICON.lock:ICON.unlock}</button><button class="btn ib del" id="bDel" title="削除 (Delete)" aria-label="削除">${ICON.trash}</button></div>`;
     sec.innerHTML=h;
+    $('bHide').onclick=()=>{pushUndo();s.hide=!s.hide||undefined;if(!s.hide)delete s.hide;lastPanelKey=null;render()};
+    $('bLock').onclick=()=>{pushUndo();if(s.lock)delete s.lock;else s.lock=true;lastPanelKey=null;render()};
     $('bDup').onclick=()=>dup();$('bMirX').onclick=()=>mirrorCopy('x');$('bMirY').onclick=()=>mirrorCopy('y');$('bDel').onclick=delSel;
     if($('bParent'))$('bParent').onclick=()=>{setSel(it.parent);render()};
     if($('bBake'))$('bBake').onclick=bake;if($('bUngroup'))$('bUngroup').onclick=ungroup;if($('bUnsplit'))$('bUnsplit').onclick=unsplit;if($('bToPath'))$('bToPath').onclick=toPath;if($('bPivot'))$('bPivot').onclick=()=>pivotPick?endPivotPick():startPivotPick();
@@ -1679,6 +1716,7 @@ function blockedBySrc(gone,verb){const ids=new Set(gone.map(x=>x.id)),uses=(o,id
   if(LANG==='en'){toast(`${used.map(n=>`“${n.name}”`).join(', ')} ${used.length>1?'are used':'is used'} by ${un.join(', ')}${users.length>4?` and ${users.length-4} more`:''}, so it can’t be ${{削除:'deleted',演算を解除:'ungrouped',パスに変換:'converted to a path'}[verb]}`,5000);return true}
   toast(`${used.map(n=>`「${n.name}」`).join('')}は ${un.join('、')}${users.length>4?` ほか${users.length-4}件`:''} の元の図形なので${verb}できません`,5000);return true}
 function delSel(){const targets=picks.map(byId).filter(Boolean);if(!targets.length)return;
+  if(targets.some(t=>t.lock)){toast('ロック中のパーツは削除できません（パーツ欄の鍵で解除）');return}
   const gone=[...new Set(targets.flatMap(t=>[t,...descendants(t)]))];if(blockedByRefs(gone,'削除')||blockedBySrc(gone,'削除'))return;pushUndo();
   for(const s of targets)if(byId(s.id))removeTree(s);
   for(const b of doc.shapes.filter(b=>b.type==='bool'&&!b.ops.length))removeTree(b);
@@ -1852,9 +1890,9 @@ const toastEl=$('toast');let toastT;
 function toast(m,ms=2600){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),ms)}
 function toMM(e){const r=svg.getBoundingClientRect();return[(e.clientX-r.left-view.tx)/view.s,(e.clientY-r.top-view.ty)/view.s]}
 const snap=v=>snapStep?Math.round(v/snapStep)*snapStep:Math.round(v*100)/100;
-const HINT={dim:'始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック',text:'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集',select:'クリックで選択（重なっている所は同じ場所をもう一度クリックで奥の図形へ）、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで矩形を描く。図形の角・中点・辺に吸着すると、その図形に連動します（Ctrl / ⌘ で一時的に吸着なし）',circle:'中心からドラッグして円を描く。中心は図形の点に吸着・連動します',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',split:'分割する図形をクリックし、続けて切る線（または図形）をクリックして Enter。最初にクリックした図形が切られます（Esc で選び直し）',fillet:'平行でない2本の線分を順にクリック。交わっていなくても延長してつなぎ、クリックした側を残して角を丸めます（R は下の欄。Esc で選び直し）',offset:'オフセットする図形をクリック。複数まとめるときは Shift＋クリックで選んで Enter（図形を選んでからこのツールを押しても作れます）'};
+const HINT={measure:'2点をクリックすると距離・角度・ΔX・ΔYを表示（図形スナップが効きます）。もう一度クリックで測り直し、Escで終了',dim:'始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック',text:'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集',select:'クリックで選択（重なっている所は同じ場所をもう一度クリックで奥の図形へ）、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで矩形を描く。図形の角・中点・辺に吸着すると、その図形に連動します（Ctrl / ⌘ で一時的に吸着なし）',circle:'中心からドラッグして円を描く。中心は図形の点に吸着・連動します',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',split:'分割する図形をクリックし、続けて切る線（または図形）をクリックして Enter。最初にクリックした図形が切られます（Esc で選び直し）',fillet:'平行でない2本の線分を順にクリック。交わっていなくても延長してつなぎ、クリックした側を残して角を丸めます（R は下の欄。Esc で選び直し）',offset:'オフセットする図形をクリック。複数まとめるときは Shift＋クリックで選んで Enter（図形を選んでからこのツールを押しても作れます）'};
 // the offset tool applies to the selection at once when there is one; otherwise it waits for a click on a shape
-function setTool(t){if(pivotPick)pivotPick=null;if(t==='offset'&&tool!=='offset'&&picks.length&&makeOffset(picks))return;
+function setTool(t){if(pivotPick)pivotPick=null;measure=null;if(underPick)underPick=null;if(t==='offset'&&tool!=='offset'&&picks.length&&makeOffset(picks))return;
   if(t==='split'&&tool!=='split'&&picks.length>=2&&makeSplit(picks))return;
   tool=t;draft=null;snapHint=null;fsel=null;fhover=null;$('fRBox').hidden=t!=='fillet';document.querySelectorAll('.tool[data-tool]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));svg.className.baseVal=t==='select'||t==='offset'||t==='split'?'':'draw';$('sHint').textContent=HINT[t];render()}
 document.querySelectorAll('.tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
@@ -1871,7 +1909,7 @@ const SNAP_LABEL={end:'端点',mid:'中点',center:'中心',quad:'四分点',int
 const osnapOn=e=>UI.osnap!==false&&!(e&&(e.ctrlKey||e.metaKey));
 // ctx: {skip:Set of ids not snapped to at all, noref:Set of ids snapped to without a reference, extra:[{x,y,ex,ey}]}
 function snapCands(ctx){const out=[];const skip=ctx.skip||new Set(),noref=ctx.noref||new Set();
-  for(const it of C.items){const g=it.g,s=it.s;if(!g||skip.has(s.id)||g.isDim)continue;
+  for(const it of C.items){const g=it.g,s=it.s;if(!g||skip.has(s.id)||g.isDim||s.hide)continue;
     // a rotated shape is snapped to by number only (its references would name unrotated sides)
     const RT=g.rot,R=!RT&&!noref.has(s.id)&&refOK(s)?refName(s.name)+'.':null,E=p=>R?R+propOut(p):null;
     const P=(x,y,kind,px,py,role)=>{const q=RT&&s.type==='rect'?rotP(RT,[x,y]):[x,y];out.push({x:q[0],y:q[1],kind,ex:px&&E(px),ey:py&&E(py),id:s.id,role})};
@@ -1892,7 +1930,7 @@ function snapCands(ctx){const out=[];const skip=ctx.skip||new Set(),noref=ctx.no
   return out}
 // outline segments near m, for intersections and nearest-on-edge
 function snapSegs(ctx,m,tol){const skip=ctx.skip||new Set(),out=[];
-  for(const it of C.items){const g=it.g,s=it.s;if(!g||skip.has(s.id)||g.isDim||g.isText)continue;
+  for(const it of C.items){const g=it.g,s=it.s;if(!g||skip.has(s.id)||g.isDim||g.isText||s.hide)continue;
     for(const P of g.paths){const n=P.length,segs=g.closed?n:n-1;
       for(let i=0;i<segs;i++){const a=P[i],b=P[(i+1)%n];
         if(Math.min(a[0],b[0])-tol>m[0]||Math.max(a[0],b[0])+tol<m[0]||Math.min(a[1],b[1])-tol>m[1]||Math.max(a[1],b[1])+tol<m[1])continue;
@@ -2009,6 +2047,8 @@ svg.addEventListener('pointerdown',e=>{
   const m=toMM(e),sm=[snap(m[0]),snap(m[1])];
   if(e.button===1||e.button===2||spaceDown){drag={kind:'pan',sx:e.clientX,sy:e.clientY,tx:view.tx,ty:view.ty};svg.classList.add('pan');return}
   if(pivotPick){if(!e.button)setPivotAt(snapAt(m,e,pivotPick.ctx));return}
+  if(underPick){if(!e.button)underClick(m,e);return}
+  if(tool==='measure'){const q=snapAt(m,e);measure=!measure||measure.done?{a:q,b:q}:{...measure,b:q,done:true};render();return}
   const now=performance.now(),dbl=lastDown&&now-lastDown.t<380&&Math.hypot(e.clientX-lastDown.x,e.clientY-lastDown.y)<6;lastDown={t:now,x:e.clientX,y:e.clientY};
   if(dbl){lastDown=null;if(onDouble(e))return}
   if(tool==='dim'){const q=snapAt(m,e);
@@ -2034,7 +2074,7 @@ svg.addEventListener('pointerdown',e=>{
     if(e.shiftKey){picks=picks.includes(id)?picks.filter(x=>x!==id):picks.concat(id);sel=picks[0]||null;lastPanelKey=null;render();return}
     makeOffset(picks.length>1&&picks.includes(id)?picks:[id]);return}
   const h=e.target.dataset&&e.target.dataset.h;
-  if(h){const s=cur();
+  if(h){const s=cur();if(s&&s.lock){toast('ロック中のパーツは図形の上で編集できません（パーツ欄の鍵で解除）');return}
     if(/^n\d/.test(h)){const i=+h.slice(1);selNodes=e.shiftKey?(selNodes.includes(i)?selNodes.filter(x=>x!==i):selNodes.concat(i)):(selNodes.includes(i)?selNodes:[i]);lastPanelKey=null;render()}
     pushUndo();const g0=C.byId[s.id]&&C.byId[s.id].g;const ni=/^n\d/.test(h)?+h.slice(1):-1;
     const extra=s.type==='poly'&&g0&&g0.nodes?g0.nodes.filter((n,i)=>i!==ni).map(n=>({x:n.x,y:n.y})):[];
@@ -2049,6 +2089,7 @@ svg.addEventListener('pointerdown',e=>{
     if(!held)setSel(id);else if(selNodes.length){selNodes=[];lastPanelKey=null}
     const click={cands,held:!!held,x:e.clientX,y:e.clientY};
     const s=byId(id);const movers=picks.length>1?picks.map(byId).filter(Boolean):[s];
+    if(movers.some(x=>x.lock)){drag={kind:'move',click,s,ls:[],bs:[],bp:[],m0:m,orig:[],base:null,ctx:{},moved:false,locked:true};render();return}
     const tree=[...new Set(movers.flatMap(x=>[...moveTree(x)]))],ls=tree.filter(x=>x.type!=='bool'&&x.type!=='offset');
     const ctx=makeCtx(tree.map(x=>x.id));
     // base point: the moving shapes' object point nearest the grab (so a corner can be dropped onto another shape's corner)
@@ -2061,6 +2102,8 @@ svg.addEventListener('pointerdown',e=>{
   drag={kind:'box',a:m,b:m,sx:e.clientX,sy:e.clientY,add:e.shiftKey,base:picks.slice()}});
 svg.addEventListener('pointermove',e=>{if(e.pointerType==='touch'&&touchMove(e))return;const m=toMM(e);$('sPos').textContent=`x ${fmt(m[0])}  y ${fmt(-m[1])}`;
   if(pivotPick&&!drag){const q=snapAt(m,e,pivotPick.ctx);pivotPick.q=q;setHint(q);render();return}
+  if(underPick&&!drag){const q=underPick.kind==='move'&&underPick.pts.length?snapAt(m,e):{x:m[0],y:m[1],kind:'grid'};underPick.q=q;setHint(q);render();return}
+  if(tool==='measure'&&!drag){const q=snapAt(m,e);setHint(q);if(measure&&!measure.done)measure.b=q;render();return}
   if(tool==='dim'&&!drag){if(!draft||draft.stage===1){const q=snapAt(m,e);const ch=setHint(q);if(draft){draft.b=q;render()}else if(ch)render();return}
     const dx=draft.b.x-draft.a.x,dy=draft.b.y-draft.a.y,L=Math.hypot(dx,dy);draft.off=snap(((m[0]-draft.a.x)*-dy+(m[1]-draft.a.y)*dx)/L);render();return}
   if(tool==='fillet'&&!drag){const S=segAt(m,e),was=fhover;fhover=S?{S,m}:null;if(fsel||!!was!==!!S||(S&&was&&!sameSeg(S,was.S)))render();return}
@@ -2076,6 +2119,7 @@ svg.addEventListener('pointermove',e=>{if(e.pointerType==='touch'&&touchMove(e))
   if(drag.kind==='pan'){view.tx=drag.tx+e.clientX-drag.sx;view.ty=drag.ty+e.clientY-drag.sy;applyView();return}
   if(drag.kind==='box'){drag.b=m;drag.big=drag.big||Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>4;render();return}
   const dx=snap(m[0]-drag.m0[0]),dy=snap(m[1]-drag.m0[1]);
+  if(drag.kind==='move'&&drag.locked){if(!drag.warned&&Math.hypot(m[0]-drag.m0[0],m[1]-drag.m0[1])*view.s>4){toast('ロック中のパーツは動かせません（パーツ欄の鍵で解除）');drag.warned=true}return}
   if(drag.kind==='move'){let mx=dx,my=dy,tq=null;const b=drag.base;
     if(b){const q=snapAt([b.x+m[0]-drag.m0[0],b.y+m[1]-drag.m0[1]],e,drag.ctx);if(q.kind!=='grid'){mx=q.x-b.x;my=q.y-b.y;tq=q}}
     setHint(tq);
@@ -2141,7 +2185,7 @@ svg.addEventListener('pointerup',e=>{if(e.pointerType==='touch'&&touchUp(e)){ren
   if(drag&&drag.kind==='box'){const d=drag;drag=null;
     if(!d.big){if(!d.add)setSel(null);render();return}
     const x0=Math.min(d.a[0],d.b[0]),x1=Math.max(d.a[0],d.b[0]),y0=Math.min(d.a[1],d.b[1]),y1=Math.max(d.a[1],d.b[1]);
-    const hit=C.items.filter(it=>it.g&&!it.parent).filter(it=>{const b=bboxG(it.g);return b[0]>=x0&&b[2]<=x1&&b[1]>=y0&&b[3]<=y1}).map(it=>it.s.id);
+    const hit=C.items.filter(it=>it.g&&!it.parent&&!it.s.hide).filter(it=>{const b=bboxG(it.g);return b[0]>=x0&&b[2]<=x1&&b[1]>=y0&&b[3]<=y1}).map(it=>it.s.id);
     picks=d.add?d.base.concat(hit.filter(id=>!d.base.includes(id))):hit;sel=picks[0]||null;lastPanelKey=null;render();
     if(hit.length)toast(`${hit.length}個を選択しました`);return}
   if(draft&&draft.type!=='poly'&&draft.type!=='dim'){const d=draft;draft=null;
@@ -2210,6 +2254,8 @@ document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden||!$('helpModal'
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='d'&&!inField){e.preventDefault();dup(false);return}
   if(inField){if(e.key==='Enter'&&!composing(e))document.activeElement.blur();return}
   if(e.key==='Escape'&&pivotPick){endPivotPick();return}
+  if(e.key==='Escape'&&underPick){underPick=null;$('sHint').textContent=HINT[tool]||'';render();return}
+  if(e.key==='Escape'&&tool==='measure'){if(measure&&!measure.done){measure=null;render()}else setTool('select');return}
   if(e.key==='Escape'&&tool==='fillet'){if(fsel){fsel=null;render()}else setTool('select');return}
   if(e.key==='Escape'){if(draft){draft=null;render()}else if(selNodes.length){selNodes=[];lastPanelKey=null;render()}else if(selEdge){selEdge=null;render()}else{setSel(null);if(tool==='offset'||tool==='split')setTool('select');else render()}return}
   if(e.key==='Enter'&&draft&&draft.type==='poly'){finishPoly(false);return}
@@ -2218,7 +2264,7 @@ document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden||!$('helpModal'
   if((e.key==='Delete'||e.key==='Backspace')&&selNodes.length){e.preventDefault();delNodes();return}
   if((e.key==='Delete'||e.key==='Backspace')&&picks.length){e.preventDefault();delSel();return}
   if(e.key.toLowerCase()==='f'&&e.shiftKey&&!e.metaKey&&!e.ctrlKey){fit();return}
-  const map={v:'select',r:'rect',c:'circle',l:'line',p:'poly',t:'text',d:'dim',o:'offset',f:'fillet',k:'split'};if(map[e.key.toLowerCase()]&&!e.metaKey&&!e.ctrlKey){setTool(map[e.key.toLowerCase()]);return}
+  const map={v:'select',r:'rect',c:'circle',l:'line',p:'poly',t:'text',d:'dim',o:'offset',f:'fillet',k:'split',m:'measure'};if(map[e.key.toLowerCase()]&&!e.metaKey&&!e.ctrlKey){setTool(map[e.key.toLowerCase()]);return}
   if(e.key.toLowerCase()==='s'&&!e.metaKey&&!e.ctrlKey&&!e.altKey){setOsnap(UI.osnap===false);toast(UI.osnap===false?'図形スナップ：オフ':'図形スナップ：オン',1400)}});
 function setOsnap(on){UI.osnap=on;saveUI();$('osnap').checked=on;if(!on&&setHint(null))render()}
 $('osnap').checked=UI.osnap!==false;$('osnap').onchange=e=>setOsnap(e.target.checked);
@@ -2421,9 +2467,9 @@ $('pdfGo').onclick=async()=>{$('pdfModal').hidden=true;const opt=expOpts(expFmt)
   if(await offer('pattern.pdf',bytes))toast(`${label}・${n}枚のPDFを保存しました`)};
 $('xSvg').onclick=()=>openExport('svg');
 $('xDxf').onclick=()=>openExport('dxf');
-$('xJson').onclick=()=>offer('pattern.json',JSON.stringify(doc,null,2));
+$('xJson').onclick=()=>offer('pattern.json',JSON.stringify(doc.under&&underSrc?{...doc,under:{...doc.under,img:underSrc}}:doc,null,2));
 $('xLoad').onclick=()=>$('fileIn').click();
-$('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.shapes||!d.vars)throw 0;pushUndo();doc=migrate(d);setSel(null);fit();toast('読み込みました')}catch(x){toast('型紙ファイルとして読めませんでした')}});e.target.value=''};
+$('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.shapes||!d.vars)throw 0;pushUndo();if(d.under&&d.under.img){setUnderSrc(d.under.img);delete d.under.img}doc=migrate(d);setSel(null);fit();toast('読み込みました')}catch(x){toast('型紙ファイルとして読めませんでした')}});e.target.value=''};
 // dropdown menus under the top bar icons (新規, 書き出し)
 const MENUS=[['xNew','newMenu'],['xExport','exportMenu']];
 function closeMenus(){for(const[b,m]of MENUS){$(m).hidden=true;$(b).setAttribute('aria-expanded','false')}}
@@ -2483,7 +2529,7 @@ async function streamBytes(bytes,ctor,fmt){const st=new Blob([bytes]).stream().p
 async function encodeDoc(d){const raw=new TextEncoder().encode(JSON.stringify(d));
   if(window.CompressionStream){try{return'z'+b64u(await streamBytes(raw,CompressionStream,'deflate-raw'))}catch(e){}}return'j'+b64u(raw)}
 async function decodeDoc(str){const kind=str[0],bytes=unb64u(str.slice(1));const raw=kind==='z'?await streamBytes(bytes,DecompressionStream,'deflate-raw'):bytes;return JSON.parse(new TextDecoder().decode(raw))}
-$('xShare').onclick=async()=>{let url;try{url=location.href.split('#')[0]+'#p='+await encodeDoc(doc)}catch(e){toast('共有用のURLを作れませんでした');return}
+$('xShare').onclick=async()=>{let url;const{under,...rest}=doc;if(under)setTimeout(()=>toast('下絵は共有リンクに含まれません',3000),2600);try{url=location.href.split('#')[0]+'#p='+await encodeDoc(rest)}catch(e){toast('共有用のURLを作れませんでした');return}
   const kb=(url.length/1024).toFixed(1);
   try{await navigator.clipboard.writeText(url);toast(`共有用のURLをコピーしました（${kb} KB）`)}
   catch(e){$('mTitle').textContent='共有用のURL';$('mNote').textContent='自動でコピーできなかったので、下の文字列をコピーしてください。';$('mText').value=url;$('mSave').hidden=true;$('modal').hidden=false;$('mText').focus();$('mText').select()}};
@@ -2768,6 +2814,96 @@ $('varsTitle').addEventListener('focus',showHelp);$('varsTitle').addEventListene
 // a tap also sends mouseenter just before the click, so a click right after the guide opened keeps it open
 $('varsTitle').addEventListener('click',()=>{if($('varHelp').hidden)showHelp();else if(performance.now()-helpAt>400)$('varHelp').hidden=true});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('varHelp').hidden){$('varHelp').hidden=true}},true);
+
+// ---------- area ----------
+// the area inside a closed outline (holes taken out), in mm²
+function areaOf(it){const g=it&&it.g;if(!g||!g.closed||g.isText||g.isDim||!window.ClipperLib)return null;
+  const c=new ClipperLib.Clipper(),sol=new ClipperLib.Paths(),F=ClipperLib.PolyFillType.pftEvenOdd;c.AddPaths(toC(g.paths),ClipperLib.PolyType.ptSubject,true);
+  c.Execute(ClipperLib.ClipType.ctUnion,sol,F,F);let a=0;for(const p of sol)a+=ClipperLib.Clipper.Area(p);return Math.abs(a)/(CS*CS)}
+// cm², and デシ (10 cm × 10 cm), the unit leather is sold by
+const areaText=(a,tot)=>`${tot?'面積の合計':'面積'} ${fmt(a/100,2)} cm²（${fmt(a/10000,2)} デシ）`;
+
+// ---------- measure (M) ----------
+function drawMeasure(M,k){const a=M.a,b=M.b,dx=b.x-a.x,dy=-(b.y-a.y),L=Math.hypot(dx,dy),A={stroke:'var(--osnap)','stroke-width':1.4,'vector-effect':'non-scaling-stroke','pointer-events':'none'};
+  el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,...A,'stroke-dasharray':'5 3'},gOver);for(const q of[a,b])el('circle',{cx:q.x,cy:q.y,r:2.5*k,fill:'var(--osnap)',stroke:'none','pointer-events':'none'},gOver);
+  if(L<1e-9)return;const ang=Math.atan2(dy,dx)*180/Math.PI,txt=`${fmt(L,2)} mm　${fmt(ang,1)}°　ΔX ${fmt(dx,2)}　ΔY ${fmt(dy,2)}`;
+  const t=el('text',{x:(a.x+b.x)/2+8*k,y:(a.y+b.y)/2-8*k,'font-size':12*k,fill:'var(--osnap)','font-family':'IBM Plex Mono, monospace','pointer-events':'none',stroke:'var(--mat)','stroke-width':3*k,'paint-order':'stroke'},gOver);t.textContent=txt;
+  if(M.done)$('sHint').textContent=`計測：${txt}`}
+
+// ---------- underlay (下絵) ----------
+// doc.under keeps the placement {x, y (bottom-left, drawing terms), w, ar (height / width), op, hide, lock}. The picture itself
+// stays out of the autosave: it lives in IndexedDB while working and is written into a saved .json as under.img.
+const IDB=(()=>{let p=null;const db=()=>p||(p=new Promise((res,rej)=>{const r=indexedDB.open('ppp',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
+  const tx=(mode,fn)=>db().then(d=>new Promise((res,rej)=>{const t=d.transaction('kv',mode),q=fn(t.objectStore('kv'));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error)}));
+  return{get:k=>tx('readonly',s=>s.get(k)).catch(()=>null),set:(k,v)=>tx('readwrite',s=>s.put(v,k)).catch(()=>null)}})();
+function setUnderSrc(src){underSrc=src;IDB.set('under',src)}
+function drawUnder(){const u=doc.under,im=$('underImg');if(!u||!underSrc||u.hide){im.style.display='none';return}
+  const h=u.w*u.ar;im.setAttribute('href',underSrc);im.setAttribute('x',u.x);im.setAttribute('y',-(u.y+h));im.setAttribute('width',u.w);im.setAttribute('height',h);im.setAttribute('opacity',u.op??0.5);im.style.display=''}
+// a picture shrunk to 2000 px on its long side, as a JPEG data URL
+function shrinkImage(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file),im=new Image();im.onload=()=>{const k=Math.min(1,2000/Math.max(im.naturalWidth,im.naturalHeight)),w=Math.max(1,Math.round(im.naturalWidth*k)),h=Math.max(1,Math.round(im.naturalHeight*k));
+    const cv=document.createElement('canvas');cv.width=w;cv.height=h;const c=cv.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,w,h);c.drawImage(im,0,0,w,h);URL.revokeObjectURL(url);res({src:cv.toDataURL('image/jpeg',0.85),ar:h/w})};
+    im.onerror=()=>{URL.revokeObjectURL(url);rej()};im.src=url})}
+function fillUnderPop(){const u=doc.under,on=!!(u&&underSrc);$('uCtl').style.display=on?'flex':'none';$('uLoad').textContent=on?'画像を差し替える':'画像を読み込む';if(!on)return;
+  const lk=!!u.lock;$('uShow').checked=!u.hide;$('uLock').checked=lk;$('uOp').value=Math.round((u.op??0.5)*100);$('uOpV').textContent=$('uOp').value+'%';
+  for(const[id,v]of[['uW',u.w],['uX',u.x],['uY',u.y]]){const f=$(id);if(document.activeElement!==f)f.value=num(v);f.disabled=lk}
+  for(const id of['uScale','uMove','uDel','uOp'])$(id).disabled=lk}
+function openUnder(){const p=$('underPop'),b=$('xUnder').getBoundingClientRect();fillUnderPop();p.hidden=false;p.style.top=(b.bottom+6)+'px';p.style.left=Math.max(8,Math.min(b.left,innerWidth-p.offsetWidth-8))+'px';$('xUnder').setAttribute('aria-expanded','true')}
+function closeUnder(){$('underPop').hidden=true;$('xUnder').setAttribute('aria-expanded','false')}
+$('xUnder').onclick=e=>{e.stopPropagation();$('underPop').hidden?openUnder():closeUnder()};$('uClose').onclick=closeUnder;
+$('underPop').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();closeUnder();$('xUnder').focus()}});
+$('uLoad').onclick=()=>$('uFile').click();
+$('uFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;let r;try{r=await shrinkImage(f)}catch(x){toast('画像を読み込めませんでした');return}
+  pushUndo();setUnderSrc(r.src);const sv=svg.getBoundingClientRect(),vw=sv.width/view.s,w=Math.round(vw*0.6),cx=(sv.width/2-view.tx)/view.s,cy=-((sv.height/2-view.ty)/view.s);
+  doc.under={x:Math.round(cx-w/2),y:Math.round(cy-w*r.ar/2),w,ar:r.ar,op:0.5};render();fillUnderPop();toast('下絵を置きました。「2点で大きさ合わせ」で実寸に合わせてください',4000)};
+const uSet=(fn)=>{if(!doc.under)return;pushUndo();fn(doc.under);render();fillUnderPop()};
+$('uShow').onchange=()=>uSet(u=>{if($('uShow').checked)delete u.hide;else u.hide=true});
+$('uLock').onchange=()=>uSet(u=>{if($('uLock').checked)u.lock=true;else delete u.lock});
+$('uOp').onpointerdown=()=>{if(doc.under)pushUndo()};$('uOp').oninput=()=>{if(!doc.under)return;doc.under.op=+$('uOp').value/100;$('uOpV').textContent=$('uOp').value+'%';drawUnder()};
+for(const[id,k]of[['uW','w'],['uX','x'],['uY','y']])$(id).onchange=()=>{const v=+String($(id).value).replace(/[０-９．－]/g,ASC);if(!isFinite(v)||(k==='w'&&v<=0)){fillUnderPop();return}uSet(u=>{u[k]=v})};
+$('uDel').onclick=()=>uSet(()=>{delete doc.under});
+$('uScale').onclick=()=>{if(!doc.under)return;const L=+$('uLen').value;if(!(L>0)){toast('実寸を mm で入れてください');return}underPick={kind:'scale',pts:[],L};closeUnder();$('sHint').textContent='下絵の上で、実寸が分かる2点をクリック（Escでやめる）';render()};
+$('uMove').onclick=()=>{if(!doc.under)return;underPick={kind:'move',pts:[]};closeUnder();$('sHint').textContent='下絵の上の点をクリックし、次にその点を置きたい場所をクリック（Escでやめる）';render()};
+function underClick(m,e){const P=underPick,q=P.kind==='move'&&P.pts.length?snapAt(m,e):{x:m[0],y:m[1]};P.pts.push([q.x,-q.y]);
+  if(P.pts.length<2){render();return}
+  const u=doc.under,[a,b]=P.pts;underPick=null;$('sHint').textContent=HINT[tool]||'';pushUndo();
+  if(P.kind==='scale'){const d=Math.hypot(b[0]-a[0],b[1]-a[1]);if(d<1e-6){undoS.pop();toast('同じ点です');render();return}
+    // scale about the first point, so it stays where it is
+    const k=P.L/d;u.x=a[0]+(u.x-a[0])*k;u.y=a[1]+(u.y-a[1])*k;u.w*=k;toast(`下絵を ${fmt(k*100,1)}% にしました`)}
+  else{u.x+=b[0]-a[0];u.y+=b[1]-a[1];toast('下絵を動かしました')}
+  for(const kk of['x','y','w'])u[kk]=+u[kk].toFixed(3);render()}
+function drawUnderPick(k){const P=underPick,A={fill:'none',stroke:'var(--osnap)','stroke-width':1.4,'vector-effect':'non-scaling-stroke','pointer-events':'none'};
+  const pts=P.pts.map(p=>[p[0],-p[1]]);if(P.q)pts.push([P.q.x,P.q.y]);
+  for(const p of pts)el('path',{d:`M${p[0]-6*k} ${p[1]}H${p[0]+6*k}M${p[0]} ${p[1]-6*k}V${p[1]+6*k}`,...A},gOver);
+  if(pts.length>1)el('line',{x1:pts[0][0],y1:pts[0][1],x2:pts[1][0],y2:pts[1][1],...A,'stroke-dasharray':'4 3'},gOver)}
+IDB.get('under').then(v=>{if(v&&!underSrc){underSrc=v;render()}});
+
+// ---------- hidden parts ----------
+$('sHidden').onclick=()=>{pushUndo();for(const x of doc.shapes)delete x.hide;lastPanelKey=null;render();toast('すべて表示しました')};
+
+// ---------- copy / paste (⌘C / ⌘V) ----------
+// the selection with its materials and sources, plus the variables they use, as JSON text on the clipboard
+const inTextField=()=>/INPUT|TEXTAREA|SELECT/.test(document.activeElement&&document.activeElement.tagName)||document.activeElement&&document.activeElement.isContentEditable;
+function clipOf(){const set=new Set();for(const id of picks){const s=byId(id);if(s)for(const x of moveTree(s))set.add(x)}
+  const shapes=doc.shapes.filter(x=>set.has(x));if(!shapes.length)return null;
+  const need=new Set(),add=e=>{let t;try{t=tokenize(String(e))}catch(x){return}for(const k of t)if(k.k==='id'&&!need.has(k.v)){const v=doc.vars.find(v=>v.n===k.v);if(v){need.add(v.n);add(v.e)}}};
+  for(const s of shapes)for(const[o,k]of exprSlots(s))add(o[k]);
+  return{ppp:'shapes',vars:doc.vars.filter(v=>need.has(v.n)),shapes:structuredClone(shapes),picks:picks.slice()}}
+function remapRefs(e,map){let t;try{t=tokenize(String(e))}catch(x){return e}let out=String(e);
+  for(const k of t.filter(k=>k.k==='ref'&&map.has(k.name)).reverse())out=out.slice(0,k.at)+refName(map.get(k.name))+out.slice(k.dot,k.end)+out.slice(k.end);return out}
+function pasteClip(d){if(!d||d.ppp!=='shapes'||!Array.isArray(d.shapes)||!d.shapes.length)return false;pushUndo();
+  let nv=0;for(const v of d.vars||[])if(!doc.vars.some(x=>x.n===v.n)){doc.vars.push({n:v.n,e:v.e});nv++}
+  const ids=new Map(),names=new Map();for(const s of d.shapes)ids.set(s.id,newId());
+  const out=d.shapes.map(s=>{const c=structuredClone(s);c.id=ids.get(s.id);const nmv=uniqName(s.name);names.set(s.name,nmv);c.name=nmv;doc.shapes.push(c);return c});
+  for(const c of out){if(c.ops)c.ops=c.ops.map(id=>ids.get(id)||id);if(c.src)c.src=Array.isArray(c.src)?c.src.map(id=>ids.get(id)||id):ids.get(c.src)||c.src;if(c.cut)c.cut=c.cut.map(id=>ids.get(id)||id);
+    for(const[o,k]of exprSlots(c))o[k]=remapRefs(o[k],names);delete c.lock}
+  // pasted next to where it was copied, so a copy in the same drawing doesn't hide the original
+  for(const c of out){if(c.type==='bool')shiftPivot(c,10,10);else if(['rect','circle','poly','text','dim'].includes(c.type))shiftLeaf(c,10,10)}
+  picks=(d.picks||[]).map(id=>ids.get(id)).filter(Boolean);sel=picks[0]||null;lastPanelKey=null;render();renderVars(false);
+  toast(`${picks.length||out.length}個を貼り付けました`+(nv?`（変数 ${nv}個も追加）`:''));return true}
+let clipMem=null;
+document.addEventListener('copy',e=>{if(inTextField()||!picks.length||!$('pdfModal').hidden||!$('modal').hidden)return;const d=clipOf();if(!d)return;clipMem=d;e.preventDefault();e.clipboardData.setData('text/plain',JSON.stringify(d));toast(`${d.picks.length}個をコピーしました`,1400)});
+document.addEventListener('paste',e=>{if(inTextField())return;const t=e.clipboardData&&e.clipboardData.getData('text/plain');let d=null;try{d=JSON.parse(t)}catch(x){}
+  if(!(d&&d.ppp==='shapes'))d=clipMem;if(pasteClip(d))e.preventDefault()});
 
 // ---------- boot ----------
 function boot(){startI18n();if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}$('xFrame').setAttribute('aria-pressed',String(!!UI.showFrame));$('xNames').setAttribute('aria-pressed',String(!UI.hideNames));setTool('select');requestAnimationFrame(fit);loadFromLink()}
