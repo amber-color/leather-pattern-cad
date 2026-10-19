@@ -461,7 +461,7 @@ const LANG=(()=>{let u={};try{u=JSON.parse(localStorage.getItem('ppp-ui')||'{}')
 const EN_EXACT={
   // top bar, menus
   'ファイル':'File','新規':'New','開く':'Open','開く：保存した .json を読み込む':'Open: load a saved .json','保存':'Save','保存：型紙を .json で保存':'Save the pattern as .json',
-  '使い方':'Help','書き出し':'Export','書き出し（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)','印刷枠':'Print area','パーツ欄の幅':'Parts panel width','変数バーの幅':'Variables bar width','コード欄の幅':'Code panel width','関係図の高さ':'Graph height','ドラッグで幅を変更（ダブルクリックで元に戻す）':'Drag to resize (double-click to reset)','ドラッグで高さを変更（ダブルクリックで元に戻す）':'Drag to resize (double-click to reset)','パーツ名':'Part names','パーツ名：図形の左上の名前を表示・非表示（選択中の図形は常に表示）':'Part names: show or hide the name above each part (a selected part always shows it)','パーツ名を隠しました':'Part names hidden','パーツ名を表示しました':'Part names shown','印刷枠：PDFの用紙と向きで印刷される範囲を図面に表示':'Print area: show the area the PDF paper and orientation will print',
+  '使い方':'Help','書き出し':'Export','書き出し（PDF・SVG・DXF）':'Export (PDF, SVG, DXF)','印刷枠':'Print area','回転中心をクリックで指定':'Pick rotation centre','キャンバスをクリックして回転中心を決めます（グリッド・図形スナップが効きます）':'Click on the canvas to set the rotation centre (grid and object snap apply)','回転中心にする点をクリック（Escでやめる）':'Click the point to rotate around (Esc to cancel)','回転中心を設定しました':'Rotation centre set','パーツ欄の幅':'Parts panel width','変数バーの幅':'Variables bar width','コード欄の幅':'Code panel width','関係図の高さ':'Graph height','ドラッグで幅を変更（ダブルクリックで元に戻す）':'Drag to resize (double-click to reset)','ドラッグで高さを変更（ダブルクリックで元に戻す）':'Drag to resize (double-click to reset)','パーツ名':'Part names','パーツ名：図形の左上の名前を表示・非表示（選択中の図形は常に表示）':'Part names: show or hide the name above each part (a selected part always shows it)','パーツ名を隠しました':'Part names hidden','パーツ名を表示しました':'Part names shown','印刷枠：PDFの用紙と向きで印刷される範囲を図面に表示':'Print area: show the area the PDF paper and orientation will print',
   'ライト / ダークを切り替え':'Switch light / dark','ライトにする':'Switch to light','ダークにする':'Switch to dark','ライトテーマにする':'Switch to the light theme','ダークテーマにする':'Switch to the dark theme',
   '共有':'Share','共有：型紙を埋め込んだURLをクリップボードにコピー':'Share: copy a URL that contains the pattern','言語を切り替え（日本語 / English）':'Switch language (日本語 / English)',
   'Parametric Pattern Plotter — 式で描くレザークラフト型紙CAD':'Parametric Pattern Plotter — a leathercraft pattern CAD driven by expressions',
@@ -698,7 +698,7 @@ migrate(doc);
 const num=v=>String(+(+v).toFixed(3));
 let picks=[],tool='select',snapStep=1;
 // pendingBetween: after a fillet dropped the edges between two picked edges of a path, the choice to keep them as a line
-let sel=null,selEdge=null,selNodes=[],pendingBetween=null;const setSel=id=>{sel=id;picks=id?[id]:[];selEdge=null;selNodes=[];if(pendingBetween&&pendingBetween.id!==id)pendingBetween=null};
+let sel=null,selEdge=null,selNodes=[],pendingBetween=null,pivotPick=null;const setSel=id=>{sel=id;picks=id?[id]:[];selEdge=null;selNodes=[];if(pendingBetween&&pendingBetween.id!==id)pendingBetween=null};
 const view={tx:0,ty:0,s:3};
 let undoS=[],redoS=[];
 function pushUndo(){undoS.push(JSON.stringify(doc));if(undoS.length>100)undoS.shift();redoS=[]}
@@ -777,6 +777,7 @@ const ICON={
   copy:PI('<path d="M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/>',24),
   flipX:PI('<path d="M12 3l0 18"/><path d="M16 7l0 10l5 0l-5 -10"/><path d="M8 7l0 10l-5 0l5 -10"/>',24),
   flipY:PI('<path d="M3 12l18 0"/><path d="M7 16l10 0l-10 5l0 -5"/><path d="M7 8l10 0l-10 -5l0 5"/>',24),
+  pivot:PI('<circle cx="8" cy="8" r="3.2"/><path d="M8 1.5v3M8 11.5v3M1.5 8h3M11.5 8h3"/>'),
   trash:PI('<path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/>',24)};
 function rectCorners(x,y,w,h,cr){const D=[
     {C:[x,y],pin:r=>[x,y+r],pout:r=>[x+r,y],c:r=>[x+r,y+r],a0:180},
@@ -1289,6 +1290,7 @@ function render(){
   if(draft)drawDraft(k);
   if(tool==='fillet')drawFillet(k);
   drawHint(k);
+  if(pivotPick&&pivotPick.q)drawPivotMark(pivotPick.q,k);
   if(drag&&drag.kind==='box'&&drag.big){const x=Math.min(drag.a[0],drag.b[0]),y=Math.min(drag.a[1],drag.b[1]);
     el('rect',{x,y,width:Math.abs(drag.b[0]-drag.a[0]),height:Math.abs(drag.b[1]-drag.a[1]),fill:'var(--sel)','fill-opacity':.08,stroke:'var(--sel)','stroke-width':1,'stroke-dasharray':'4 3','vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver)}
   renderPanel();save();if(codeOpen)syncCode();if(graphOpen&&window.PPPD3)graphSync();}
@@ -1396,7 +1398,8 @@ function renderPanel(){
       if(it.g&&it.g.flLost&&it.g.flLost.length)h+=`<div class="small" style="color:var(--danger)">「外れ」の角Rは、形が変わってどの角にも当てはまらなくなっています。</div>`}
     if(s.type==='text')h+=`<div class="row"><label for="f_text">文字</label><input type="text" id="f_text" data-path="text" value="${esc(s.text||'')}" autocomplete="off"><span></span></div>`;
     for(const key in s.p)if(s.type!=='offset'&&!(s.type==='rect'&&key==='r')&&!(ROTATABLE(s.type)&&/^(rot|rcx|rcy)$/.test(key)))h+=exprRow('p.'+key,LABELS[key]||key,s.p[key],env);
-    if(ROTATABLE(s.type)&&it.g){const c=pivotOf(it.g);h+=exprRow('p.rot','回転（度）',s.p.rot??'0',env)+exprRow('p.rcx','回転中心X',s.p.rcx??num(c[0]),env)+exprRow('p.rcy','回転中心Y',s.p.rcy??num(c[1]),env)}
+    if(ROTATABLE(s.type)&&it.g){const c=pivotOf(it.g);h+=exprRow('p.rot','回転（度）',s.p.rot??'0',env)+exprRow('p.rcx','回転中心X',s.p.rcx??num(c[0]),env)+exprRow('p.rcy','回転中心Y',s.p.rcy??num(c[1]),env)
+      +`<button class="btn" id="bPivot" aria-pressed="${!!pivotPick}" title="キャンバスをクリックして回転中心を決めます（グリッド・図形スナップが効きます）" style="display:flex;align-items:center;justify-content:center;gap:6px">${ICON.pivot}回転中心をクリックで指定</button>`}
     if(s.type==='rect'){const each=s.cmode==='each'&&Array.isArray(s.cs);
       h+=segRow('cmode',[['all','四隅共通'],['each','個別']],each?'each':'all','角','cmd');
       if(!each)h+=segRow('ct',[['round',ICON.round+' 角丸'],['chamfer',ICON.chamfer+' 面取り']],s.ct||'round','角の種類','cty')+exprRow('p.r','角R',s.p.r,env);
@@ -1446,7 +1449,7 @@ function renderPanel(){
     sec.innerHTML=h;
     $('bDup').onclick=()=>dup();$('bMirX').onclick=()=>mirrorCopy('x');$('bMirY').onclick=()=>mirrorCopy('y');$('bDel').onclick=delSel;
     if($('bParent'))$('bParent').onclick=()=>{setSel(it.parent);render()};
-    if($('bBake'))$('bBake').onclick=bake;if($('bUngroup'))$('bUngroup').onclick=ungroup;if($('bUnsplit'))$('bUnsplit').onclick=unsplit;if($('bToPath'))$('bToPath').onclick=toPath;
+    if($('bBake'))$('bBake').onclick=bake;if($('bUngroup'))$('bUngroup').onclick=ungroup;if($('bUnsplit'))$('bUnsplit').onclick=unsplit;if($('bToPath'))$('bToPath').onclick=toPath;if($('bPivot'))$('bPivot').onclick=()=>pivotPick?endPivotPick():startPivotPick();
     if($('bEdgeX'))$('bEdgeX').onclick=()=>{selEdge=null;render()};
     if($('bGapAdd'))$('bGapAdd').onclick=()=>{const e=curEdge();if(!e)return;pushUndo();const L=e.L-e.ra-e.rb,len=Math.min(10,Math.round(L/3));gapSet(s,e,o=>{o.gaps=(o.gaps||[]).concat([{at:num(Math.round(e.ra+(L-len)/2)),len:num(len)}])});lastPanelKey=null;render()};
     sec.querySelectorAll('[data-gapdel]').forEach(b=>b.onclick=()=>{const e=curEdge();if(!e)return;pushUndo();gapSet(s,e,o=>{o.gaps.splice(+b.dataset.gapdel,1);if(!o.gaps.length)delete o.gaps});lastPanelKey=null;render()});
@@ -1823,7 +1826,7 @@ function toMM(e){const r=svg.getBoundingClientRect();return[(e.clientX-r.left-vi
 const snap=v=>snapStep?Math.round(v/snapStep)*snapStep:Math.round(v*100)/100;
 const HINT={dim:'始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック',text:'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集',select:'クリックで選択（重なっている所は同じ場所をもう一度クリックで奥の図形へ）、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで矩形を描く。図形の角・中点・辺に吸着すると、その図形に連動します（Ctrl / ⌘ で一時的に吸着なし）',circle:'中心からドラッグして円を描く。中心は図形の点に吸着・連動します',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',split:'分割する図形をクリックし、続けて切る線（または図形）をクリックして Enter。最初にクリックした図形が切られます（Esc で選び直し）',fillet:'平行でない2本の線分を順にクリック。交わっていなくても延長してつなぎ、クリックした側を残して角を丸めます（R は下の欄。Esc で選び直し）',offset:'オフセットする図形をクリック。複数まとめるときは Shift＋クリックで選んで Enter（図形を選んでからこのツールを押しても作れます）'};
 // the offset tool applies to the selection at once when there is one; otherwise it waits for a click on a shape
-function setTool(t){if(t==='offset'&&tool!=='offset'&&picks.length&&makeOffset(picks))return;
+function setTool(t){if(pivotPick)pivotPick=null;if(t==='offset'&&tool!=='offset'&&picks.length&&makeOffset(picks))return;
   if(t==='split'&&tool!=='split'&&picks.length>=2&&makeSplit(picks))return;
   tool=t;draft=null;snapHint=null;fsel=null;fhover=null;$('fRBox').hidden=t!=='fillet';document.querySelectorAll('.tool[data-tool]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));svg.className.baseVal=t==='select'||t==='offset'||t==='split'?'':'draw';$('sHint').textContent=HINT[t];render()}
 document.querySelectorAll('.tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
@@ -1976,6 +1979,7 @@ svg.addEventListener('pointerdown',e=>{
   if(e.pointerType==='touch'&&touchDown(e))return;
   const m=toMM(e),sm=[snap(m[0]),snap(m[1])];
   if(e.button===1||e.button===2||spaceDown){drag={kind:'pan',sx:e.clientX,sy:e.clientY,tx:view.tx,ty:view.ty};svg.classList.add('pan');return}
+  if(pivotPick){if(!e.button)setPivotAt(snapAt(m,e,pivotPick.ctx));return}
   const now=performance.now(),dbl=lastDown&&now-lastDown.t<380&&Math.hypot(e.clientX-lastDown.x,e.clientY-lastDown.y)<6;lastDown={t:now,x:e.clientX,y:e.clientY};
   if(dbl){lastDown=null;if(onDouble(e))return}
   if(tool==='dim'){const q=snapAt(m,e);
@@ -2027,6 +2031,7 @@ svg.addEventListener('pointerdown',e=>{
     drag={kind:'move',click,s,ls,bs,bp:bs.map(x=>structuredClone(x.p)),m0:m,orig:ls.map(c=>structuredClone(c)),base,ctx,moved:false,undo:JSON.stringify(doc)};render();return}
   drag={kind:'box',a:m,b:m,sx:e.clientX,sy:e.clientY,add:e.shiftKey,base:picks.slice()}});
 svg.addEventListener('pointermove',e=>{if(e.pointerType==='touch'&&touchMove(e))return;const m=toMM(e);$('sPos').textContent=`x ${fmt(m[0])}  y ${fmt(m[1])}`;
+  if(pivotPick&&!drag){const q=snapAt(m,e,pivotPick.ctx);pivotPick.q=q;setHint(q);render();return}
   if(tool==='dim'&&!drag){if(!draft||draft.stage===1){const q=snapAt(m,e);const ch=setHint(q);if(draft){draft.b=q;render()}else if(ch)render();return}
     const dx=draft.b.x-draft.a.x,dy=draft.b.y-draft.a.y,L=Math.hypot(dx,dy);draft.off=snap(((m[0]-draft.a.x)*-dy+(m[1]-draft.a.y)*dx)/L);render();return}
   if(tool==='fillet'&&!drag){const S=segAt(m,e),was=fhover;fhover=S?{S,m}:null;if(fsel||!!was!==!!S||(S&&was&&!sameSeg(S,was.S)))render();return}
@@ -2173,6 +2178,7 @@ document.addEventListener('keydown',e=>{if(!$('pdfModal').hidden||!$('helpModal'
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!inField){e.preventDefault();e.shiftKey?redo():undo();return}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='d'&&!inField){e.preventDefault();dup(false);return}
   if(inField){if(e.key==='Enter'&&!composing(e))document.activeElement.blur();return}
+  if(e.key==='Escape'&&pivotPick){endPivotPick();return}
   if(e.key==='Escape'&&tool==='fillet'){if(fsel){fsel=null;render()}else setTool('select');return}
   if(e.key==='Escape'){if(draft){draft=null;render()}else if(selNodes.length){selNodes=[];lastPanelKey=null;render()}else if(selEdge){selEdge=null;render()}else{setSel(null);if(tool==='offset'||tool==='split')setTool('select');else render()}return}
   if(e.key==='Enter'&&draft&&draft.type==='poly'){finishPoly(false);return}
@@ -2672,6 +2678,19 @@ async function openGraph(){if(graphOpen)return;graphOpen=true;document.body.clas
   if(!graphOpen)return;gState=null;requestAnimationFrame(()=>{applyView();render()})}
 function closeGraph(){graphOpen=false;gState=null;document.body.classList.remove('graphmode');$('gpane').hidden=true;$('xGraph').setAttribute('aria-pressed','false');requestAnimationFrame(()=>{applyView();render()})}
 $('xGraph').onclick=()=>graphOpen?closeGraph():openGraph();$('gClose').onclick=closeGraph;
+
+// ---------- rotation centre by click ----------
+// pick a point on the canvas (grid and object snap apply) as the selected part's rotation centre. A rotated part stays
+// where it is: its unrotated outline shifts by (I - R⁻¹)(new - old), so turning around the new centre lands on the same place.
+function startPivotPick(){const s=cur();if(!s||!ROTATABLE(s.type))return;const own=dependents([s.id]),skip=new Set(own);skip.delete(s.id);
+  pivotPick={id:s.id,ctx:{skip,noref:own},q:null};svg.className.baseVal='draw';$('sHint').textContent='回転中心にする点をクリック（Escでやめる）';lastPanelKey=null;render()}
+function endPivotPick(){pivotPick=null;snapHint=null;svg.className.baseVal=tool==='select'||tool==='offset'||tool==='split'?'':'draw';$('sHint').textContent=HINT[tool];lastPanelKey=null;render()}
+function setPivotAt(q){const s=byId(pivotPick.id),it=s&&C.byId[s.id];endPivotPick();if(!it||!it.g)return;pushUndo();const R=it.g.rot;
+  if(R){const c=R.c,v=unrotV(R,[c[0]-q.x,c[1]-q.y]),dx=v[0]+q.x-c[0],dy=v[1]+q.y-c[1];
+    if(Math.hypot(dx,dy)>1e-9)for(const m of moveTree(s)){if(m.type==='bool')shiftPivot(m,dx,dy);else shiftLeaf(m,dx,dy)}}
+  s.p.rcx=exOf(q);s.p.rcy=eyOf(q);lastPanelKey=null;render();toast('回転中心を設定しました')}
+function drawPivotMark(q,k){const A={fill:'none',stroke:'var(--sel)','stroke-width':1.4,'vector-effect':'non-scaling-stroke','pointer-events':'none'},z=7*k;
+  el('circle',{cx:q.x,cy:q.y,r:z*.6,...A},gOver);el('path',{d:`M${q.x-z*1.4} ${q.y}H${q.x-z*.6}M${q.x+z*.6} ${q.y}H${q.x+z*1.4}M${q.x} ${q.y-z*1.4}V${q.y-z*.6}M${q.x} ${q.y+z*.6}V${q.y+z*1.4}`,...A},gOver)}
 
 // ---------- panel sizes ----------
 // drag a panel edge to size it; the sizes are kept in UI.sizes. On a phone every side panel's handle sizes the bottom half.
