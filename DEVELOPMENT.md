@@ -39,7 +39,8 @@ Push straight to `main` when asked; there is no build step.
   negate y, rot and rcy (rect: top = -(y+h)); `shapeProp` / `selfProp` return y values negated (上 = -min y);
   writes go through `eyOf` (num(-y)), `shiftLeaf` / `shiftPivot` (move by -dy), and the handle / draw / node code.
   Stitch `eo` / `fl` / piece anchors `u,v` are in internal bbox terms and did not change.
-- `image` shapes (下絵): `p.x, p.y` (bottom-left), `p.w`, `ar` (height / width), `op`. The picture (a shrunk JPEG data URL)
+- `image` shapes (下絵): `p.x, p.y` (bottom-left), `p.w`, `p.h` (empty = `w*ar`), `ar` (the picture's height / width), `op`;
+  resized with the rectangle's `rs-` handles (Shift keeps the proportions, writing plain numbers). The picture (a shrunk JPEG data URL)
   is kept out of the doc in `IMG` and IndexedDB (`IDB`, key `img:<id>`), written into a saved .json as the shape's `img`
   (`takeImgs` moves it out again on open), copied on duplicate / paste, and never put in a share link. Images are drawn first,
   are never exported or snapped to, and a drag on a locked one box-selects. The first version's `doc.under` migrates to an
