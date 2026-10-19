@@ -39,6 +39,9 @@ Push straight to `main` when asked; there is no build step.
   negate y, rot and rcy (rect: top = -(y+h)); `shapeProp` / `selfProp` return y values negated (上 = -min y);
   writes go through `eyOf` (num(-y)), `shiftLeaf` / `shiftPivot` (move by -dy), and the handle / draw / node code.
   Stitch `eo` / `fl` / piece anchors `u,v` are in internal bbox terms and did not change.
+- A path's `p.x, p.y` is its origin (empty = 0): `placedNodes` adds it to the nodes, moving a path (`shiftLeaf`) changes only
+  the origin, and node values written from the canvas go through `nodeX` / `nodeY` / `nodeXE` / `nodeYE` (relative to it).
+  `自分.点1X` reads the node field as written (relative); other shapes' `L.点1X` read the placed value.
 - shape: `{id,name,type,kind,p:{…},st:{on,inset,pitch,hole,method?,pos?,eo?},fill?:{t,pitch}}`; `kind` is a line type from
   `LINES` (cut 実線, thin, red, guide 破線, dashthin, chain — cut/guide are the old 裁断線/ガイド ids), `fill.t` a hatch from
   `HATCHES` (`hatchOf` clips lines / places dots in world coordinates, used by canvas and all exports)
