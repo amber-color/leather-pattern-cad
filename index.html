@@ -18,7 +18,7 @@
   --bg:#eef0ec; --panel:#f8f9f6; --line:#d3d8cf; --fg:#1f2a24; --muted:#5f6d64;
   --accent:#b8611f; --accent-soft:#f3e1d1; --danger:#b3261e; --ok:#2f7a4b;
   --mat:#363331; --mat-minor:rgba(255,255,255,.07); --mat-major:rgba(255,255,255,.16);
-  --cut:#f4efe2; --lred:#ff6b5e; --lcyan:#3fd6f0; --guide:#9fc3b1; --stitch:#f0a94a; --sel:#ffb36b; --irr:#ff6f6f; --frame:#b9a7ff; --osnap:#7fe6ff; --ck:#8a4d1c; --cs:#1f5f8b; --cn:#b8611f; --cb:#8a3fa0;
+  --cut:#f4efe2; --lred:#ff6b5e; --lcyan:#3fd6f0; --guide:#9fc3b1; --stitch:#f0a94a; --sel:#ffb36b; --irr:#ff6f6f; --frame:#b9a7ff; --osnap:#7fe6ff; --ax-x:#ff7f6e; --ax-y:#7fdc8f; --ck:#8a4d1c; --cs:#1f5f8b; --cn:#b8611f; --cb:#8a3fa0;
   --ui:"IBM Plex Sans JP",system-ui,-apple-system,"Hiragino Sans",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
   color-scheme:light;
@@ -325,7 +325,7 @@ input.err{border-color:var(--danger)}
 
   <main class="stage" id="stage">
     <svg id="cv" xmlns="http://www.w3.org/2000/svg">
-      <g id="world"><path id="gMinor" fill="none" stroke="var(--mat-minor)" stroke-width="1" vector-effect="non-scaling-stroke"/><path id="gMajor" fill="none" stroke="var(--mat-major)" stroke-width="1" vector-effect="non-scaling-stroke"/><g id="shapes"></g><g id="overlay"></g></g>
+      <g id="world"><path id="gMinor" fill="none" stroke="var(--mat-minor)" stroke-width="1" vector-effect="non-scaling-stroke"/><path id="gMajor" fill="none" stroke="var(--mat-major)" stroke-width="1" vector-effect="non-scaling-stroke"/><g id="gAxes" pointer-events="none"></g><g id="shapes"></g><g id="overlay"></g></g>
     </svg>
     <div class="gpane" id="gpane" hidden><div class="sizer" data-size="gh" role="separator" aria-label="関係図の高さ" title="ドラッグで高さを変更（ダブルクリックで元に戻す）"></div><div class="ghead"><strong>関係図</strong><span class="small" id="gInfo"></span><button class="vtoggle" id="gClose" aria-label="関係図を閉じる" title="閉じる"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div><svg id="gsvg" aria-label="関係図"></svg></div>
     <div class="toast" id="toast" role="status"></div>
@@ -1245,7 +1245,11 @@ function drawGrid(){
   const r=svg.getBoundingClientRect(),x0=-view.tx/view.s,y0=-view.ty/view.s,x1=x0+r.width/view.s,y1=y0+r.height/view.s;
   const minor=view.s>=4?1:view.s>=1.2?5:10,major=view.s>=1.2?10:50;
   const line=(st)=>{let d='';for(let x=Math.floor(x0/st)*st;x<=x1;x+=st)d+=`M${x} ${y0}V${y1}`;for(let y=Math.floor(y0/st)*st;y<=y1;y+=st)d+=`M${x0} ${y}H${x1}`;return d};
-  $('gMinor').setAttribute('d',minor<major?line(minor):'');$('gMajor').setAttribute('d',line(major));}
+  $('gMinor').setAttribute('d',minor<major?line(minor):'');$('gMajor').setAttribute('d',line(major));
+  // X and Y arrows at the origin, a constant size on screen (inside y runs down, so +Y points to -y)
+  const k=1/view.s,L=44*k,a=6*k,w=3.5*k,f=11*k,A=(c,d)=>`<path d="${d}" fill="none" stroke="${c}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
+  $('gAxes').innerHTML=A('var(--ax-x)',`M0 0H${L}M${L-a} ${-w}L${L} 0L${L-a} ${w}`)+A('var(--ax-y)',`M0 0V${-L}M${-w} ${-L+a}L0 ${-L}L${w} ${-L+a}`)
+    +`<circle r="${2*k}" fill="var(--cut)" fill-opacity=".7"/><text x="${L+4*k}" y="${f*0.35}" font-size="${f}" fill="var(--ax-x)" font-family="IBM Plex Mono, monospace">X</text><text x="${-f*0.3}" y="${-L-5*k}" font-size="${f}" fill="var(--ax-y)" font-family="IBM Plex Mono, monospace">Y</text>`}
 function render(){
   C=compute();gShapes.textContent='';gOver.textContent='';
   if(sel&&!byId(sel))setSel(null);picks=picks.filter(id=>byId(id));
