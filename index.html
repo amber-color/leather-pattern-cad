@@ -156,9 +156,7 @@ body.sizing,body.sizing *{cursor:inherit!important;user-select:none!important}bo
 #varsTitle{cursor:help;border-bottom:1px dotted var(--muted)}#varsTitle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* the expression guide shown on hovering 変数 */
 .vhelp{position:fixed;z-index:60;width:min(340px,calc(100vw - 32px));max-height:calc(100vh - 80px);overflow:auto;box-sizing:border-box;padding:12px 14px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.22);font-size:12px;line-height:1.55}
-.vhelp[hidden]{display:none}
-.upop{position:fixed;z-index:56;width:min(300px,calc(100vw - 32px));box-sizing:border-box;padding:12px 14px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.22);display:flex;flex-direction:column;gap:8px}
-.upop[hidden]{display:none}.upop .uhead{display:flex;align-items:center;justify-content:space-between}.upop p{margin:0}.vhelp h3{margin:10px 0 4px;font-size:11px;letter-spacing:.08em;color:var(--muted);font-weight:500}.vhelp h3:first-child{margin-top:0}
+.vhelp[hidden]{display:none}.vhelp h3{margin:10px 0 4px;font-size:11px;letter-spacing:.08em;color:var(--muted);font-weight:500}.vhelp h3:first-child{margin-top:0}
 .vhelp p{margin:0 0 4px}.vhelp code{font:11.5px var(--mono);background:var(--bg);border-radius:3px;padding:0 3px}.vhelp dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0}.vhelp dt{white-space:nowrap}.vhelp dd{margin:0;color:var(--muted)}
 .vbody{display:flex;flex-direction:column;gap:8px}
 .vtoggle{width:26px;height:26px;padding:0;display:grid;place-items:center;flex:none;border:none;background:none;color:var(--muted);cursor:pointer;border-radius:4px}
@@ -305,7 +303,7 @@ input.err{border-color:var(--danger)}
         </div></div>
       <button class="btn ibtn" id="xFrame" aria-pressed="false" title="印刷枠：PDFの用紙と向きで印刷される範囲を図面に表示" aria-label="印刷枠"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v2"/><path d="M20 16v2a2 2 0 0 1 -2 2h-2"/><path d="M8 20h-2a2 2 0 0 1 -2 -2v-2"/><path d="M4 8v-2a2 2 0 0 1 2 -2h2"/></svg></button>
       <button class="btn ibtn" id="xNames" aria-pressed="true" title="パーツ名：図形の左上の名前を表示・非表示（選択中の図形は常に表示）" aria-label="パーツ名"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 7.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3z"/></svg></button>
-      <button class="btn ibtn" id="xUnder" aria-expanded="false" title="下絵：写真やスキャンを実寸に合わせて背景に置く" aria-label="下絵"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z"/><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5"/><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3"/></svg></button>
+      <button class="btn ibtn" id="xUnder" title="下絵を読み込む：写真やスキャンを背景に置き、実寸に合わせて型紙をなぞる" aria-label="下絵を読み込む"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z"/><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5"/><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3"/></svg></button>
       <button class="btn ibtn" id="xTheme" title="ライト / ダークを切り替え" aria-label="ライト / ダークを切り替え"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="t-moon"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454l0 .008"/></g><g class="t-sun"><path d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"/></g></svg></button>
       <button class="btn ibtn" id="xCode" aria-pressed="false" title="コード：型紙をJSONで直接編集" aria-label="コード"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8l-4 4l4 4"/><path d="M17 8l4 4l-4 4"/><path d="M14 4l-4 16"/></svg></button>
       <button class="btn ibtn" id="xGraph" aria-pressed="false" title="関係図：変数とパーツのつながりを表示" aria-label="関係図"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="6" height="4" rx="1"/><rect x="3" y="16" width="6" height="4" rx="1"/><rect x="15" y="10" width="6" height="4" rx="1"/><path d="M9 6c3 0 3 6 6 6M9 18c3 0 3 -6 6 -6"/></svg></button>
@@ -334,7 +332,7 @@ input.err{border-color:var(--danger)}
 
   <main class="stage" id="stage">
     <svg id="cv" xmlns="http://www.w3.org/2000/svg">
-      <g id="world"><image id="underImg" preserveAspectRatio="none" pointer-events="none" style="display:none"/><path id="gMinor" fill="none" stroke="var(--mat-minor)" stroke-width="1" vector-effect="non-scaling-stroke"/><path id="gMajor" fill="none" stroke="var(--mat-major)" stroke-width="1" vector-effect="non-scaling-stroke"/><g id="gAxes" pointer-events="none"></g><g id="shapes"></g><g id="overlay"></g></g>
+      <g id="world"><path id="gMinor" fill="none" stroke="var(--mat-minor)" stroke-width="1" vector-effect="non-scaling-stroke"/><path id="gMajor" fill="none" stroke="var(--mat-major)" stroke-width="1" vector-effect="non-scaling-stroke"/><g id="gAxes" pointer-events="none"></g><g id="shapes"></g><g id="overlay"></g></g>
     </svg>
     <div class="gpane" id="gpane" hidden><div class="sizer" data-size="gh" role="separator" aria-label="関係図の高さ" title="ドラッグで高さを変更（ダブルクリックで元に戻す）"></div><div class="ghead"><strong>関係図</strong><span class="small" id="gInfo"></span><button class="vtoggle" id="gClose" aria-label="関係図を閉じる" title="閉じる"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div><svg id="gsvg" aria-label="関係図"></svg></div>
     <div class="toast" id="toast" role="status"></div>
@@ -414,22 +412,7 @@ input.err{border-color:var(--danger)}
   <div class="btns"><button class="btn primary" id="mCopy">コピー</button><button class="btn" id="mSave">テキストで保存</button><button class="btn" id="mClose">閉じる</button></div>
 </div></div>
 
-<div class="upop" id="underPop" role="dialog" aria-label="下絵" hidden>
-  <div class="uhead"><b>下絵</b><button class="vtoggle" id="uClose" aria-label="閉じる" title="閉じる"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
-  <p class="small">写真やスキャンを読み込み、写っている2点の実寸で大きさを合わせます。作図の目安なので書き出しには出ません。</p>
-  <div class="btnrow"><button class="btn" id="uLoad">画像を読み込む</button></div>
-  <input type="file" id="uFile" accept="image/*" hidden>
-  <div id="uCtl" style="display:flex;flex-direction:column;gap:8px">
-    <div class="btnrow"><label class="check"><input type="checkbox" id="uShow"> 表示</label><label class="check"><input type="checkbox" id="uLock"> ロック</label></div>
-    <div class="row"><label for="uOp">濃さ</label><input type="range" id="uOp" min="10" max="100" step="5"><span id="uOpV" class="small"></span></div>
-    <div class="row"><label for="uW">幅</label><input type="text" id="uW" spellcheck="false" autocomplete="off"><span class="small">mm</span></div>
-    <div class="row"><label for="uX">X</label><input type="text" id="uX" spellcheck="false" autocomplete="off"><span class="small">mm（左下）</span></div>
-    <div class="row"><label for="uY">Y</label><input type="text" id="uY" spellcheck="false" autocomplete="off"><span class="small">mm</span></div>
-    <div class="row"><label for="uLen">実寸</label><input type="text" id="uLen" value="100" spellcheck="false" autocomplete="off"><span class="small">mm</span></div>
-    <div class="btnrow"><button class="btn" id="uScale" title="画像の上で2点をクリックすると、その間が「実寸」の長さになるよう拡大縮小します">2点で大きさ合わせ</button><button class="btn" id="uMove" title="画像の上の点をクリックし、次に置きたい場所をクリック（スナップが効きます）">点で位置合わせ</button></div>
-    <div class="btnrow"><button class="btn del" id="uDel">下絵を外す</button></div>
-  </div>
-</div>
+<input type="file" id="uFile" accept="image/*" hidden>
 <div class="vhelp" id="varHelp" role="tooltip" data-noi18n hidden></div>
 <script>
 (()=>{
@@ -485,6 +468,7 @@ const fmt=(v,d=1)=>(Math.round(v*10**d)/10**d).toFixed(d);
 const LANG=(()=>{let u={};try{u=JSON.parse(localStorage.getItem('ppp-ui')||'{}')||{}}catch(e){}
   if(u.lang==='ja'||u.lang==='en')return u.lang;const l=(navigator.languages&&navigator.languages[0])||navigator.language||'ja';return/^ja/i.test(l)?'ja':'en'})();
 const EN_EXACT={
+  '下絵を読み込む：写真やスキャンを背景に置き、実寸に合わせて型紙をなぞる':'Load an underlay: put a photo or scan behind the drawing, bring it to full size and trace it','下絵を読み込む':'Load an underlay','画像を差し替えました':'Image replaced','下絵を置きました。パーツ欄の「2点で大きさ合わせ」で実寸に合わせてください':'Underlay placed. Use “Scale by 2 points” in the parts panel to bring it to full size','画像がありません（パーツ欄で差し替え）':'No image (replace it in the parts panel)','作図の目安なので書き出しには出ません。画像は保存（.json）に入り、共有リンクには入りません。':'A drawing aid, never exported. The image is kept in saved .json files but not in share links.','幅は正の値に':'Width must be positive',
   '下絵：写真やスキャンを実寸に合わせて背景に置く':'Underlay: a photo or scan placed full-size behind the drawing','下絵':'Underlay','写真やスキャンを読み込み、写っている2点の実寸で大きさを合わせます。作図の目安なので書き出しには出ません。':'Load a photo or scan and size it by the real distance between two points in it. It is a drawing aid and is never exported.','画像を読み込む':'Load an image','画像を差し替える':'Replace the image','表示':'Show','ロック':'Lock','濃さ':'Opacity','mm（左下）':'mm (bottom left)','実寸':'Real size','2点で大きさ合わせ':'Scale by 2 points','点で位置合わせ':'Move by a point','下絵を外す':'Remove the underlay','画像の上で2点をクリックすると、その間が「実寸」の長さになるよう拡大縮小します':'Click two points on the image; it is scaled so they are “Real size” apart','画像の上の点をクリックし、次に置きたい場所をクリック（スナップが効きます）':'Click a point on the image, then where it should go (snapping applies)','計測 (M)':'Measure (M)','2点をクリックすると距離・角度・ΔX・ΔYを表示（図形スナップが効きます）。もう一度クリックで測り直し、Escで終了':'Click two points to see the distance, angle, ΔX and ΔY (object snap applies). Click again to measure anew; Esc to finish','表示する':'Show','非表示にする（書き出しには影響しません）':'Hide (exports are not affected)','非表示':'Hide','ロックを解除':'Unlock','ロック：図形の上で動かしたり消したりできないようにする':'Lock: can’t be moved or deleted on the canvas','まとめて表示':'Show all','まとめて非表示':'Hide all','まとめてロック解除':'Unlock all','まとめてロック':'Lock all','ロック中のパーツは図形の上で編集できません（パーツ欄の鍵で解除）':'A locked part can’t be edited on the canvas (unlock it in the parts panel)','ロック中のパーツは動かせません（パーツ欄の鍵で解除）':'A locked part can’t be moved (unlock it in the parts panel)','ロック中のパーツは削除できません（パーツ欄の鍵で解除）':'A locked part can’t be deleted (unlock it in the parts panel)','すべて表示しました':'Everything is shown','画像を読み込めませんでした':'Couldn’t read that image','下絵を置きました。「2点で大きさ合わせ」で実寸に合わせてください':'Underlay placed. Use “Scale by 2 points” to bring it to full size','実寸を mm で入れてください':'Enter the real size in mm','下絵の上で、実寸が分かる2点をクリック（Escでやめる）':'Click two points on the underlay whose real distance you know (Esc to cancel)','下絵の上の点をクリックし、次にその点を置きたい場所をクリック（Escでやめる）':'Click a point on the underlay, then where it should go (Esc to cancel)','同じ点です':'Those are the same point','下絵を動かしました':'Underlay moved','下絵は共有リンクに含まれません':'The underlay isn’t included in share links',
   // top bar, menus
   'ファイル':'File','新規':'New','開く':'Open','開く：保存した .json を読み込む':'Open: load a saved .json','保存':'Save','保存：型紙を .json で保存':'Save the pattern as .json',
@@ -603,6 +587,7 @@ const EN_EXACT={
 };
 // [Japanese with {0}…, English, optional {index:{ja:en}} for words that read differently inside the sentence]
 const EN_PAT=[
+  ['{0} mm（縦横比を保つ）','{0} mm (keeps the aspect ratio)'],
   ['非表示 {0} · すべて表示','Hidden {0} · show all'],['下絵を {0}% にしました','Underlay scaled to {0}%'],['{0}個をコピーしました','Copied {0}'],['{0}個を貼り付けました（変数 {1}個も追加）','Pasted {0} (and {1} variables)'],['{0}個を貼り付けました','Pasted {0}'],['面積の合計 {0} cm²（{1} デシ）','Total area {0} cm² ({1} dm²)'],['面積 {0} cm²（{1} デシ）','Area {0} cm² ({1} dm²)'],['計測：{0}','Measure: {0}'],
   ['{0}（書き出さない）  {1}穴','{0} (not exported)  {1} holes',{0:'T'}],['{0}（書き出さない）','{0} (not exported)',{0:'T'}],['{0}（材料）  {1}穴','{0} (material)  {1} holes'],['{0}  {1}穴','{0}  {1} holes'],['{0}（材料）','{0} (material)'],['周長 {0}','Perimeter {0}'],['{0} · 連動','{0} · linked',{0:'T'}],
   ['{0} 横  {1}','{0} landscape  {1}',{0:'T'}],['{0} 縦  {1}','{0} portrait  {1}',{0:'T'}],['{0} 横','{0} landscape',{0:'T'}],['{0} 縦','{0} portrait',{0:'T'}],['図形に合わせる（{0} × {1} mm）  {2}','Fit to the shapes ({0} × {1} mm)  {2}'],['図形に合わせる（{0} × {1} mm）','Fit to the shapes ({0} × {1} mm)'],
@@ -721,12 +706,14 @@ const SAMPLE={vars:[{n:'名刺W',e:'91'},{n:'名刺H',e:'55'},{n:'ゆとり',e:'
 const KEY='ppp-v1';
 let doc;try{doc=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!doc||!doc.shapes)doc=structuredClone(SAMPLE);
-function migrate(d){for(const s of d.shapes||[])if(s.type==='poly'&&!s.nodes){s.nodes=(s.pts||[]).map(([x,y])=>({x:String(x),y:String(y)}));delete s.pts}return d}
+function migrate(d){if(d.under&&d.shapes){const u=d.under,n=v=>String(+(+v).toFixed(3));delete d.under;
+    d.shapes.unshift({id:'img_under',name:'下絵',type:'image',kind:'guide',p:{x:n(u.x),y:n(u.y),w:n(u.w)},ar:u.ar||1,op:u.op??0.5,...(u.hide?{hide:true}:{}),...(u.lock?{lock:true}:{}),st:{on:false,inset:'3',pitch:'4',hole:'1'}})}
+  for(const s of d.shapes||[])if(s.type==='poly'&&!s.nodes){s.nodes=(s.pts||[]).map(([x,y])=>({x:String(x),y:String(y)}));delete s.pts}return d}
 migrate(doc);
 const num=v=>String(+(+v).toFixed(3));
 let picks=[],tool='select',snapStep=1;
 // pendingBetween: after a fillet dropped the edges between two picked edges of a path, the choice to keep them as a line
-let sel=null,selEdge=null,selNodes=[],pendingBetween=null,pivotPick=null,measure=null,underPick=null,underSrc=null;const setSel=id=>{sel=id;picks=id?[id]:[];selEdge=null;selNodes=[];if(pendingBetween&&pendingBetween.id!==id)pendingBetween=null};
+let sel=null,selEdge=null,selNodes=[],pendingBetween=null,pivotPick=null,measure=null,underPick=null;const setSel=id=>{sel=id;picks=id?[id]:[];selEdge=null;selNodes=[];if(pendingBetween&&pendingBetween.id!==id)pendingBetween=null};
 const view={tx:0,ty:0,s:3};
 let undoS=[],redoS=[];
 function pushUndo(){undoS.push(JSON.stringify(doc));if(undoS.length>100)undoS.shift();redoS=[]}
@@ -881,6 +868,8 @@ function geomLeaf0(s,env){
     return{paths:[d.bound],pts:d.bound,closed:false,isDim:true,dim:d,...v}}
   if(s.type==='text'){const x=P(s,'x',env),y=-P(s,'y',env),size=P(s,'size',env),rot=-P(s,'rot',env);if(size<=0)throw Error('文字の高さは正の値に');
     const str=s.text||'',w=Math.max(textWidth(str,size),size*0.3),box=textBox(x,y,w,size,rot);return{paths:[box],pts:box,closed:false,isText:true,x,y,size,rot,w,str}}
+  if(s.type==='image'){const x=P(s,'x',env),w=P(s,'w',env);if(w<=0)throw Error('幅は正の値に');const h=w*(s.ar||1),y=-P(s,'y',env)-h,box=[[x,y],[x+w,y],[x+w,y+h],[x,y+h]];
+    return{paths:[box],pts:box,closed:false,isImage:true,x,y,w,h}}
   // the drawing's (x, y) is the bottom-left corner; inside, y runs down and the box starts at its top
   if(s.type==='rect'){const x=P(s,'x',env),w=P(s,'w',env),h=P(s,'h',env),y=-P(s,'y',env)-h,r=P(s,'r',env);
     if(w<=0||h<=0)throw Error('幅と高さは正の値に');const lim=v=>Math.max(0,Math.min(v,w/2,h/2)),each=s.cmode==='each'&&Array.isArray(s.cs);
@@ -1288,7 +1277,7 @@ function drawGrid(){
   $('gAxes').innerHTML=A('var(--ax-x)',`M0 0H${L}M${L-a} ${-w}L${L} 0L${L-a} ${w}`)+A('var(--ax-y)',`M0 0V${-L}M${-w} ${-L+a}L0 ${-L}L${w} ${-L+a}`)
     +`<circle r="${2*k}" fill="var(--cut)" fill-opacity=".7"/><text x="${L+4*k}" y="${f*0.35}" font-size="${f}" fill="var(--ax-x)" font-family="IBM Plex Mono, monospace">X</text><text x="${-f*0.3}" y="${-L-5*k}" font-size="${f}" fill="var(--ax-y)" font-family="IBM Plex Mono, monospace">Y</text>`}
 function render(){
-  C=compute();gShapes.textContent='';gOver.textContent='';drawUnder();
+  C=compute();gShapes.textContent='';gOver.textContent='';
   {const n=doc.shapes.filter(x=>x.hide).length,b=$('sHidden');b.hidden=!n;if(n)b.textContent=`非表示 ${n} · すべて表示`}
   if(sel&&!byId(sel))setSel(null);picks=picks.filter(id=>byId(id));
   {const sc=byId(sel);if(!sc||sc.type!=='poly'||picks.length!==1)selNodes=[];else selNodes=selNodes.filter(i=>i<sc.nodes.length)}
@@ -1296,12 +1285,16 @@ function render(){
   const k=1/view.s;
   // materials first (faint), then top-level shapes, and the selection last so its outline is never covered
   const picked=i=>picks.includes(i.s.id)||i.s.id===sel;
-  const order=C.items.filter(i=>i.parent&&!picked(i)).concat(C.items.filter(i=>!i.parent&&!picked(i)),C.items.filter(picked));
+  const isImg=i=>i.s.type==='image',rest=C.items.filter(i=>!isImg(i));
+  const order=C.items.filter(isImg).concat(rest.filter(i=>i.parent&&!picked(i)),rest.filter(i=>!i.parent&&!picked(i)),rest.filter(picked));
   for(const it of order){const s=it.s,g=it.g;if(!g)continue;const on=picks.includes(s.id),mat=!!it.parent;
     // a hidden part is left out (shown faint only while it is selected, so it can be shown again)
     if(s.hide&&!on&&s.id!==sel)continue;
     const faint=mat&&s.id!==sel;
     const grp=el('g',{'data-id':s.id,'pointer-events':faint?'none':'auto',opacity:faint||s.hide?.35:s.noexp&&!on?.45:1},gShapes);
+    if(g.isImage){const src=IMG[s.id];if(src)el('image',{href:src,x:g.x,y:g.y,width:g.w,height:g.h,preserveAspectRatio:'none',opacity:s.op??0.5,'pointer-events':'none'},grp);
+      else{const t=el('text',{x:g.x+2*k,y:g.y+14*k,'font-size':11*k,fill:'var(--muted)','pointer-events':'none'},grp);t.textContent='画像がありません（パーツ欄で差し替え）'}
+      el('rect',{x:g.x,y:g.y,width:g.w,height:g.h,fill:'transparent',stroke:on?'var(--sel)':src?'none':'var(--muted)','stroke-width':1.2,'stroke-dasharray':on?'':'4 3','vector-effect':'non-scaling-stroke'},grp);continue}
     const d=dPaths(g.paths,g.closed);
     if(g.isDim){const D=g.dim,col=on?'var(--sel)':'var(--guide)';
       el('path',{d:D.lines.map(([a,b])=>`M${a[0]} ${a[1]}L${b[0]} ${b[1]}`).join(''),stroke:col,'stroke-width':1,fill:'none','vector-effect':'non-scaling-stroke','pointer-events':'none'},grp);
@@ -1386,7 +1379,7 @@ function drawSel(it,k){const s=it.s,g=it.g;if(g.isText)return;drawEdges(it,k);if
 // ---------- panel ----------
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 const LABELS={rcx:'回転中心X',rcy:'回転中心Y',x1:'始点X',y1:'始点Y',x2:'終点X',y2:'終点Y',off:'離れ',x:'X',y:'Y',w:'幅',h:'高さ',r:'角R',cx:'中心X',cy:'中心Y',d:'直径',size:'文字の高さ',rot:'回転（度）'};
-const TYPE_LABEL=s=>({dim:'寸法線',text:'テキスト',rect:'矩形',circle:'円',poly:s.closed?'閉じたパス':'開いたパス',bool:'演算 · '+OPS[s.op],offset:'オフセット · '+OFFSET_SIDES[s.side==='in'?'in':'out'],piece:'分割'+((C.byId[s.id]||{}).g&&C.byId[s.id].g.piece?` · ${C.byId[s.id].g.piece.i+1}/${C.byId[s.id].g.piece.n}`:'')}[s.type]);
+const TYPE_LABEL=s=>({image:'下絵',dim:'寸法線',text:'テキスト',rect:'矩形',circle:'円',poly:s.closed?'閉じたパス':'開いたパス',bool:'演算 · '+OPS[s.op],offset:'オフセット · '+OFFSET_SIDES[s.side==='in'?'in':'out'],piece:'分割'+((C.byId[s.id]||{}).g&&C.byId[s.id].g.piece?` · ${C.byId[s.id].g.piece.i+1}/${C.byId[s.id].g.piece.n}`:'')}[s.type]);
 function exprRow(path,label,expr,env){let v,e;try{v=evalExpr(expr,env)}catch(x){e=x.message}
   return `<div class="row"><label for="f_${path}">${label}</label><input type="text" id="f_${path}" data-path="${path}" value="${esc(expr)}" class="${e?'err':''}" spellcheck="false" autocomplete="off"><span class="val ${e?'err':''}" title="${esc(e||'')}">${e?'エラー':'= '+fmt(v)}</span></div>`}
 const irrText=irr=>{if(!irr.length)return'なし';const g={};irr.forEach(x=>{const k=fmt(x.g);g[k]=(g[k]||0)+1});return`<b style="color:var(--danger);font-weight:500">${Object.entries(g).map(([v,c])=>`${v}mm × ${c}`).join('、')}</b>`};
@@ -1423,8 +1416,8 @@ function renderPanel(){
     h+=`<h2>パーツ <span class="pill">${TYPE_LABEL(s)}</span></h2>
     <div class="row"><label for="f_name">名前</label><input type="text" id="f_name" data-path="name" value="${esc(s.name)}"><span></span></div>`;
     {const a=areaOf(it);if(a!=null)h+=`<div class="small">${areaText(a)}</div>`}
-    h+=`<label class="check"><input type="checkbox" id="f_exp" data-path="exp"${s.noexp?'':' checked'}> 書き出す（PDF・SVG・DXF）</label>`;
-    if(!it.parent&&s.type!=='dim'){const LN=lineOf(s),k=LINES[s.kind]?s.kind:'cut',sc=LN.col==='#000'?'currentColor':LN.col;
+    if(s.type!=='image')h+=`<label class="check"><input type="checkbox" id="f_exp" data-path="exp"${s.noexp?'':' checked'}> 書き出す（PDF・SVG・DXF）</label>`;
+    if(!it.parent&&s.type!=='dim'&&s.type!=='image'){const LN=lineOf(s),k=LINES[s.kind]?s.kind:'cut',sc=LN.col==='#000'?'currentColor':LN.col;
       h+=`<div class="row"><label for="f_kind">線種</label><select class="inp" id="f_kind" data-path="kind">${Object.entries(LINES).map(([v,l])=>`<option value="${v}"${k===v?' selected':''}>${l.ja}</option>`).join('')}</select><svg class="lsample" viewBox="0 0 56 10" aria-hidden="true"><line x1="2" y1="5" x2="54" y2="5" stroke="${sc}" stroke-width="${LN.sw*1.2}" stroke-dasharray="${LN.dash}"/></svg></div>`;
       if(it.g&&it.g.closed&&!it.g.isText){const ft=s.fill&&HATCHES[s.fill.t]?s.fill.t:'none';
         h+=`<div class="row"><label for="f_fill">塗り</label><select class="inp" id="f_fill" data-path="fill.t">${Object.entries(HATCHES).map(([v,l])=>`<option value="${v}"${ft===v?' selected':''}>${l}</option>`).join('')}</select><span></span></div>`;
@@ -1454,6 +1447,13 @@ function renderPanel(){
     for(const key in s.p)if(s.type!=='offset'&&!(s.type==='rect'&&key==='r')&&!(s.type==='poly'&&(key==='x'||key==='y'))&&!(ROTATABLE(s.type)&&/^(rot|rcx|rcy)$/.test(key)))h+=exprRow('p.'+key,LABELS[key]||key,s.p[key],env);
     if(ROTATABLE(s.type)&&it.g){const c=pivotOf(it.g);h+=exprRow('p.rot','回転（度）',s.p.rot??'0',env)+exprRow('p.rcx','回転中心X',s.p.rcx??num(c[0]),env)+exprRow('p.rcy','回転中心Y',s.p.rcy??num(-c[1]),env)
       +`<div class="row"><span></span><button class="btn" id="bPivot" aria-pressed="${!!pivotPick}" title="キャンバスをクリックして回転中心を決めます（グリッド・図形スナップが効きます）" style="display:flex;align-items:center;justify-content:center;gap:5px;padding:4px 6px;white-space:nowrap">${ICON.pivot}クリックで指定</button><span></span></div>`}
+    if(s.type==='image'){const op=Math.round((s.op??0.5)*100);
+      h+=`<div class="row"><label>高さ</label><span class="small">${it.g?fmt(it.g.h,1):'—'} mm（縦横比を保つ）</span><span></span></div>
+      <div class="row"><label for="f_op">濃さ</label><input type="range" id="f_op" min="10" max="100" step="5" value="${op}"><span class="small" id="f_opv">${op}%</span></div>
+      <div class="row"><label for="f_ilen">実寸</label><input type="text" id="f_ilen" value="${esc(imgLen)}" spellcheck="false" autocomplete="off"><span class="small">mm</span></div>
+      <div class="btnrow"><button class="btn" id="bImgScale" title="画像の上で2点をクリックすると、その間が「実寸」の長さになるよう拡大縮小します">2点で大きさ合わせ</button><button class="btn" id="bImgMove" title="画像の上の点をクリックし、次に置きたい場所をクリック（スナップが効きます）">点で位置合わせ</button></div>
+      <div class="btnrow"><button class="btn" id="bImgSwap">画像を差し替える</button></div>
+      <div class="small">作図の目安なので書き出しには出ません。画像は保存（.json）に入り、共有リンクには入りません。</div>`}
     if(s.type==='rect'){const each=s.cmode==='each'&&Array.isArray(s.cs);
       h+=segRow('cmode',[['all','四隅共通'],['each','個別']],each?'each':'all','角','cmd');
       if(!each)h+=segRow('ct',[['round',ICON.round+' 角丸'],['chamfer',ICON.chamfer+' 面取り']],s.ct||'round','角の種類','cty')+exprRow('p.r','角R',s.p.r,env);
@@ -1474,7 +1474,7 @@ function renderPanel(){
     if(s.type==='dim'&&it.g)h+=`<div class="result"><span>寸法</span><span>${fmt(it.g.dim.L)} mm</span></div><div class="small">始点・終点の丸い四角、線の中央の丸をドラッグで調整。図形の角や中心に吸着します。離れは、始点から終点へ向かって右側が正、左側が負です。</div>`;
     const matOn=(s.type==='bool'||s.type==='piece')&&matStitchOn(s);
     if(matOn)h+=`<h2 style="margin-top:6px">ステッチ穴</h2><div class="small">材料に穴を並べているので、ステッチ穴は材料ごとの設定で決まり、ここでは変えられません。上の材料を選んで設定してください。演算結果で穴を設定するには、材料の「穴を並べる」をすべてオフにします。</div>`;
-    if(!matOn&&s.type!=='text'&&s.type!=='dim'){h+=`<h2 style="margin-top:6px">ステッチ穴</h2><label class="check"><input type="checkbox" id="f_st" data-path="st.on"${s.st.on?' checked':''}> 穴を並べる</label>`;
+    if(!matOn&&s.type!=='text'&&s.type!=='dim'&&s.type!=='image'){h+=`<h2 style="margin-top:6px">ステッチ穴</h2><label class="check"><input type="checkbox" id="f_st" data-path="st.on"${s.st.on?' checked':''}> 穴を並べる</label>`;
       if(s.st.on){if(it.g&&it.g.closed)h+=exprRow('st.inset','縫い代',s.st.inset,env);
         h+=exprRow('st.pitch','ピッチ',s.st.pitch,env)+exprRow('st.hole','穴径',s.st.hole,env);
         h+=segRow('st.method',METHODS,s.st.method||'auto','余りの処理','stm')+segRow('st.pos',POSES,s.st.pos||'both','余りの位置','stp');
@@ -1500,11 +1500,13 @@ function renderPanel(){
     const conv=`<button class="btn" id="bBake" title="式と元の図形とのつながりをやめ、今の形のパスに置き換えます（元に戻すには ⌘Z）">パスに変換</button>`;
     const row1=s.type==='rect'||s.type==='circle'?`<button class="btn" id="bToPath" title="${s.type==='rect'?'矩形':'円'}をパスに変換します。式は残るので変数を変えても形が追従し、線の上をダブルクリックで頂点を足せます">パスに変換</button>`:s.type==='bool'?conv+`<button class="btn" id="bUngroup" title="演算をやめて材料を元の図形に戻します">演算を解除</button>`:s.type==='offset'?conv:s.type==='piece'?conv+`<button class="btn" id="bUnsplit" title="この分割のピースをすべて消して、元の図形と切る線に戻します">分割を解除</button>`:'';
     if(row1)h+=`<div class="btnrow" style="margin-top:4px">${row1}</div>`;
-    h+=`<div class="btnrow"${row1?'':' style="margin-top:4px"'}><button class="btn ib" id="bDup" title="複製 (⌘D)" aria-label="複製">${ICON.copy}</button><button class="btn ib" id="bMirX" title="左右反転した形を右側に複製" aria-label="左右複製">${ICON.flipX}</button><button class="btn ib" id="bMirY" title="上下反転した形を下側に複製" aria-label="上下複製">${ICON.flipY}</button><button class="btn ib" id="bHide" aria-pressed="${!!s.hide}" title="${s.hide?'表示する':'非表示にする（書き出しには影響しません）'}" aria-label="非表示">${s.hide?ICON.eyeOff:ICON.eye}</button><button class="btn ib" id="bLock" aria-pressed="${!!s.lock}" title="${s.lock?'ロックを解除':'ロック：図形の上で動かしたり消したりできないようにする'}" aria-label="ロック">${s.lock?ICON.lock:ICON.unlock}</button><button class="btn ib del" id="bDel" title="削除 (Delete)" aria-label="削除">${ICON.trash}</button></div>`;
+    h+=`<div class="btnrow"${row1?'':' style="margin-top:4px"'}><button class="btn ib" id="bDup" title="複製 (⌘D)" aria-label="複製">${ICON.copy}</button>${s.type==='image'?'':`<button class="btn ib" id="bMirX" title="左右反転した形を右側に複製" aria-label="左右複製">${ICON.flipX}</button><button class="btn ib" id="bMirY" title="上下反転した形を下側に複製" aria-label="上下複製">${ICON.flipY}</button>`}<button class="btn ib" id="bHide" aria-pressed="${!!s.hide}" title="${s.hide?'表示する':'非表示にする（書き出しには影響しません）'}" aria-label="非表示">${s.hide?ICON.eyeOff:ICON.eye}</button><button class="btn ib" id="bLock" aria-pressed="${!!s.lock}" title="${s.lock?'ロックを解除':'ロック：図形の上で動かしたり消したりできないようにする'}" aria-label="ロック">${s.lock?ICON.lock:ICON.unlock}</button><button class="btn ib del" id="bDel" title="削除 (Delete)" aria-label="削除">${ICON.trash}</button></div>`;
     sec.innerHTML=h;
     $('bHide').onclick=()=>{pushUndo();s.hide=!s.hide||undefined;if(!s.hide)delete s.hide;lastPanelKey=null;render()};
     $('bLock').onclick=()=>{pushUndo();if(s.lock)delete s.lock;else s.lock=true;lastPanelKey=null;render()};
-    $('bDup').onclick=()=>dup();$('bMirX').onclick=()=>mirrorCopy('x');$('bMirY').onclick=()=>mirrorCopy('y');$('bDel').onclick=delSel;
+    $('bDup').onclick=()=>dup();if($('bMirX')){$('bMirX').onclick=()=>mirrorCopy('x');$('bMirY').onclick=()=>mirrorCopy('y')}
+    if(s.type==='image'){const op=$('f_op');op.onpointerdown=()=>pushUndo();op.oninput=()=>{s.op=+op.value/100;$('f_opv').textContent=op.value+'%';const im=gShapes.querySelector(`g[data-id="${s.id}"] image`);if(im)im.setAttribute('opacity',s.op);save()};op.onchange=()=>render();
+      $('f_ilen').oninput=e=>{imgLen=e.target.value};$('bImgScale').onclick=()=>startImgPick('scale');$('bImgMove').onclick=()=>startImgPick('move');$('bImgSwap').onclick=()=>{imgFor=s.id;$('uFile').click()}}$('bDel').onclick=delSel;
     if($('bParent'))$('bParent').onclick=()=>{setSel(it.parent);render()};
     if($('bBake'))$('bBake').onclick=bake;if($('bUngroup'))$('bUngroup').onclick=ungroup;if($('bUnsplit'))$('bUnsplit').onclick=unsplit;if($('bToPath'))$('bToPath').onclick=toPath;if($('bPivot'))$('bPivot').onclick=()=>pivotPick?endPivotPick():startPivotPick();
     if($('bEdgeX'))$('bEdgeX').onclick=()=>{selEdge=null;render()};
@@ -1659,7 +1661,7 @@ function insertNode(s,m){const g=C.byId[s.id].g,N=g.lnodes||g.nodes;if(g.rot)m=u
   const rel=(a,b)=>[num(a[0]-b[0]),num(b[1]-a[1])];
   s.nodes[i].ho=rel(p01,c.p0);s.nodes[j].hi=rel(p23,c.p3);
   s.nodes.splice(i+1,0,{x:nodeX(g,M[0]),y:nodeY(g,M[1]),t:'smooth',hi:rel(p012,M),ho:rel(p123,M)});return true}
-function cloneTree(s,dx){const c=structuredClone(s);c.id=newId();c.name=uniqName(c.name);
+function cloneTree(s,dx){const c=structuredClone(s);c.id=newId();c.name=uniqName(c.name);if(c.type==='image'&&IMG[s.id])setImg(c.id,IMG[s.id]);
   if(c.type==='bool'){c.ops=s.ops.map(id=>cloneTree(byId(id),dx));shiftPivot(c,dx,0)}
   // an offset is copied with its source shapes, so the copy has its own sources beside the originals
   else if(c.type==='offset')c.src=(s.src||[]).map(byId).filter(Boolean).map(x=>cloneTree(x,dx));
@@ -1909,7 +1911,7 @@ const SNAP_LABEL={end:'端点',mid:'中点',center:'中心',quad:'四分点',int
 const osnapOn=e=>UI.osnap!==false&&!(e&&(e.ctrlKey||e.metaKey));
 // ctx: {skip:Set of ids not snapped to at all, noref:Set of ids snapped to without a reference, extra:[{x,y,ex,ey}]}
 function snapCands(ctx){const out=[];const skip=ctx.skip||new Set(),noref=ctx.noref||new Set();
-  for(const it of C.items){const g=it.g,s=it.s;if(!g||skip.has(s.id)||g.isDim||s.hide)continue;
+  for(const it of C.items){const g=it.g,s=it.s;if(!g||skip.has(s.id)||g.isDim||g.isImage||s.hide)continue;
     // a rotated shape is snapped to by number only (its references would name unrotated sides)
     const RT=g.rot,R=!RT&&!noref.has(s.id)&&refOK(s)?refName(s.name)+'.':null,E=p=>R?R+propOut(p):null;
     const P=(x,y,kind,px,py,role)=>{const q=RT&&s.type==='rect'?rotP(RT,[x,y]):[x,y];out.push({x:q[0],y:q[1],kind,ex:px&&E(px),ey:py&&E(py),id:s.id,role})};
@@ -1930,7 +1932,7 @@ function snapCands(ctx){const out=[];const skip=ctx.skip||new Set(),noref=ctx.no
   return out}
 // outline segments near m, for intersections and nearest-on-edge
 function snapSegs(ctx,m,tol){const skip=ctx.skip||new Set(),out=[];
-  for(const it of C.items){const g=it.g,s=it.s;if(!g||skip.has(s.id)||g.isDim||g.isText||s.hide)continue;
+  for(const it of C.items){const g=it.g,s=it.s;if(!g||skip.has(s.id)||g.isDim||g.isText||g.isImage||s.hide)continue;
     for(const P of g.paths){const n=P.length,segs=g.closed?n:n-1;
       for(let i=0;i<segs;i++){const a=P[i],b=P[(i+1)%n];
         if(Math.min(a[0],b[0])-tol>m[0]||Math.max(a[0],b[0])+tol<m[0]||Math.min(a[1],b[1])-tol>m[1]||Math.max(a[1],b[1])+tol<m[1])continue;
@@ -2081,6 +2083,7 @@ svg.addEventListener('pointerdown',e=>{
     drag={kind:'handle',h,s,m0:m,g0,p0:structuredClone(s.p),ctx:{...makeCtx([s.id]),extra}};return}
   const ek=e.target.dataset&&e.target.dataset.edge;if(ek&&!e.shiftKey){selEdge={id:sel,key:ek};render();return}
   const cands=hitList(e);
+  if(cands.length&&!e.shiftKey&&cands.every(id=>{const x=byId(id);return x&&x.type==='image'&&x.lock})){drag={kind:'box',a:m,b:m,sx:e.clientX,sy:e.clientY,add:false,base:picks.slice(),pick:cands[0]};return}
   if(cands.length){let id=cands[0];
     if(e.shiftKey){if(C.byId[id].parent){toast('材料は演算結果ごと選んでください');return}
       picks=picks.includes(id)?picks.filter(x=>x!==id):picks.concat(id);sel=picks[0]||null;render();return}
@@ -2183,9 +2186,9 @@ svg.addEventListener('pointerleave',()=>{if(!drag&&setHint(null))render()});
 svg.addEventListener('pointerup',e=>{if(e.pointerType==='touch'&&touchUp(e)){render();return}svg.classList.remove('pan');dimHint=null;if(!draft||draft.type!=='poly')setHint(null);
   if(draft&&draft.type==='poly'){draft.dragging=null;render()}
   if(drag&&drag.kind==='box'){const d=drag;drag=null;
-    if(!d.big){if(!d.add)setSel(null);render();return}
+    if(!d.big){if(d.pick){setSel(d.pick);lastPanelKey=null;render();return}if(!d.add)setSel(null);render();return}
     const x0=Math.min(d.a[0],d.b[0]),x1=Math.max(d.a[0],d.b[0]),y0=Math.min(d.a[1],d.b[1]),y1=Math.max(d.a[1],d.b[1]);
-    const hit=C.items.filter(it=>it.g&&!it.parent&&!it.s.hide).filter(it=>{const b=bboxG(it.g);return b[0]>=x0&&b[2]<=x1&&b[1]>=y0&&b[3]<=y1}).map(it=>it.s.id);
+    const hit=C.items.filter(it=>it.g&&!it.parent&&!it.s.hide&&!it.g.isImage).filter(it=>{const b=bboxG(it.g);return b[0]>=x0&&b[2]<=x1&&b[1]>=y0&&b[3]<=y1}).map(it=>it.s.id);
     picks=d.add?d.base.concat(hit.filter(id=>!d.base.includes(id))):hit;sel=picks[0]||null;lastPanelKey=null;render();
     if(hit.length)toast(`${hit.length}個を選択しました`);return}
   if(draft&&draft.type!=='poly'&&draft.type!=='dim'){const d=draft;draft=null;
@@ -2281,7 +2284,7 @@ const NAME_SIZE=3;
 // each item: out (draw the shape itself), mat (a material of an operation, drawn faint and dashed), st (stitch holes),
 // line (stitched runs as polylines), name ({str,x,y}: the shape's name above its top left)
 function exportItems(opt=EXP_DEFAULT,reuse){if(!reuse)C=compute();const items=[];
-  for(const it of C.items){const s=it.s,g=it.g;if(!g||s.noexp)continue;const mat=!!it.parent;
+  for(const it of C.items){const s=it.s,g=it.g;if(!g||s.noexp||g.isImage)continue;const mat=!!it.parent;
     // a material goes out only when its operation does; its holes always count (stitching lives on the materials),
     // its outline only when materials are asked for
     if(mat){let a=it.parent,off=false;while(a){const as=byId(a);if(!as||as.noexp){off=true;break}a=(C.byId[a]||{}).parent}if(off||g.isDim||g.isText)continue}
@@ -2467,9 +2470,9 @@ $('pdfGo').onclick=async()=>{$('pdfModal').hidden=true;const opt=expOpts(expFmt)
   if(await offer('pattern.pdf',bytes))toast(`${label}・${n}枚のPDFを保存しました`)};
 $('xSvg').onclick=()=>openExport('svg');
 $('xDxf').onclick=()=>openExport('dxf');
-$('xJson').onclick=()=>offer('pattern.json',JSON.stringify(doc.under&&underSrc?{...doc,under:{...doc.under,img:underSrc}}:doc,null,2));
+$('xJson').onclick=()=>{const out=structuredClone(doc);for(const x of out.shapes)if(x.type==='image'&&IMG[x.id])x.img=IMG[x.id];offer('pattern.json',JSON.stringify(out,null,2))};
 $('xLoad').onclick=()=>$('fileIn').click();
-$('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.shapes||!d.vars)throw 0;pushUndo();if(d.under&&d.under.img){setUnderSrc(d.under.img);delete d.under.img}doc=migrate(d);setSel(null);fit();toast('読み込みました')}catch(x){toast('型紙ファイルとして読めませんでした')}});e.target.value=''};
+$('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.shapes||!d.vars)throw 0;pushUndo();doc=takeImgs(d);loadImgs();setSel(null);fit();toast('読み込みました')}catch(x){toast('型紙ファイルとして読めませんでした')}});e.target.value=''};
 // dropdown menus under the top bar icons (新規, 書き出し)
 const MENUS=[['xNew','newMenu'],['xExport','exportMenu']];
 function closeMenus(){for(const[b,m]of MENUS){$(m).hidden=true;$(b).setAttribute('aria-expanded','false')}}
@@ -2529,7 +2532,7 @@ async function streamBytes(bytes,ctor,fmt){const st=new Blob([bytes]).stream().p
 async function encodeDoc(d){const raw=new TextEncoder().encode(JSON.stringify(d));
   if(window.CompressionStream){try{return'z'+b64u(await streamBytes(raw,CompressionStream,'deflate-raw'))}catch(e){}}return'j'+b64u(raw)}
 async function decodeDoc(str){const kind=str[0],bytes=unb64u(str.slice(1));const raw=kind==='z'?await streamBytes(bytes,DecompressionStream,'deflate-raw'):bytes;return JSON.parse(new TextDecoder().decode(raw))}
-$('xShare').onclick=async()=>{let url;const{under,...rest}=doc;if(under)setTimeout(()=>toast('下絵は共有リンクに含まれません',3000),2600);try{url=location.href.split('#')[0]+'#p='+await encodeDoc(rest)}catch(e){toast('共有用のURLを作れませんでした');return}
+$('xShare').onclick=async()=>{let url;const rest={...doc,shapes:doc.shapes.filter(x=>x.type!=='image')};if(rest.shapes.length<doc.shapes.length)setTimeout(()=>toast('下絵は共有リンクに含まれません',3000),2600);try{url=location.href.split('#')[0]+'#p='+await encodeDoc(rest)}catch(e){toast('共有用のURLを作れませんでした');return}
   const kb=(url.length/1024).toFixed(1);
   try{await navigator.clipboard.writeText(url);toast(`共有用のURLをコピーしました（${kb} KB）`)}
   catch(e){$('mTitle').textContent='共有用のURL';$('mNote').textContent='自動でコピーできなかったので、下の文字列をコピーしてください。';$('mText').value=url;$('mSave').hidden=true;$('modal').hidden=false;$('mText').focus();$('mText').select()}};
@@ -2553,7 +2556,7 @@ function docJSON(d){const L=['{','  "vars": ['];d.vars.forEach((v,i)=>L.push('  
   d.shapes.forEach((s,i)=>L.push('    '+pj(s,'    ',0)+(i<d.shapes.length-1?',':'')));
   L.push('  ]');for(const k of Object.keys(d))if(k!=='vars'&&k!=='shapes'){L[L.length-1]+=',';L.push('  '+JSON.stringify(k)+': '+cj(d[k]))}
   L.push('}');return L.join('\n')}
-const SHAPE_TYPES=['rect','circle','poly','bool','offset','piece','text','dim'];
+const SHAPE_TYPES=['rect','circle','poly','bool','offset','piece','text','dim','image'];
 // structural problems that would break the drawing; returns [message, shape id or null]
 function codeProblems(d){const out=[];if(!d||typeof d!=='object'||Array.isArray(d))return[['全体が { … } のオブジェクトになっていません',null]];
   if(!Array.isArray(d.vars))out.push(['"vars" が配列ではありません',null]);if(!Array.isArray(d.shapes)){out.push(['"shapes" が配列ではありません',null]);return out}
@@ -2830,52 +2833,45 @@ function drawMeasure(M,k){const a=M.a,b=M.b,dx=b.x-a.x,dy=-(b.y-a.y),L=Math.hypo
   const t=el('text',{x:(a.x+b.x)/2+8*k,y:(a.y+b.y)/2-8*k,'font-size':12*k,fill:'var(--osnap)','font-family':'IBM Plex Mono, monospace','pointer-events':'none',stroke:'var(--mat)','stroke-width':3*k,'paint-order':'stroke'},gOver);t.textContent=txt;
   if(M.done)$('sHint').textContent=`計測：${txt}`}
 
-// ---------- underlay (下絵) ----------
-// doc.under keeps the placement {x, y (bottom-left, drawing terms), w, ar (height / width), op, hide, lock}. The picture itself
-// stays out of the autosave: it lives in IndexedDB while working and is written into a saved .json as under.img.
+// ---------- underlay pictures (下絵) ----------
+// a shape of type 'image': p.x, p.y (bottom-left), p.w as expressions, ar (height / width), op (opacity). The picture itself
+// (a shrunk JPEG data URL) stays out of the doc: in IMG and IndexedDB ('img:'+id) while working, written into a saved .json
+// as the shape's img, and never put in a share link.
 const IDB=(()=>{let p=null;const db=()=>p||(p=new Promise((res,rej)=>{const r=indexedDB.open('ppp',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
   const tx=(mode,fn)=>db().then(d=>new Promise((res,rej)=>{const t=d.transaction('kv',mode),q=fn(t.objectStore('kv'));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error)}));
   return{get:k=>tx('readonly',s=>s.get(k)).catch(()=>null),set:(k,v)=>tx('readwrite',s=>s.put(v,k)).catch(()=>null)}})();
-function setUnderSrc(src){underSrc=src;IDB.set('under',src)}
-function drawUnder(){const u=doc.under,im=$('underImg');if(!u||!underSrc||u.hide){im.style.display='none';return}
-  const h=u.w*u.ar;im.setAttribute('href',underSrc);im.setAttribute('x',u.x);im.setAttribute('y',-(u.y+h));im.setAttribute('width',u.w);im.setAttribute('height',h);im.setAttribute('opacity',u.op??0.5);im.style.display=''}
-// a picture shrunk to 2000 px on its long side, as a JPEG data URL
+const IMG={};let imgLen='100',imgFor=null;
+function setImg(id,src){IMG[id]=src;IDB.set('img:'+id,src)}
+// pictures for the image shapes in the doc (the first version kept a single one under the key 'under')
+function loadImgs(){for(const s of doc.shapes)if(s.type==='image'&&!IMG[s.id])IDB.get('img:'+s.id).then(v=>v||(s.id==='img_under'?IDB.get('under'):null)).then(v=>{if(v&&!IMG[s.id]){setImg(s.id,v);render()}})}
+// pictures carried inside a loaded file move out of the doc
+function takeImgs(d){const u=d.under&&d.under.img;if(u)delete d.under.img;migrate(d);if(u)setImg('img_under',u);for(const x of d.shapes)if(x.type==='image'&&x.img){setImg(x.id,x.img);delete x.img}return d}
 function shrinkImage(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file),im=new Image();im.onload=()=>{const k=Math.min(1,2000/Math.max(im.naturalWidth,im.naturalHeight)),w=Math.max(1,Math.round(im.naturalWidth*k)),h=Math.max(1,Math.round(im.naturalHeight*k));
     const cv=document.createElement('canvas');cv.width=w;cv.height=h;const c=cv.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,w,h);c.drawImage(im,0,0,w,h);URL.revokeObjectURL(url);res({src:cv.toDataURL('image/jpeg',0.85),ar:h/w})};
     im.onerror=()=>{URL.revokeObjectURL(url);rej()};im.src=url})}
-function fillUnderPop(){const u=doc.under,on=!!(u&&underSrc);$('uCtl').style.display=on?'flex':'none';$('uLoad').textContent=on?'画像を差し替える':'画像を読み込む';if(!on)return;
-  const lk=!!u.lock;$('uShow').checked=!u.hide;$('uLock').checked=lk;$('uOp').value=Math.round((u.op??0.5)*100);$('uOpV').textContent=$('uOp').value+'%';
-  for(const[id,v]of[['uW',u.w],['uX',u.x],['uY',u.y]]){const f=$(id);if(document.activeElement!==f)f.value=num(v);f.disabled=lk}
-  for(const id of['uScale','uMove','uDel','uOp'])$(id).disabled=lk}
-function openUnder(){const p=$('underPop'),b=$('xUnder').getBoundingClientRect();fillUnderPop();p.hidden=false;p.style.top=(b.bottom+6)+'px';p.style.left=Math.max(8,Math.min(b.left,innerWidth-p.offsetWidth-8))+'px';$('xUnder').setAttribute('aria-expanded','true')}
-function closeUnder(){$('underPop').hidden=true;$('xUnder').setAttribute('aria-expanded','false')}
-$('xUnder').onclick=e=>{e.stopPropagation();$('underPop').hidden?openUnder():closeUnder()};$('uClose').onclick=closeUnder;
-$('underPop').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();closeUnder();$('xUnder').focus()}});
-$('uLoad').onclick=()=>$('uFile').click();
+$('xUnder').onclick=()=>{imgFor=null;$('uFile').click()};
 $('uFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;let r;try{r=await shrinkImage(f)}catch(x){toast('画像を読み込めませんでした');return}
-  pushUndo();setUnderSrc(r.src);const sv=svg.getBoundingClientRect(),vw=sv.width/view.s,w=Math.round(vw*0.6),cx=(sv.width/2-view.tx)/view.s,cy=-((sv.height/2-view.ty)/view.s);
-  doc.under={x:Math.round(cx-w/2),y:Math.round(cy-w*r.ar/2),w,ar:r.ar,op:0.5};render();fillUnderPop();toast('下絵を置きました。「2点で大きさ合わせ」で実寸に合わせてください',4000)};
-const uSet=(fn)=>{if(!doc.under)return;pushUndo();fn(doc.under);render();fillUnderPop()};
-$('uShow').onchange=()=>uSet(u=>{if($('uShow').checked)delete u.hide;else u.hide=true});
-$('uLock').onchange=()=>uSet(u=>{if($('uLock').checked)u.lock=true;else delete u.lock});
-$('uOp').onpointerdown=()=>{if(doc.under)pushUndo()};$('uOp').oninput=()=>{if(!doc.under)return;doc.under.op=+$('uOp').value/100;$('uOpV').textContent=$('uOp').value+'%';drawUnder()};
-for(const[id,k]of[['uW','w'],['uX','x'],['uY','y']])$(id).onchange=()=>{const v=+String($(id).value).replace(/[０-９．－]/g,ASC);if(!isFinite(v)||(k==='w'&&v<=0)){fillUnderPop();return}uSet(u=>{u[k]=v})};
-$('uDel').onclick=()=>uSet(()=>{delete doc.under});
-$('uScale').onclick=()=>{if(!doc.under)return;const L=+$('uLen').value;if(!(L>0)){toast('実寸を mm で入れてください');return}underPick={kind:'scale',pts:[],L};closeUnder();$('sHint').textContent='下絵の上で、実寸が分かる2点をクリック（Escでやめる）';if(phoneQ.matches)toast($('sHint').textContent,4000);render()};
-$('uMove').onclick=()=>{if(!doc.under)return;underPick={kind:'move',pts:[]};closeUnder();$('sHint').textContent='下絵の上の点をクリックし、次にその点を置きたい場所をクリック（Escでやめる）';if(phoneQ.matches)toast($('sHint').textContent,4000);render()};
+  pushUndo();const old=imgFor&&byId(imgFor);
+  if(old){setImg(old.id,r.src);old.ar=r.ar;lastPanelKey=null;render();toast('画像を差し替えました');return}
+  // a new picture, 60% of the visible width, in the middle of the view
+  const sv=svg.getBoundingClientRect(),w=Math.round(sv.width/view.s*0.6),cx=(sv.width/2-view.tx)/view.s,cy=-((sv.height/2-view.ty)/view.s);
+  const id=newId(),sh={id,name:uniqName(nm('下絵')),type:'image',kind:'guide',p:{x:num(Math.round(cx-w/2)),y:num(Math.round(cy-w*r.ar/2)),w:num(w)},ar:r.ar,op:0.5,st:{on:false,inset:'3',pitch:'4',hole:'1'}};
+  setImg(id,r.src);doc.shapes.unshift(sh);setSel(id);setTool('select');toast('下絵を置きました。パーツ欄の「2点で大きさ合わせ」で実寸に合わせてください',4000)};
+function startImgPick(kind){const s=cur();if(!s||s.type!=='image')return;const L=+imgLen;if(kind==='scale'&&!(L>0)){toast('実寸を mm で入れてください');return}
+  underPick={kind,id:s.id,pts:[],L};$('sHint').textContent=kind==='scale'?'下絵の上で、実寸が分かる2点をクリック（Escでやめる）':'下絵の上の点をクリックし、次にその点を置きたい場所をクリック（Escでやめる）';if(phoneQ.matches)toast($('sHint').textContent,4000);render()}
 function underClick(m,e){const P=underPick,q=P.kind==='move'&&P.pts.length?snapAt(m,e):{x:m[0],y:m[1]};P.pts.push([q.x,-q.y]);
   if(P.pts.length<2){render();return}
-  const u=doc.under,[a,b]=P.pts;underPick=null;$('sHint').textContent=HINT[tool]||'';pushUndo();
-  if(P.kind==='scale'){const d=Math.hypot(b[0]-a[0],b[1]-a[1]);if(d<1e-6){undoS.pop();toast('同じ点です');render();return}
+  const s=byId(P.id),it=C.byId[P.id],[a,b]=P.pts;underPick=null;$('sHint').textContent=HINT[tool]||'';if(!s||!it||!it.g){render();return}
+  const g=it.g;let X=g.x,Y=-(g.y+g.h),W=g.w;
+  if(P.kind==='scale'){const d=Math.hypot(b[0]-a[0],b[1]-a[1]);if(d<1e-6){toast('同じ点です');render();return}
     // scale about the first point, so it stays where it is
-    const k=P.L/d;u.x=a[0]+(u.x-a[0])*k;u.y=a[1]+(u.y-a[1])*k;u.w*=k;toast(`下絵を ${fmt(k*100,1)}% にしました`)}
-  else{u.x+=b[0]-a[0];u.y+=b[1]-a[1];toast('下絵を動かしました')}
-  for(const kk of['x','y','w'])u[kk]=+u[kk].toFixed(3);render();openUnder()}
+    const k=P.L/d;X=a[0]+(X-a[0])*k;Y=a[1]+(Y-a[1])*k;W*=k;toast(`下絵を ${fmt(k*100,1)}% にしました`)}
+  else{X+=b[0]-a[0];Y+=b[1]-a[1];toast('下絵を動かしました')}
+  pushUndo();s.p.x=num(X);s.p.y=num(Y);s.p.w=num(W);lastPanelKey=null;render()}
 function drawUnderPick(k){const P=underPick,A={fill:'none',stroke:'var(--osnap)','stroke-width':1.4,'vector-effect':'non-scaling-stroke','pointer-events':'none'};
   const pts=P.pts.map(p=>[p[0],-p[1]]);if(P.q)pts.push([P.q.x,P.q.y]);
   for(const p of pts)el('path',{d:`M${p[0]-6*k} ${p[1]}H${p[0]+6*k}M${p[0]} ${p[1]-6*k}V${p[1]+6*k}`,...A},gOver);
   if(pts.length>1)el('line',{x1:pts[0][0],y1:pts[0][1],x2:pts[1][0],y2:pts[1][1],...A,'stroke-dasharray':'4 3'},gOver)}
-IDB.get('under').then(v=>{if(v&&!underSrc){underSrc=v;render()}});
 
 // ---------- hidden parts ----------
 $('sHidden').onclick=()=>{pushUndo();for(const x of doc.shapes)delete x.hide;lastPanelKey=null;render();toast('すべて表示しました')};
@@ -2887,7 +2883,8 @@ function clipOf(){const set=new Set();for(const id of picks){const s=byId(id);if
   const shapes=doc.shapes.filter(x=>set.has(x));if(!shapes.length)return null;
   const need=new Set(),add=e=>{let t;try{t=tokenize(String(e))}catch(x){return}for(const k of t)if(k.k==='id'&&!need.has(k.v)){const v=doc.vars.find(v=>v.n===k.v);if(v){need.add(v.n);add(v.e)}}};
   for(const s of shapes)for(const[o,k]of exprSlots(s))add(o[k]);
-  return{ppp:'shapes',vars:doc.vars.filter(v=>need.has(v.n)),shapes:structuredClone(shapes),picks:picks.slice()}}
+  const cs=structuredClone(shapes);for(const c of cs)if(c.type==='image'&&IMG[c.id])c.img=IMG[c.id];
+  return{ppp:'shapes',vars:doc.vars.filter(v=>need.has(v.n)),shapes:cs,picks:picks.slice()}}
 function remapRefs(e,map){let t;try{t=tokenize(String(e))}catch(x){return e}let out=String(e);
   for(const k of t.filter(k=>k.k==='ref'&&map.has(k.name)).reverse())out=out.slice(0,k.at)+refName(map.get(k.name))+out.slice(k.dot,k.end)+out.slice(k.end);return out}
 function pasteClip(d){if(!d||d.ppp!=='shapes'||!Array.isArray(d.shapes)||!d.shapes.length)return false;pushUndo();
@@ -2895,9 +2892,9 @@ function pasteClip(d){if(!d||d.ppp!=='shapes'||!Array.isArray(d.shapes)||!d.shap
   const ids=new Map(),names=new Map();for(const s of d.shapes)ids.set(s.id,newId());
   const out=d.shapes.map(s=>{const c=structuredClone(s);c.id=ids.get(s.id);const nmv=uniqName(s.name);names.set(s.name,nmv);c.name=nmv;doc.shapes.push(c);return c});
   for(const c of out){if(c.ops)c.ops=c.ops.map(id=>ids.get(id)||id);if(c.src)c.src=Array.isArray(c.src)?c.src.map(id=>ids.get(id)||id):ids.get(c.src)||c.src;if(c.cut)c.cut=c.cut.map(id=>ids.get(id)||id);
-    for(const[o,k]of exprSlots(c))o[k]=remapRefs(o[k],names);delete c.lock}
+    for(const[o,k]of exprSlots(c))o[k]=remapRefs(o[k],names);delete c.lock;if(c.type==='image'){if(c.img)setImg(c.id,c.img);delete c.img}}
   // pasted next to where it was copied, so a copy in the same drawing doesn't hide the original
-  for(const c of out){if(c.type==='bool')shiftPivot(c,10,10);else if(['rect','circle','poly','text','dim'].includes(c.type))shiftLeaf(c,10,10)}
+  for(const c of out){if(c.type==='bool')shiftPivot(c,10,10);else if(['rect','circle','poly','text','dim','image'].includes(c.type))shiftLeaf(c,10,10)}
   picks=(d.picks||[]).map(id=>ids.get(id)).filter(Boolean);sel=picks[0]||null;lastPanelKey=null;render();renderVars(false);
   toast(`${picks.length||out.length}個を貼り付けました`+(nv?`（変数 ${nv}個も追加）`:''));return true}
 let clipMem=null;
@@ -2906,7 +2903,7 @@ document.addEventListener('paste',e=>{if(inTextField())return;const t=e.clipboar
   if(!(d&&d.ppp==='shapes'))d=clipMem;if(pasteClip(d))e.preventDefault()});
 
 // ---------- boot ----------
-function boot(){startI18n();if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}$('xFrame').setAttribute('aria-pressed',String(!!UI.showFrame));$('xNames').setAttribute('aria-pressed',String(!UI.hideNames));setTool('select');requestAnimationFrame(fit);loadFromLink()}
+function boot(){startI18n();loadImgs();if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}$('xFrame').setAttribute('aria-pressed',String(!!UI.showFrame));$('xNames').setAttribute('aria-pressed',String(!UI.hideNames));setTool('select');requestAnimationFrame(fit);loadFromLink()}
 if(document.readyState==='complete')boot();else addEventListener('load',boot);
 })();
 </script>
