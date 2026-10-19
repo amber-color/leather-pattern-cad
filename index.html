@@ -2839,10 +2839,15 @@ function drawMeasure(M,k){const a=M.a,b=M.b,dx=b.x-a.x,dy=-(b.y-a.y),L=Math.hypo
 // as the shape's img, and never put in a share link.
 const IDB=(()=>{let p=null;const db=()=>p||(p=new Promise((res,rej)=>{const r=indexedDB.open('ppp',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
   const tx=(mode,fn)=>db().then(d=>new Promise((res,rej)=>{const t=d.transaction('kv',mode),q=fn(t.objectStore('kv'));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error)}));
-  return{get:k=>tx('readonly',s=>s.get(k)).catch(()=>null),set:(k,v)=>tx('readwrite',s=>s.put(v,k)).catch(()=>null)}})();
+  return{get:k=>tx('readonly',s=>s.get(k)).catch(()=>null),set:(k,v)=>tx('readwrite',s=>s.put(v,k)).catch(()=>null),
+    keys:()=>tx('readonly',s=>s.getAllKeys()).catch(()=>[]),del:k=>tx('readwrite',s=>s.delete(k)).catch(()=>null)}})();
 const IMG={};let imgLen='100',imgFor=null;
 function setImg(id,src){IMG[id]=src;IDB.set('img:'+id,src)}
 // pictures for the image shapes in the doc (the first version kept a single one under the key 'under')
+// pictures no longer used by the drawing leave the browser at the next start (until then a deleted one can still be
+// brought back with ⌘Z); the first version's 'under' goes once it has moved to img_under
+function pruneImgs(){const used=new Set(doc.shapes.filter(x=>x.type==='image').map(x=>'img:'+x.id));
+  IDB.keys().then(ks=>{for(const k of ks||[])if((String(k).startsWith('img:')&&!used.has(k))||(k==='under'&&!used.has('img:img_under')))IDB.del(k)})}
 function loadImgs(){for(const s of doc.shapes)if(s.type==='image'&&!IMG[s.id])IDB.get('img:'+s.id).then(v=>v||(s.id==='img_under'?IDB.get('under'):null)).then(v=>{if(v&&!IMG[s.id]){setImg(s.id,v);render()}})}
 // pictures carried inside a loaded file move out of the doc
 function takeImgs(d){const u=d.under&&d.under.img;if(u)delete d.under.img;migrate(d);if(u)setImg('img_under',u);for(const x of d.shapes)if(x.type==='image'&&x.img){setImg(x.id,x.img);delete x.img}return d}
@@ -2903,7 +2908,7 @@ document.addEventListener('paste',e=>{if(inTextField())return;const t=e.clipboar
   if(!(d&&d.ppp==='shapes'))d=clipMem;if(pasteClip(d))e.preventDefault()});
 
 // ---------- boot ----------
-function boot(){startI18n();loadImgs();if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}$('xFrame').setAttribute('aria-pressed',String(!!UI.showFrame));$('xNames').setAttribute('aria-pressed',String(!UI.hideNames));setTool('select');requestAnimationFrame(fit);loadFromLink()}
+function boot(){startI18n();loadImgs();setTimeout(pruneImgs,3000);if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}$('xFrame').setAttribute('aria-pressed',String(!!UI.showFrame));$('xNames').setAttribute('aria-pressed',String(!UI.hideNames));setTool('select');requestAnimationFrame(fit);loadFromLink()}
 if(document.readyState==='complete')boot();else addEventListener('load',boot);
 })();
 </script>
