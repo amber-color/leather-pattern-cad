@@ -33,6 +33,12 @@ Push straight to `main` when asked; there is no build step.
 
 ## Data model (what `.json` files, share links and the code panel hold)
 `doc = {vars:[{n,e}], shapes:[…]}`; every dimension is an expression string.
+- Axes: the drawing (doc values, references, the panel, the status bar, DXF) has y **up** and counter-clockwise
+  rotation; a rect's `x,y` is its bottom-left corner. Inside, geometry and the canvas run y **down** as before (screen /
+  SVG / PDF terms), so the flip happens only where doc values are read or written: `geomLeaf0` / `evalNodes` / `rotOf`
+  negate y, rot and rcy (rect: top = -(y+h)); `shapeProp` / `selfProp` return y values negated (上 = -min y);
+  writes go through `eyOf` (num(-y)), `shiftLeaf` / `shiftPivot` (move by -dy), and the handle / draw / node code.
+  Stitch `eo` / `fl` / piece anchors `u,v` are in internal bbox terms and did not change.
 - shape: `{id,name,type,kind,p:{…},st:{on,inset,pitch,hole,method?,pos?,eo?},fill?:{t,pitch}}`; `kind` is a line type from
   `LINES` (cut 実線, thin, red, guide 破線, dashthin, chain — cut/guide are the old 裁断線/ガイド ids), `fill.t` a hatch from
   `HATCHES` (`hatchOf` clips lines / places dots in world coordinates, used by canvas and all exports)
