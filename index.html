@@ -643,6 +643,11 @@ const EN_PAT=[
 ].map(([ja,en,caps])=>{const lit=ja.replace(/\{\d\}/g,'');const re=new RegExp('^'+ja.replace(/[.*+?^$()|[\]\\]/g,'\\$&').replace(/\\?\{(\d)\\?\}/g,'(.+?)')+'$','s');
   const order=[...ja.matchAll(/\{(\d)\}/g)].map(m=>+m[1]);return{re,en,caps:caps||{},order,w:lit.length}}).sort((a,b)=>b.w-a.w);
 const HAS_JA=/[　-ヿ㐀-鿿！-～]/;
+// key names are written Mac-style (⌘, ⇧); elsewhere they read Ctrl / Shift
+const MAC=/Mac|iPhone|iPad|iPod/.test(navigator.userAgentData?.platform||navigator.platform||navigator.userAgent),KEYS=/[⌘⇧]/;
+function kb(t){if(MAC||!t||!KEYS.test(t))return t;
+  return t.replace(/⌘Enter（Ctrl\+Enter）|⌘Enter \(Ctrl\+Enter\)|⌘Enter \/ Ctrl\+Enter/g,'Ctrl+Enter').replace(/`⌘Enter` \/ `Ctrl\+Enter`/g,'`Ctrl+Enter`').replace(/Ctrl \/ ⌘|`Ctrl` \/ `⌘`/g,m=>m[0]==='`'?'`Ctrl`':'Ctrl')
+    .replace(/⇧⌘(\w+)/g,'Ctrl+Shift+$1').replace(/⌘(\w+)/g,'Ctrl+$1').replace(/⇧(\w+)/g,'Shift+$1')}
 function tr(text,depth=0){if(LANG!=='en'||!text||!HAS_JA.test(text)||depth>4)return text;
   const lead=text.match(/^\s*/)[0],tail=text.match(/\s*$/)[0],core=text.trim();if(!core)return text;
   if(core in EN_EXACT)return lead+EN_EXACT[core]+tail;
@@ -662,11 +667,11 @@ function propIn(p){const l=p.toLowerCase();if(l in PROP_JA)return PROP_JA[l];con
 const propOut=p=>LANG!=='en'?p:PROP_EN[p]||p.replace(/^点(\d+)([XY])$/,'pt$1$2');
 // translate every visible text node and label attribute below root (not the drawing's own text, not the guide)
 function i18nNode(n){if(n.nodeType===3){const p=n.parentElement;if(!p||p.closest('#shapes,#helpBody,[data-noi18n]'))return;
-    const NT=p.classList&&p.classList.contains('nt');const v=NT?({'曲':'Cv','角':'Cn'}[n.nodeValue.trim()]||n.nodeValue):tr(n.nodeValue);if(v!==n.nodeValue)n.nodeValue=v;return}
+    const NT=p.classList&&p.classList.contains('nt');const v=NT?({'曲':'Cv','角':'Cn'}[n.nodeValue.trim()]||n.nodeValue):kb(tr(n.nodeValue));if(v!==n.nodeValue)n.nodeValue=v;return}
   if(n.nodeType!==1||n.closest('#shapes,#helpBody,[data-noi18n]'))return;
-  for(const a of['title','aria-label','placeholder']){const v=n.getAttribute(a);if(v&&HAS_JA.test(v)){const t=tr(v);if(t!==v)n.setAttribute(a,t)}}}
-function i18nTree(root){if(LANG!=='en')return;i18nNode(root);const w=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT|NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode()))i18nNode(n)}
-function startI18n(){document.documentElement.lang=LANG;if(LANG!=='en')return;i18nTree(document.body);
+  for(const a of['title','aria-label','placeholder']){const v=n.getAttribute(a);if(v&&(HAS_JA.test(v)||KEYS.test(v))){const t=kb(tr(v));if(t!==v)n.setAttribute(a,t)}}}
+function i18nTree(root){if(LANG!=='en'&&MAC)return;i18nNode(root);const w=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT|NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode()))i18nNode(n)}
+function startI18n(){document.documentElement.lang=LANG;if(LANG!=='en'&&MAC)return;i18nTree(document.body);
   new MutationObserver(ms=>{for(const m of ms){if(m.type==='childList')m.addedNodes.forEach(i18nTree);else if(m.type==='characterData')i18nNode(m.target);else if(m.type==='attributes')i18nNode(m.target)}})
     .observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','placeholder']})}
 
@@ -2524,7 +2529,7 @@ function mdToHtml(md){const L=md.replace(/\r/g,'').split('\n'),out=[];let i=0,pa
   flush();return out.join('')}
 let helpLoaded=false;
 async function openHelp(){$('helpModal').hidden=false;$('helpClose').focus();if(helpLoaded)return;
-  try{const r=await fetch('README.md',{cache:'no-cache'});if(!r.ok)throw 0;$('helpBody').innerHTML=mdToHtml(await r.text());helpLoaded=true}
+  try{const r=await fetch('README.md',{cache:'no-cache'});if(!r.ok)throw 0;$('helpBody').innerHTML=mdToHtml(kb(await r.text()));helpLoaded=true}
   catch(e){$('helpBody').innerHTML='<p>使い方を読み込めませんでした。<a href="https://github.com/amber-color/parametric-pattern-plotter#readme" target="_blank" rel="noopener">GitHub の README</a> を開いてください。</p>'}}
 $('xHelp').onclick=openHelp;$('helpClose').onclick=()=>$('helpModal').hidden=true;
 $('helpModal').addEventListener('click',e=>{if(e.target.id==='helpModal')$('helpModal').hidden=true});

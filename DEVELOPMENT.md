@@ -105,6 +105,8 @@ with cycle detection. Variables cannot reference shapes.
 on-screen text through `EN_EXACT` (exact strings) and `EN_PAT` (patterns with {0}…; captures stay as written unless
 marked `{n:'T'}` or given a word map). Names users type are never translated. `#shapes`, `#helpBody` and elements with
 `data-noi18n` (the code editor) are skipped. New Japanese text on screen → add it to `EN_EXACT`/`EN_PAT`.
+Key names are written Mac-style (`⌘Z`, `⇧⌘Z`, `Ctrl / ⌘`); off Mac, `kb()` rewrites them to `Ctrl+Z`, `Ctrl+Shift+Z`, `Ctrl`
+in the same pass (and in the guide), so write new shortcuts the Mac way.
 Default names for new shapes go through `nm()` / `EN_NAME`.
 
 ## Layout
