@@ -56,7 +56,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .seg.off{opacity:.45;pointer-events:none}
 .top .grp{display:flex;align-items:center;gap:6px}
 .top .lbl{font-size:11px;letter-spacing:.12em;color:var(--muted);margin-right:2px}
-.top .vsep{width:1px;height:22px;background:var(--line);margin:0 6px;flex:none}
+.top .vsep{width:1px;height:22px;background:var(--line);margin:0 4px;flex:none}
 .top .spacer{flex:1}
 .top .share{margin-left:auto}
 /* code panel: replaces the parts panel and the variables bar while open */
@@ -108,13 +108,13 @@ html.theme-fade,html.theme-fade *{transition:background-color .45s ease,color .4
 .pdfprev figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:3px}
 .pdfprev svg{width:140px;height:auto;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);display:block}
 .pdfprev figcaption{font:10px var(--mono);color:var(--muted)}
-.rail{grid-row:2/4;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px;padding:8px 6px;align-items:center}
+.rail{grid-row:2/4;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px;padding:8px 6px;align-items:center;overflow-y:auto}
 .tool{width:40px;height:40px;border:1px solid transparent;border-radius:6px;background:none;color:var(--fg);cursor:pointer;display:grid;place-items:center;position:relative}
 .tool:hover{background:var(--bg)}
 .tool[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .tool kbd{position:absolute;right:2px;bottom:1px;font:9px var(--mono);color:var(--muted)}
 .tool svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6}
-.rail .sep{width:28px;height:1px;background:var(--line);margin:4px 0}
+.rail .sep{width:28px;height:1px;background:var(--line);margin:4px 0;flex:none}
 .stage{position:relative;background:var(--mat);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:default}
 /* relationship graph: the lower part of the stage, the drawing above it */
@@ -298,33 +298,40 @@ input.err{border-color:var(--danger)}
         </div></div>
       <button class="btn ibtn" id="xLoad" title="開く：保存した .json を読み込む" aria-label="開く"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19l2.757 -7.351a1 1 0 0 1 .936 -.649h12.307a1 1 0 0 1 .986 1.164l-.996 5.211a2 2 0 0 1 -1.964 1.625h-14.026a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2h4l3 3h7a2 2 0 0 1 2 2v2"/></svg></button>
       <button class="btn ibtn" id="xJson" title="保存：型紙を .json で保存" aria-label="保存"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2"/><path d="M10 14a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M14 4l0 4l-6 0l0 -4"/></svg></button>
-      <button class="btn ibtn" id="xHelp" title="使い方" aria-label="使い方"><svg viewBox="6 6 12 12" aria-hidden="true"><path d="M12 9h.01"/><path d="M11 12h1v4h1"/></svg></button>
       <div class="menuwrap"><button class="btn ibtn" id="xExport" title="書き出し（PDF・SVG・DXF）" aria-label="書き出し" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2"/><path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4"/><path d="M7 15a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2l0 -4"/></svg></button>
         <div class="menu" id="exportMenu" role="menu" hidden>
           <button role="menuitem" id="xPdf"><b>PDF</b><span>実寸で印刷。用紙と向きを選んで書き出します</span></button>
           <button role="menuitem" id="xSvg"><b>SVG</b><span>mm単位。出力する内容を選んで、種類ごとにグループ分け</span></button>
           <button role="menuitem" id="xDxf"><b>DXF</b><span>R12形式。出力する内容を選んで、種類ごとにレイヤー分け</span></button>
         </div></div>
+      <div class="vsep" aria-hidden="true"></div>
+      <button class="btn ibtn" id="xUnder" title="下絵を読み込む：写真やスキャンを背景に置き、実寸に合わせて型紙をなぞる" aria-label="下絵を読み込む"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z"/><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5"/><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3"/></svg></button>
+      <div class="vsep" aria-hidden="true"></div>
       <button class="btn ibtn" id="xFrame" aria-pressed="false" title="印刷枠：PDFの用紙と向きで印刷される範囲を図面に表示" aria-label="印刷枠"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v2"/><path d="M20 16v2a2 2 0 0 1 -2 2h-2"/><path d="M8 20h-2a2 2 0 0 1 -2 -2v-2"/><path d="M4 8v-2a2 2 0 0 1 2 -2h2"/></svg></button>
       <button class="btn ibtn" id="xNames" aria-pressed="true" title="パーツ名：図形の左上の名前を表示・非表示（選択中の図形は常に表示）" aria-label="パーツ名"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 7.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3z"/></svg></button>
-      <button class="btn ibtn" id="xUnder" title="下絵を読み込む：写真やスキャンを背景に置き、実寸に合わせて型紙をなぞる" aria-label="下絵を読み込む"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z"/><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5"/><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3"/></svg></button>
       <button class="btn ibtn" id="xTheme" title="ライト / ダークを切り替え" aria-label="ライト / ダークを切り替え"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="t-moon"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454l0 .008"/></g><g class="t-sun"><path d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"/></g></svg></button>
+      <div class="vsep" aria-hidden="true"></div>
       <button class="btn ibtn" id="xCode" aria-pressed="false" title="コード：型紙をJSONで直接編集" aria-label="コード"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8l-4 4l4 4"/><path d="M17 8l4 4l-4 4"/><path d="M14 4l-4 16"/></svg></button>
       <button class="btn ibtn" id="xGraph" aria-pressed="false" title="関係図：変数とパーツのつながりを表示" aria-label="関係図"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="6" height="4" rx="1"/><rect x="3" y="16" width="6" height="4" rx="1"/><rect x="15" y="10" width="6" height="4" rx="1"/><path d="M9 6c3 0 3 6 6 6M9 18c3 0 3 -6 6 -6"/></svg></button>
+      <div class="vsep" aria-hidden="true"></div>
       <button class="btn ibtn" id="xLang" title="言語を切り替え（日本語 / English）" aria-label="言語を切り替え（日本語 / English）"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.371c0 4.418 -2.239 6.629 -5 6.629"/><path d="M4 6.371h7"/><path d="M5 9c0 2.144 2.252 3.908 6 4"/><path d="M12 20l4 -9l4 9"/><path d="M19.1 18h-6.2"/><path d="M6.694 3l.793 .582"/></svg></button>
+      <button class="btn ibtn" id="xHelp" title="使い方" aria-label="使い方"><svg viewBox="6 6 12 12" aria-hidden="true"><path d="M12 9h.01"/><path d="M11 12h1v4h1"/></svg></button>
       <input type="file" id="fileIn" accept=".json,application/json" hidden>
     </div>
     <button class="btn ibtn share" id="xShare" title="共有：型紙を埋め込んだURLをクリップボードにコピー" aria-label="共有"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 6a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M8.7 10.7l6.6 -3.4"/><path d="M8.7 13.3l6.6 3.4"/></svg></button>
   </header>
   <nav class="rail" aria-label="ツール">
     <button class="tool" data-tool="select" title="選択・移動 (V)"><svg viewBox="0 0 20 20"><path d="M4 3l11 6-5 1.5L8 16z"/></svg><kbd>V</kbd></button>
+    <div class="sep"></div>
     <button class="tool" data-tool="rect" title="矩形 (R)"><svg viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="10" rx="3"/></svg><kbd>R</kbd></button>
     <button class="tool" data-tool="circle" title="円 (C)"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.5"/></svg><kbd>C</kbd></button>
     <button class="tool" data-tool="line" title="直線・折れ線 (L)"><svg viewBox="0 0 20 20"><path d="M3 15l4-9 6 6 4-8"/></svg><kbd>L</kbd></button>
+    <button class="tool" data-tool="poly" title="ベジェ曲線 (P)"><svg viewBox="0 0 20 20"><path d="M3 16C5 6 11 4 17 4"/><path d="M8 7.5l6-3" stroke-width="1"/><circle cx="8" cy="7.5" r="1.3"/><circle cx="14" cy="4.5" r="1.3"/></svg><kbd>P</kbd></button>
+    <div class="sep"></div>
+    <button class="tool" data-tool="text" title="テキスト (T)"><svg viewBox="0 0 20 20"><path d="M4 5V3.5h12V5M10 3.5v13M7.5 16.5h5"/></svg><kbd>T</kbd></button>
     <button class="tool" data-tool="dim" title="寸法線 (D)"><svg viewBox="0 0 20 20"><path d="M3 6v9M17 6v9M3 10.5h14"/><path d="M3 10.5l3-1.8v3.6zM17 10.5l-3-1.8v3.6z" fill="currentColor" stroke="none"/></svg><kbd>D</kbd></button>
     <button class="tool" data-tool="measure" title="計測 (M)"><svg viewBox="0 0 20 20"><path d="M2.5 14.5l12-12 3 3-12 12z"/><path d="M5.5 11.5l1.5 1.5M8 9l1 1M10.5 6.5l1.5 1.5M13 4l1 1"/></svg><kbd>M</kbd></button>
-    <button class="tool" data-tool="text" title="テキスト (T)"><svg viewBox="0 0 20 20"><path d="M4 5V3.5h12V5M10 3.5v13M7.5 16.5h5"/></svg><kbd>T</kbd></button>
-    <button class="tool" data-tool="poly" title="ベジェ曲線 (P)"><svg viewBox="0 0 20 20"><path d="M3 16C5 6 11 4 17 4"/><path d="M8 7.5l6-3" stroke-width="1"/><circle cx="8" cy="7.5" r="1.3"/><circle cx="14" cy="4.5" r="1.3"/></svg><kbd>P</kbd></button>
+    <div class="sep"></div>
     <button class="tool" data-tool="offset" title="オフセット (O)"><svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="13" rx="4"/><rect x="6.5" y="7.5" width="7" height="5" rx=".5" stroke-width="1.2"/></svg><kbd>O</kbd></button>
     <button class="tool" data-tool="split" title="分割 (K)"><svg viewBox="0 0 24 24"><path d="M3 7a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M3 17a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M8.6 8.6l10.4 10.4"/><path d="M8.6 15.4l10.4 -10.4"/></svg><kbd>K</kbd></button>
     <button class="tool" data-tool="fillet" title="フィレット (F)"><svg viewBox="0 0 20 20"><path d="M3.5 17V11a6 6 0 0 1 6-6h7"/><path d="M3.5 11V5h6" stroke-width="1" stroke-dasharray="1.5 1.5"/></svg><kbd>F</kbd></button>
