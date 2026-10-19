@@ -2861,8 +2861,8 @@ $('uLock').onchange=()=>uSet(u=>{if($('uLock').checked)u.lock=true;else delete u
 $('uOp').onpointerdown=()=>{if(doc.under)pushUndo()};$('uOp').oninput=()=>{if(!doc.under)return;doc.under.op=+$('uOp').value/100;$('uOpV').textContent=$('uOp').value+'%';drawUnder()};
 for(const[id,k]of[['uW','w'],['uX','x'],['uY','y']])$(id).onchange=()=>{const v=+String($(id).value).replace(/[０-９．－]/g,ASC);if(!isFinite(v)||(k==='w'&&v<=0)){fillUnderPop();return}uSet(u=>{u[k]=v})};
 $('uDel').onclick=()=>uSet(()=>{delete doc.under});
-$('uScale').onclick=()=>{if(!doc.under)return;const L=+$('uLen').value;if(!(L>0)){toast('実寸を mm で入れてください');return}underPick={kind:'scale',pts:[],L};closeUnder();$('sHint').textContent='下絵の上で、実寸が分かる2点をクリック（Escでやめる）';render()};
-$('uMove').onclick=()=>{if(!doc.under)return;underPick={kind:'move',pts:[]};closeUnder();$('sHint').textContent='下絵の上の点をクリックし、次にその点を置きたい場所をクリック（Escでやめる）';render()};
+$('uScale').onclick=()=>{if(!doc.under)return;const L=+$('uLen').value;if(!(L>0)){toast('実寸を mm で入れてください');return}underPick={kind:'scale',pts:[],L};closeUnder();$('sHint').textContent='下絵の上で、実寸が分かる2点をクリック（Escでやめる）';if(phoneQ.matches)toast($('sHint').textContent,4000);render()};
+$('uMove').onclick=()=>{if(!doc.under)return;underPick={kind:'move',pts:[]};closeUnder();$('sHint').textContent='下絵の上の点をクリックし、次にその点を置きたい場所をクリック（Escでやめる）';if(phoneQ.matches)toast($('sHint').textContent,4000);render()};
 function underClick(m,e){const P=underPick,q=P.kind==='move'&&P.pts.length?snapAt(m,e):{x:m[0],y:m[1]};P.pts.push([q.x,-q.y]);
   if(P.pts.length<2){render();return}
   const u=doc.under,[a,b]=P.pts;underPick=null;$('sHint').textContent=HINT[tool]||'';pushUndo();
@@ -2870,7 +2870,7 @@ function underClick(m,e){const P=underPick,q=P.kind==='move'&&P.pts.length?snapA
     // scale about the first point, so it stays where it is
     const k=P.L/d;u.x=a[0]+(u.x-a[0])*k;u.y=a[1]+(u.y-a[1])*k;u.w*=k;toast(`下絵を ${fmt(k*100,1)}% にしました`)}
   else{u.x+=b[0]-a[0];u.y+=b[1]-a[1];toast('下絵を動かしました')}
-  for(const kk of['x','y','w'])u[kk]=+u[kk].toFixed(3);render()}
+  for(const kk of['x','y','w'])u[kk]=+u[kk].toFixed(3);render();openUnder()}
 function drawUnderPick(k){const P=underPick,A={fill:'none',stroke:'var(--osnap)','stroke-width':1.4,'vector-effect':'non-scaling-stroke','pointer-events':'none'};
   const pts=P.pts.map(p=>[p[0],-p[1]]);if(P.q)pts.push([P.q.x,P.q.y]);
   for(const p of pts)el('path',{d:`M${p[0]-6*k} ${p[1]}H${p[0]+6*k}M${p[0]} ${p[1]-6*k}V${p[1]+6*k}`,...A},gOver);
