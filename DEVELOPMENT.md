@@ -32,7 +32,8 @@ Push straight to `main` when asked; there is no build step.
   inlined in the HTML; their MIT notice is an HTML comment above `<header class="top">` (no visible credit, by request).
 
 ## Data model (what `.json` files, share links and the code panel hold)
-`doc = {vars:[{n,e}], shapes:[…]}`; every dimension is an expression string.
+`doc = {name?, vars:[{n,e}], shapes:[…]}`; every dimension is an expression string. `name` is the project name
+(top bar `#projName`; `fileBase()` turns it into file names, `showName()` keeps the field and the tab title in step).
 - Axes: the drawing (doc values, references, the panel, the status bar, DXF) has y **up** and counter-clockwise
   rotation; a rect's `x,y` is its bottom-left corner. Inside, geometry and the canvas run y **down** as before (screen /
   SVG / PDF terms), so the flip happens only where doc values are read or written: `geomLeaf0` / `evalNodes` / `rotOf`

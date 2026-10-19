@@ -40,6 +40,9 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;o
 .top{grid-column:1/-1;grid-row:1;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
 .top .brand{font-weight:500;font-size:14px;letter-spacing:.01em;color:var(--accent);margin-right:10px;white-space:nowrap}
 .top .brand img{display:block;width:30px;height:30px}
+.top .pname{width:180px;flex:none;font:500 14px var(--ui);background:transparent;border:1px solid transparent;border-radius:5px;padding:4px 6px;color:var(--fg)}
+.top .pname:hover{border-color:var(--line)}.top .pname:focus{border-color:var(--accent);background:var(--bg);outline:none}
+@media (max-width:760px){.top .pname{width:110px;font-size:16px}}
 .opt{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;align-items:center}html[lang=en] .opt{grid-template-columns:58px minmax(0,1fr)}
 .opt>label,.opt>span{font-size:12px;color:var(--muted)}
 .seg{display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
@@ -286,6 +289,7 @@ input.err{border-color:var(--danger)}
 -->
   <header class="top">
     <div class="brand" title="Parametric Pattern Plotter — 式で描くレザークラフト型紙CAD"><img src="favicon.svg" alt="Parametric Pattern Plotter" width="30" height="30"></div>
+    <input type="text" id="projName" class="pname" placeholder="無題の型紙" aria-label="プロジェクト名" title="プロジェクト名：保存・書き出しのファイル名になります" spellcheck="false" autocomplete="off">
     <div class="grp" role="group" aria-label="ファイル">
       <div class="menuwrap"><button class="btn ibtn" id="xNew" title="新規" aria-label="新規" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2"/></svg></button>
         <div class="menu" id="newMenu" role="menu" hidden>
@@ -468,6 +472,7 @@ const fmt=(v,d=1)=>(Math.round(v*10**d)/10**d).toFixed(d);
 const LANG=(()=>{let u={};try{u=JSON.parse(localStorage.getItem('ppp-ui')||'{}')||{}}catch(e){}
   if(u.lang==='ja'||u.lang==='en')return u.lang;const l=(navigator.languages&&navigator.languages[0])||navigator.language||'ja';return/^ja/i.test(l)?'ja':'en'})();
 const EN_EXACT={
+  '無題の型紙':'Untitled pattern','プロジェクト名':'Project name','プロジェクト名：保存・書き出しのファイル名になります':'Project name: used as the file name when saving and exporting',
   '下絵を置きました。四隅・辺の中点のハンドルで大きさを変えられます（Shift で縦横比を保つ）':'Underlay placed. Drag its corner and side handles to resize (Shift keeps the proportions)','四隅・辺の中点のハンドルで大きさを変えられます（Shift で縦横比を保つ）。作図の目安なので書き出しには出ません。画像は保存（.json）に入り、共有リンクには入りません。':'Drag the corner and side handles to resize (Shift keeps the proportions). A drawing aid, never exported. The image is kept in saved .json files but not in share links.',
   '下絵を読み込む：写真やスキャンを背景に置き、実寸に合わせて型紙をなぞる':'Load an underlay: put a photo or scan behind the drawing, bring it to full size and trace it','下絵を読み込む':'Load an underlay','画像を差し替えました':'Image replaced','下絵を置きました。パーツ欄の「2点で大きさ合わせ」で実寸に合わせてください':'Underlay placed. Use “Scale by 2 points” in the parts panel to bring it to full size','画像がありません（パーツ欄で差し替え）':'No image (replace it in the parts panel)','作図の目安なので書き出しには出ません。画像は保存（.json）に入り、共有リンクには入りません。':'A drawing aid, never exported. The image is kept in saved .json files but not in share links.','幅は正の値に':'Width must be positive',
   '下絵：写真やスキャンを実寸に合わせて背景に置く':'Underlay: a photo or scan placed full-size behind the drawing','下絵':'Underlay','写真やスキャンを読み込み、写っている2点の実寸で大きさを合わせます。作図の目安なので書き出しには出ません。':'Load a photo or scan and size it by the real distance between two points in it. It is a drawing aid and is never exported.','画像を読み込む':'Load an image','画像を差し替える':'Replace the image','表示':'Show','ロック':'Lock','濃さ':'Opacity','mm（左下）':'mm (bottom left)','実寸':'Real size','2点で大きさ合わせ':'Scale by 2 points','点で位置合わせ':'Move by a point','下絵を外す':'Remove the underlay','画像の上で2点をクリックすると、その間が「実寸」の長さになるよう拡大縮小します':'Click two points on the image; it is scaled so they are “Real size” apart','画像の上の点をクリックし、次に置きたい場所をクリック（スナップが効きます）':'Click a point on the image, then where it should go (snapping applies)','計測 (M)':'Measure (M)','2点をクリックすると距離・角度・ΔX・ΔYを表示（図形スナップが効きます）。もう一度クリックで測り直し、Escで終了':'Click two points to see the distance, angle, ΔX and ΔY (object snap applies). Click again to measure anew; Esc to finish','表示する':'Show','非表示にする（書き出しには影響しません）':'Hide (exports are not affected)','非表示':'Hide','ロックを解除':'Unlock','ロック：図形の上で動かしたり消したりできないようにする':'Lock: can’t be moved or deleted on the canvas','まとめて表示':'Show all','まとめて非表示':'Hide all','まとめてロック解除':'Unlock all','まとめてロック':'Lock all','ロック中のパーツは図形の上で編集できません（パーツ欄の鍵で解除）':'A locked part can’t be edited on the canvas (unlock it in the parts panel)','ロック中のパーツは動かせません（パーツ欄の鍵で解除）':'A locked part can’t be moved (unlock it in the parts panel)','ロック中のパーツは削除できません（パーツ欄の鍵で解除）':'A locked part can’t be deleted (unlock it in the parts panel)','すべて表示しました':'Everything is shown','画像を読み込めませんでした':'Couldn’t read that image','下絵を置きました。「2点で大きさ合わせ」で実寸に合わせてください':'Underlay placed. Use “Scale by 2 points” to bring it to full size','実寸を mm で入れてください':'Enter the real size in mm','下絵の上で、実寸が分かる2点をクリック（Escでやめる）':'Click two points on the underlay whose real distance you know (Esc to cancel)','下絵の上の点をクリックし、次にその点を置きたい場所をクリック（Escでやめる）':'Click a point on the underlay, then where it should go (Esc to cancel)','同じ点です':'Those are the same point','下絵を動かしました':'Underlay moved','下絵は共有リンクに含まれません':'The underlay isn’t included in share links',
@@ -670,7 +675,7 @@ const ST=(on,edges)=>({on,inset:'縫い代',pitch:'ピッチ',hole:'穴',...(edg
 const K_=c=>`0.5523*${c}`;
 const TX=(id,name,text,x,y,size,kind='guide')=>({id,name,type:'text',kind,text,p:{x,y,size,rot:'0'},st:ST(false)});
 const DM=(id,name,x1,y1,x2,y2,off)=>({id,name,type:'dim',kind:'guide',p:{x1,y1,x2,y2,off,size:'3.5'},st:ST(false)});
-const SAMPLE={vars:[{n:'名刺W',e:'91'},{n:'名刺H',e:'55'},{n:'ゆとり',e:'3'},{n:'縫い代',e:'3'},{n:'ピッチ',e:'4'},{n:'穴',e:'1.2'},{n:'R',e:'4'},{n:'背幅',e:'8'},{n:'指',e:'22'},{n:'間',e:'12'},
+const SAMPLE={name:'二つ折り名刺入れ',vars:[{n:'名刺W',e:'91'},{n:'名刺H',e:'55'},{n:'ゆとり',e:'3'},{n:'縫い代',e:'3'},{n:'ピッチ',e:'4'},{n:'穴',e:'1.2'},{n:'R',e:'4'},{n:'背幅',e:'8'},{n:'指',e:'22'},{n:'間',e:'12'},
     {n:'角補正',e:'縫い代+(R-縫い代)*(1-sqrt(0.5))'},{n:'ポケット幅',e:'ceil((名刺W+ゆとり+縫い代-2*角補正)/ピッチ)*ピッチ+2*角補正'},{n:'高さ',e:'名刺H+ゆとり+2*縫い代'},{n:'外装幅',e:'2*ポケット幅+背幅'},
     {n:'ベロ幅',e:'26'},{n:'重ね',e:'20'},{n:'ベロ長',e:'重ね+背幅+30'},{n:'ホック穴',e:'3'},{n:'右列',e:'外装幅+間'},{n:'上端',e:'2*高さ+間'},{n:'タグ上',e:'上端-ベロ幅-間-9'}],
   shapes:[
@@ -1279,7 +1284,7 @@ function drawGrid(){
   $('gAxes').innerHTML=A('var(--ax-x)',`M0 0H${L}M${L-a} ${-w}L${L} 0L${L-a} ${w}`)+A('var(--ax-y)',`M0 0V${-L}M${-w} ${-L+a}L0 ${-L}L${w} ${-L+a}`)
     +`<circle r="${2*k}" fill="var(--cut)" fill-opacity=".7"/><text x="${L+4*k}" y="${f*0.35}" font-size="${f}" fill="var(--ax-x)" font-family="IBM Plex Mono, monospace">X</text><text x="${-f*0.3}" y="${-L-5*k}" font-size="${f}" fill="var(--ax-y)" font-family="IBM Plex Mono, monospace">Y</text>`}
 function render(){
-  C=compute();gShapes.textContent='';gOver.textContent='';
+  showName();C=compute();gShapes.textContent='';gOver.textContent='';
   {const n=doc.shapes.filter(x=>x.hide).length,b=$('sHidden');b.hidden=!n;if(n)b.textContent=`非表示 ${n} · すべて表示`}
   if(sel&&!byId(sel))setSel(null);picks=picks.filter(id=>byId(id));
   {const sc=byId(sel);if(!sc||sc.type!=='poly'||picks.length!==1)selNodes=[];else selNodes=selNodes.filter(i=>i<sc.nodes.length)}
@@ -2306,7 +2311,7 @@ function exportItems(opt=EXP_DEFAULT,reuse){if(!reuse)C=compute();const items=[]
     if(o.name){ext(o.name.x,o.name.y-NAME_SIZE);ext(o.name.x+textWidth(o.name.str,NAME_SIZE),o.name.y)}}
   return{items,bb}}
 function buildSVG(opt){const{items,bb}=exportItems(opt);const m=5,x0=bb[0]-m,y0=bb[1]-m,w=bb[2]-bb[0]+2*m,h=bb[3]-bb[1]+2*m;
-  let o=`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${fmt(w,3)}mm" height="${fmt(h,3)}mm" viewBox="${fmt(x0,3)} ${fmt(y0,3)} ${fmt(w,3)} ${fmt(h,3)}">\n`;
+  let o=`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${fmt(w,3)}mm" height="${fmt(h,3)}mm" viewBox="${fmt(x0,3)} ${fmt(y0,3)} ${fmt(w,3)} ${fmt(h,3)}">\n${String(doc.name||'').trim()?`<title>${esc(doc.name.trim())}</title>\n`:''}`;
   const groups={mat:'',stitch:'',line:'',text:'',dim:'',names:''},lg={};
   for(const{s,g,st,out,mat,line,name,hatch}of items){const id=esc(s.name);let e;const LN=lineOf(s);
     if(line)groups.line+=`<path d="${line.map(P=>dOf(P,false)).join('')}"><title>${id}</title></path>\n`;
@@ -2418,10 +2423,13 @@ function buildPDF(o,opt){const{items,bb}=exportItems(opt);const K=72/25.4;
   let xo='';for(const v of masks.values()){const id=add(`<< /Type /XObject /Subtype /Image /Width ${v.m.w} /Height ${v.m.h} /ImageMask true /BitsPerComponent 1 /Decode [1 0] /Length ${v.m.bin.length} >>\nstream\n${v.m.bin}\nendstream`);xo+=`/${v.name} ${id} 0 R `}
   const kids=[];for(const s of pages){const cid=add(`<< /Length ${s.length} >>\nstream\n${s}endstream`);kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${F(pw*K)} ${F(ph*K)}] /Resources << /Font << /F1 3 0 R >>${xo?` /XObject << ${xo}>>`:''} >> /Contents ${cid} 0 R >>`))}
   objs[1]=`<< /Type /Pages /Kids [${kids.map(k=>k+' 0 R').join(' ')}] /Count ${kids.length} >>`;
+  const nm0=String(doc.name||'').trim(),info=nm0?add(`<< /Title <FEFF${[...nm0].map(c=>{const u=c.codePointAt(0);const h=v=>v.toString(16).padStart(4,'0');if(u<0x10000)return h(u);const v=u-0x10000;return h(0xD800+(v>>10))+h(0xDC00+(v&1023))}).join('').toUpperCase()}> /Producer (Parametric Pattern Plotter) >>`):0;
   let pdf='%PDF-1.4\n';const offs=[];objs.forEach((o,i)=>{offs.push(pdf.length);pdf+=`${i+1} 0 obj\n${o}\nendobj\n`});
   const x=pdf.length;pdf+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`+offs.map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('');
-  pdf+=`trailer\n<< /Size ${objs.length+1} /Root 1 0 R >>\nstartxref\n${x}\n%%EOF\n`;return{pdf,n:pages.length,label:L.label}}
+  pdf+=`trailer\n<< /Size ${objs.length+1} /Root 1 0 R${info?` /Info ${info} 0 R`:''} >>\nstartxref\n${x}\n%%EOF\n`;return{pdf,n:pages.length,label:L.label}}
 let dl=null;(async()=>{try{if(window.claude&&window.claude.use)dl=await window.claude.use('downloads')}catch(e){}})();
+// the project name as a file name (characters files can't hold become _)
+const fileBase=()=>(String(doc.name||'').trim().replace(/[\\/:*?"<>|\u0000-\u001f]+/g,'_').replace(/^\.+/,'').slice(0,80))||'pattern';
 async function offer(filename,data){
   if(!dl){try{const url=URL.createObjectURL(new Blob([data]));const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);toast(filename+' を保存しました');return true}catch(e){toast('保存できませんでした');return false}}
   try{await dl.save({filename,data});toast(filename+' を保存しました');return true}
@@ -2469,13 +2477,13 @@ $('pdfCancel').onclick=()=>$('pdfModal').hidden=true;
 $('pdfModal').addEventListener('click',e=>{if(e.target.id==='pdfModal')$('pdfModal').hidden=true});
 $('pdfModal').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();$('pdfModal').hidden=true}});
 $('pdfGo').onclick=async()=>{$('pdfModal').hidden=true;const opt=expOpts(expFmt);
-  if(expFmt==='svg'){offer('pattern.svg',buildSVG(opt));return}if(expFmt==='dxf'){offer('pattern.dxf',buildDXF(opt));return}
+  if(expFmt==='svg'){offer(fileBase()+'.svg',buildSVG(opt));return}if(expFmt==='dxf'){offer(fileBase()+'.dxf',buildDXF(opt));return}
   const o=pdfOpts();UI.pdfSize=o.size;UI.pdfOrient=o.orient;saveUI();
   const{pdf,n,label}=buildPDF(o,opt);const bytes=new Uint8Array(pdf.length);for(let i=0;i<pdf.length;i++)bytes[i]=pdf.charCodeAt(i)&255;
-  if(await offer('pattern.pdf',bytes))toast(`${label}・${n}枚のPDFを保存しました`)};
+  if(await offer(fileBase()+'.pdf',bytes))toast(`${label}・${n}枚のPDFを保存しました`)};
 $('xSvg').onclick=()=>openExport('svg');
 $('xDxf').onclick=()=>openExport('dxf');
-$('xJson').onclick=()=>{const out=structuredClone(doc);for(const x of out.shapes)if(x.type==='image'&&IMG[x.id])x.img=IMG[x.id];offer('pattern.json',JSON.stringify(out,null,2))};
+$('xJson').onclick=()=>{const out=structuredClone(doc);for(const x of out.shapes)if(x.type==='image'&&IMG[x.id])x.img=IMG[x.id];offer(fileBase()+'.json',JSON.stringify(out,null,2))};
 $('xLoad').onclick=()=>$('fileIn').click();
 $('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.shapes||!d.vars)throw 0;pushUndo();doc=takeImgs(d);loadImgs();setSel(null);fit();toast('読み込みました')}catch(x){toast('型紙ファイルとして読めませんでした')}});e.target.value=''};
 // dropdown menus under the top bar icons (新規, 書き出し)
@@ -2899,6 +2907,11 @@ document.addEventListener('paste',e=>{if(inTextField())return;const t=e.clipboar
   if(!(d&&d.ppp==='shapes'))d=clipMem;if(pasteClip(d))e.preventDefault()});
 
 // ---------- boot ----------
+// project name: in the top bar, the tab title and every file name
+let nameUndo=null;$('projName').addEventListener('focus',()=>{nameUndo=JSON.stringify(doc)});
+$('projName').addEventListener('input',e=>{if(nameUndo){undoS.push(nameUndo);if(undoS.length>100)undoS.shift();redoS=[];nameUndo=null}const v=e.target.value;if(v.trim())doc.name=v;else delete doc.name;showName();save()});
+$('projName').addEventListener('keydown',e=>{if(e.key==='Enter'&&!composing(e))e.target.blur()});
+function showName(){const n=String(doc.name||'').trim(),f=$('projName');if(document.activeElement!==f)f.value=doc.name||'';document.title=n?`${n} — Parametric Pattern Plotter`:'Parametric Pattern Plotter'}
 function boot(){startI18n();loadImgs();setTimeout(pruneImgs,3000);if(!window.ClipperLib){toast('オフセット計算ライブラリを読み込めませんでした');}$('xFrame').setAttribute('aria-pressed',String(!!UI.showFrame));$('xNames').setAttribute('aria-pressed',String(!UI.hideNames));setTool('select');requestAnimationFrame(fit);loadFromLink()}
 if(document.readyState==='complete')boot();else addEventListener('load',boot);
 })();
