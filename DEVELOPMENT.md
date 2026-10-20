@@ -63,7 +63,9 @@ Push straight to `main` when asked; there is no build step.
   `piece` (分割: `src`, `cut:[ids]`, anchor `u,v` in the source's bbox; `splitPieces` takes 2 µm slivers along the cuts out
   of the source and `geomPiece` picks the part holding the anchor; source and cutters count as its materials via `parent`),
   `text` (text; x,y,size,rot), `dim` (x1,y1,x2,y2,off,size). rect/poly/bool may have `rot`, `rcx`, `rcy` (pivot).
-- fillets on bool / offset outlines: `fl:[{u,v,r}]`, anchored to the corner in the unrounded outline's bbox (`g.lbb0`) like
+- corners: a node or `fl` entry with `ct:'chamfer'` is cut straight, `r` from the corner along each edge (`chamferAt`, `cornerAt`);
+  the fillet tool's `#fMode` picks round or chamfer.
+- fillets on bool / offset outlines: `fl:[{u,v,r,ct?}]`, anchored to the corner in the unrounded outline's bbox (`g.lbb0`) like
   `st.eo` (`filletOutline`). The fillet tool (`doFillet`) writes `node.r`, a rect's `cs[i]`, or `fl`, or joins two open
   paths / drops the nodes between two edges of one path (`pendingBetween` offers keeping them as a line).
 - stitching and operations: every non-bool shape, materials included, is stitched on its own outline (drawn at full
@@ -92,6 +94,9 @@ alone while an IME is composing.
 ## Things that are easy to break
 - Snapping writes references (`exOf`/`eyOf`); alignment guides never create references; rotated shapes are snapped
   to by number only.
+- Positions are rewritten through `moveLeaf(c, fx, fy)` (fx / fy map each x / y expression; `shiftLeaf` is the numeric case).
+  `cloneTree(s, mv)` takes a number (shift right) or `{fx, fy}`; array copies (`doArray`) use it with `combE(e, spacing, 1, k)`
+  so a spacing expression stays an expression. Alignment (`alignPicks`) moves each pick's `moveTree` like a drag.
 - Moves rewrite expressions with `shSmart` (adjust a trailing constant); a drag that changed expression positions asks
   for confirmation (`mvModal`).
 - Japanese IME: never act on Enter while composing (`composing(e)`), or text is committed twice.

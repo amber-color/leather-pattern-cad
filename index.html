@@ -203,7 +203,9 @@ input.err{border-color:var(--danger)}
 .crow .val{font:12px var(--mono);text-align:right;color:var(--muted)}.crow .val.err{color:var(--danger)}
 .seg.sm label{padding:4px 0;font-size:11px}
 .ntab{display:flex;flex-direction:column;gap:3px}
-.nrow{display:grid;grid-template-columns:22px minmax(0,1fr) minmax(0,1fr) 44px 30px 18px;gap:4px;align-items:center}
+.arrgrid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 10px;align-items:center}
+#arrModal [hidden]{display:none!important}
+.nrow{display:grid;grid-template-columns:22px minmax(0,1fr) minmax(0,1fr) 44px 22px 30px 18px;gap:4px;align-items:center}
 .nrow input[type=text]{font-size:12px;padding:4px 6px}
 .nrow .ni{font:11px var(--mono);color:var(--muted);text-align:right}
 .nrow.sub .ni{color:var(--accent)}
@@ -357,7 +359,7 @@ input.err{border-color:var(--danger)}
     <span><button class="btn" id="zOut" style="padding:0 7px" aria-label="縮小">−</button> <span id="sZoom">100%</span> <button class="btn" id="zIn" style="padding:0 7px" aria-label="拡大">＋</button></span>
     <label>スナップ <select id="snap"><option value="0">なし</option><option value="0.5">0.5</option><option value="1" selected>1</option><option value="5">5</option></select> mm</label>
     <label class="osnap" title="図形の端点・中点・中心・交点などに吸着します（S で切り替え。Ctrl / ⌘ を押している間は一時的に無効）"><input type="checkbox" id="osnap"> 図形スナップ</label>
-    <label id="fRBox" hidden>R <input type="text" id="fR" value="3" aria-label="フィレットの半径" spellcheck="false" autocomplete="off"> mm</label>
+    <span id="fRBox" hidden><select id="fMode" aria-label="角の処理"><option value="round">丸める</option><option value="chamfer">面取り</option></select> <label><span id="fRLbl">R</span> <input type="text" id="fR" value="3" aria-label="フィレットの半径" spellcheck="false" autocomplete="off"> mm</label></span>
     <button class="btn" id="sHidden" style="padding:0 8px" hidden></button>
     <span class="hint" id="sHint"></span>
   </div>
@@ -419,6 +421,22 @@ input.err{border-color:var(--danger)}
   <div class="small">動かした分だけ、式の後ろに数値が足されます。変数との関係が変わるので、意図した移動か確かめてください。</div>
   <div class="mvlist" id="mvList"></div>
   <div class="btns"><button class="btn primary" id="mvOk">動かす</button><button class="btn" id="mvUndo">元に戻す</button></div>
+</div></div>
+<div class="modal" id="arrModal" hidden role="dialog" aria-modal="true" aria-labelledby="arrTitle"><div class="box" style="width:min(420px,100%)">
+  <strong id="arrTitle">配列複製</strong>
+  <div class="seg" id="arrMode" role="radiogroup" aria-label="並べ方"><label><input type="radio" name="arrm" value="line" checked>直線</label><label><input type="radio" name="arrm" value="grid">格子</label><label><input type="radio" name="arrm" value="polar">円形</label></div>
+  <div class="arrgrid">
+    <label for="arrN" id="arrNLbl">個数</label><input type="text" id="arrN" value="3" spellcheck="false" autocomplete="off">
+    <label for="arrRows" data-arr="grid">行数</label><input type="text" id="arrRows" value="2" data-arr="grid" spellcheck="false" autocomplete="off">
+    <label for="arrDX" data-arr="line grid">間隔X</label><input type="text" id="arrDX" data-arr="line grid" spellcheck="false" autocomplete="off">
+    <label for="arrDY" data-arr="line grid">間隔Y</label><input type="text" id="arrDY" data-arr="line grid" spellcheck="false" autocomplete="off">
+    <label for="arrCX" data-arr="polar">中心X</label><input type="text" id="arrCX" data-arr="polar" spellcheck="false" autocomplete="off">
+    <label for="arrCY" data-arr="polar">中心Y</label><input type="text" id="arrCY" data-arr="polar" spellcheck="false" autocomplete="off">
+    <label for="arrA" data-arr="polar">角度</label><input type="text" id="arrA" data-arr="polar" placeholder="空欄で一周に均等" spellcheck="false" autocomplete="off">
+  </div>
+  <div class="small" data-arr="line grid">個数は元の図形を含めた数です。間隔は1つごとにずらす距離（mm）で、右・上が＋です。変数を使った式で書くと、複製も変数に追従します。</div>
+  <div class="small" data-arr="polar">個数は元の図形を含めた数です。中心のまわりに、角度ずつ反時計回りに回して並べます（時計回りはマイナス）。</div>
+  <div class="btns"><button class="btn primary" id="arrGo">複製する</button><button class="btn" id="arrCancel">キャンセル</button></div>
 </div></div>
 <div class="modal" id="modal" hidden><div class="box">
   <strong id="mTitle"></strong><div class="small" id="mNote"></div>
@@ -483,6 +501,7 @@ const fmt=(v,d=1)=>(Math.round(v*10**d)/10**d).toFixed(d);
 const LANG=(()=>{let u={};try{u=JSON.parse(localStorage.getItem('ppp-ui')||'{}')||{}}catch(e){}
   if(u.lang==='ja'||u.lang==='en')return u.lang;const l=(navigator.languages&&navigator.languages[0])||navigator.language||'ja';return/^ja/i.test(l)?'ja':'en'})();
 const EN_EXACT={
+  '左を揃える':'Align left edges','左右の中央を揃える':'Align horizontal centres','右を揃える':'Align right edges','上を揃える':'Align top edges','上下の中央を揃える':'Align vertical centres','下を揃える':'Align bottom edges','横に等間隔':'Distribute horizontally','縦に等間隔':'Distribute vertically','本体に揃える':'Align to the base','本体に揃える・等間隔に並べる':'Align to the base, or space evenly','エラーのある図形は整列できません':'Shapes with errors can’t be aligned','すでに揃っています':'Already in line','配列複製（直線・格子・円形に並べる）':'Array copy (in a row, a grid or around a centre)','配列複製':'Array copy','並べ方':'Layout','直線':'Row','格子':'Grid','円形':'Circular','個数':'Count','列数':'Columns','行数':'Rows','間隔X':'Spacing X','間隔Y':'Spacing Y','角度':'Angle','空欄で一周に均等':'Empty: evenly round a full turn','複製する':'Copy','個数は元の図形を含めた数です。間隔は1つごとにずらす距離（mm）で、右・上が＋です。変数を使った式で書くと、複製も変数に追従します。':'The count includes the original. Spacing is how far each copy is moved from the previous one (mm); right and up are positive. Write it with a variable and the copies follow that variable.','個数は元の図形を含めた数です。中心のまわりに、角度ずつ反時計回りに回して並べます（時計回りはマイナス）。':'The count includes the original. Copies are turned counter-clockwise around the centre by the angle each (negative for clockwise).','エラーのある図形は複製できません':'Shapes with errors can’t be copied','2個以上にしてください':'Make it 2 or more','一度に作れるのは400個までです':'Up to 400 at a time','丸める':'Round','角の処理':'Corner','面取りの長さ':'Chamfer length','C は正の値にしてください':'C must be positive','C が大きすぎます（線分が足りません）':'C is too large (an edge is too short)','角を面取りしました':'Corner chamfered','2本を延長して角を面取りしました':'Extended both edges and chamfered the corner','丸め⇔面取りを切り替え':'Switch between round and chamfer',
   '無題の型紙':'Untitled pattern','プロジェクト名':'Project name','プロジェクト名：保存・書き出しのファイル名になります':'Project name: used as the file name when saving and exporting',
   '下絵を置きました。四隅・辺の中点のハンドルで大きさを変えられます（Shift で縦横比を保つ）':'Underlay placed. Drag its corner and side handles to resize (Shift keeps the proportions)','四隅・辺の中点のハンドルで大きさを変えられます（Shift で縦横比を保つ）。作図の目安なので書き出しには出ません。画像は保存（.json）に入り、共有リンクには入りません。':'Drag the corner and side handles to resize (Shift keeps the proportions). A drawing aid, never exported. The image is kept in saved .json files but not in share links.',
   '下絵を読み込む：写真やスキャンを背景に置き、実寸に合わせて型紙をなぞる':'Load an underlay: put a photo or scan behind the drawing, bring it to full size and trace it','下絵を読み込む':'Load an underlay','画像を差し替えました':'Image replaced','下絵を置きました。パーツ欄の「2点で大きさ合わせ」で実寸に合わせてください':'Underlay placed. Use “Scale by 2 points” in the parts panel to bring it to full size','画像がありません（パーツ欄で差し替え）':'No image (replace it in the parts panel)','作図の目安なので書き出しには出ません。画像は保存（.json）に入り、共有リンクには入りません。':'A drawing aid, never exported. The image is kept in saved .json files but not in share links.','幅は正の値に':'Width must be positive',
@@ -506,7 +525,7 @@ const EN_EXACT={
   'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直':'Click for a corner point, drag for a curve point. Click the first point to close; double-click or Enter to finish; Shift for horizontal / vertical',
   '始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック':'Click the start and end (snaps to corners, midpoints and centres), move to place the line, then click again',
   'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集':'Click to place text (anchored at its lower left); then edit the text, height and rotation in the panel',
-  '平行でない2本の線分を順にクリック。交わっていなくても延長してつなぎ、クリックした側を残して角を丸めます（R は下の欄。Esc で選び直し）':'Click two edges that aren’t parallel. They are extended (or trimmed) to meet even if they don’t cross, and the corner is rounded, keeping the side you clicked (R is in the field below; Esc picks again)',
+  '平行でない2本の線分を順にクリック。交わっていなくても延長してつなぎ、クリックした側を残して角を丸める・面取りします（R・C は下の欄。Esc で選び直し）':'Click two edges that aren’t parallel. They are extended (or trimmed) to meet even if they don’t cross, and the corner is rounded or chamfered, keeping the side you clicked (R / C is in the field below; Esc picks again)',
   'オフセットする図形をクリック。複数まとめるときは Shift＋クリックで選んで Enter（図形を選んでからこのツールを押しても作れます）':'Click the shape to offset. For several at once, Shift-click them and press Enter (or select shapes first, then pick this tool)',
   // variables bar
   '変数':'Variables','＋ 追加':'+ Add','変数を追加':'Add a variable','変数バーを広げる':'Expand the variables bar','変数バーを折りたたむ':'Collapse the variables bar','変数名':'Variable name',
@@ -530,7 +549,7 @@ const EN_EXACT={
   'ピッチは変えずに、角から角までの辺ごとに余りを処理します。縫い線（点線）をクリックすると、その辺だけの設定ができます。':'The pitch never changes; any remainder is handled per edge, corner to corner. Click a stitch line (dotted) to set that edge on its own.',
   'この辺を縫う':'Stitch this edge','始点から':'From start','終点から':'From end','辺の選択を解除':'Deselect the edge','削除':'Delete','パスに変換':'Convert to path','演算を解除':'Ungroup','複製':'Duplicate','左右複製':'Mirror L↔R','上下複製':'Mirror T↕B',
   '演算をやめて材料を元の図形に戻します':'Undo the operation and turn the materials back into shapes',
-  'R はその頂点の角を丸める半径です（フィレット。空欄なら角のまま）。':'R rounds that node’s corner (fillet); leave it empty for a sharp corner.','角R（フィレットで丸めた角）':'Corner radii (fillets)','外れ':'Lost',
+  'R はその頂点の角を丸める半径です（フィレット。空欄なら角のまま）。横の R / C で面取りに切り替えると、角から切り落とす長さになります。':'R rounds that node’s corner (fillet); leave it empty for a sharp corner. Switch R / C beside it to chamfer instead: the value is then how much is cut off from the corner.','角R（フィレットで丸めた・面取りした角）':'Corner radii and chamfers (fillet tool)','外れ':'Lost',
   '「外れ」の角Rは、形が変わってどの角にも当てはまらなくなっています。':'“Lost” radii no longer match any corner (the shape changed).','別の線として残す':'Keep as a separate line','消したままにする':'Leave them removed',
   '平行な線分はフィレットできません':'Parallel edges can’t be filleted','2本の線分の交点が遠すぎます':'The two edges meet too far away','R が大きすぎます（線分が接点まで届きません）':'R is too large (an edge doesn’t reach its tangent point)',
   'R は正の値にしてください':'R must be positive','2本目は別の線分を選んでください':'Pick a different edge the second time','この2本は延長してつなげられません（クリックする位置を変えてください）':'These two can’t be extended to meet (try clicking other parts of them)',
@@ -604,6 +623,7 @@ const EN_EXACT={
 };
 // [Japanese with {0}…, English, optional {index:{ja:en}} for words that read differently inside the sentence]
 const EN_PAT=[
+  ['{0}を入力してください','Enter the {0}',{0:'T'}],['{0}は1〜200の整数にしてください','{0} must be a whole number from 1 to 200',{0:'T'}],['間隔X：{0}','Spacing X: {0}',{0:'T'}],['間隔Y：{0}','Spacing Y: {0}',{0:'T'}],['中心X：{0}','Centre X: {0}',{0:'T'}],['中心Y：{0}','Centre Y: {0}',{0:'T'}],['個数：{0}','Count: {0}',{0:'T'}],['列数：{0}','Columns: {0}',{0:'T'}],['行数：{0}','Rows: {0}',{0:'T'}],['角度：{0}','Angle: {0}',{0:'T'}],['C：{0}','C: {0}',{0:'T'}],['{0}個複製しました（{1}個にエラー）','Made {0} copies ({1} with errors)'],['{0}個複製しました。まとめて選択中です','Made {0} copies; they are all selected'],['{0}の角を面取りしました','Chamfered the corner: {0}',{0:'T'}],['頂点{0}の角を面取りしました','Chamfered the corner at node {0}'],['「{0}」とつないで角を面取りしました','Joined with “{0}” and chamfered the corner'],['面取り {0}','Chamfer {0}'],['角{0}の丸め⇔面取りを切り替え','Switch corner {0} between round and chamfer'],['頂点{0}の丸め⇔面取りを切り替え','Switch node {0} between round and chamfer'],
   ['{0} mm（縦横比を保つ）','{0} mm (keeps the aspect ratio)'],
   ['非表示 {0} · すべて表示','Hidden {0} · show all'],['下絵を {0}% にしました','Underlay scaled to {0}%'],['{0}個をコピーしました','Copied {0}'],['{0}個を貼り付けました（変数 {1}個も追加）','Pasted {0} (and {1} variables)'],['{0}個を貼り付けました','Pasted {0}'],['面積の合計 {0} cm²（{1} デシ）','Total area {0} cm² ({1} dm²)'],['面積 {0} cm²（{1} デシ）','Area {0} cm² ({1} dm²)'],['計測：{0}','Measure: {0}'],
   ['{0}（書き出さない）  {1}穴','{0} (not exported)  {1} holes',{0:'T'}],['{0}（書き出さない）','{0} (not exported)',{0:'T'}],['{0}（材料）  {1}穴','{0} (material)  {1} holes'],['{0}  {1}穴','{0}  {1} holes'],['{0}（材料）','{0} (material)'],['周長 {0}','Perimeter {0}'],['{0} · 連動','{0} · linked',{0:'T'}],
@@ -671,7 +691,7 @@ function propIn(p){const l=p.toLowerCase();if(l in PROP_JA)return PROP_JA[l];con
 const propOut=p=>LANG!=='en'?p:PROP_EN[p]||p.replace(/^点(\d+)([XY])$/,'pt$1$2');
 // translate every visible text node and label attribute below root (not the drawing's own text, not the guide)
 function i18nNode(n){if(n.nodeType===3){const p=n.parentElement;if(!p||p.closest('#shapes,#helpBody,[data-noi18n]'))return;
-    const NT=p.classList&&p.classList.contains('nt');const v=NT?({'曲':'Cv','角':'Cn'}[n.nodeValue.trim()]||n.nodeValue):kb(tr(n.nodeValue));if(v!==n.nodeValue)n.nodeValue=v;return}
+    const NT=LANG==='en'&&p.classList&&p.classList.contains('nt');const v=NT?({'曲':'Cv','角':'Cn'}[n.nodeValue.trim()]||n.nodeValue):kb(tr(n.nodeValue));if(v!==n.nodeValue)n.nodeValue=v;return}
   if(n.nodeType!==1||n.closest('#shapes,#helpBody,[data-noi18n]'))return;
   for(const a of['title','aria-label','placeholder']){const v=n.getAttribute(a);if(v&&(HAS_JA.test(v)||KEYS.test(v))){const t=kb(tr(v));if(t!==v)n.setAttribute(a,t)}}}
 function i18nTree(root){if(LANG!=='en'&&MAC)return;i18nNode(root);const w=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT|NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode()))i18nNode(n)}
@@ -813,6 +833,15 @@ const ICON={
   ct:(k,i)=>PI(`<g transform="rotate(${90*i} 8 8)"><path d="${{round:'M3 13V8a5 5 0 0 1 5-5h5',chamfer:'M3 13V7.5L7.5 3H13',none:'M3 13V3h10'}[k]}"/></g>`),
   // which corner of the rectangle: the box faint, that corner strong
   corner:i=>PI('<rect x="2.5" y="2.5" width="11" height="11" rx="1" stroke-opacity=".35"/><path stroke="var(--accent)" stroke-width="2.4" d="'+['M2.5 7.5v-5h5','M8.5 2.5h5v5','M13.5 8.5v5h-5','M7.5 13.5h-5v-5'][i]+'"/>'),
+  al_l:PI('<path d="M4 3L4 21"/><rect x="8" y="6" width="11" height="4" rx="1"/><rect x="8" y="14" width="6" height="4" rx="1"/>',24),
+  al_hc:PI('<path d="M12 3L12 21"/><rect x="6" y="6" width="12" height="4" rx="1"/><rect x="8.5" y="14" width="7" height="4" rx="1"/>',24),
+  al_r:PI('<path d="M20 3L20 21"/><rect x="5" y="6" width="11" height="4" rx="1"/><rect x="10" y="14" width="6" height="4" rx="1"/>',24),
+  al_t:PI('<path d="M3 4L21 4"/><rect x="6" y="8" width="4" height="11" rx="1"/><rect x="14" y="8" width="4" height="6" rx="1"/>',24),
+  al_vc:PI('<path d="M3 12L21 12"/><rect x="6" y="6" width="4" height="12" rx="1"/><rect x="14" y="8.5" width="4" height="7" rx="1"/>',24),
+  al_b:PI('<path d="M3 20L21 20"/><rect x="6" y="5" width="4" height="11" rx="1"/><rect x="14" y="10" width="4" height="6" rx="1"/>',24),
+  al_hd:PI('<rect x="3" y="7" width="4" height="10" rx="1"/><rect x="10" y="5" width="4" height="14" rx="1"/><rect x="17" y="8" width="4" height="8" rx="1"/>',24),
+  al_vd:PI('<rect x="7" y="3" width="10" height="4" rx="1"/><rect x="5" y="10" width="14" height="4" rx="1"/><rect x="8" y="17" width="8" height="4" rx="1"/>',24),
+  arr:PI('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',24),
   copy:PI('<path d="M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/>',24),
   flipX:PI('<path d="M12 3l0 18"/><path d="M16 7l0 10l5 0l-5 -10"/><path d="M8 7l0 10l-5 0l5 -10"/>',24),
   flipY:PI('<path d="M3 12l18 0"/><path d="M7 16l10 0l-10 5l0 -5"/><path d="M7 8l10 0l-10 -5l0 5"/>',24),
@@ -946,6 +975,14 @@ function filletAt(V,P,Q,r){const l1=dist(V,P),l2=dist(V,Q);if(l1<1e-9||l2<1e-9)r
   if(th>Math.PI-1e-6||th<1e-6)return null;
   const t=r/Math.tan(th/2),bx=u1[0]+u2[0],by=u1[1]+u2[1],bl=Math.hypot(bx,by),h=r/Math.sin(th/2),c=[V[0]+bx/bl*h,V[1]+by/bl*h];
   return{t,u1,u2,T1:[V[0]+u1[0]*t,V[1]+u1[1]*t],T2:[V[0]+u2[0]*t,V[1]+u2[1]*t],M:[c[0]-bx/bl*r,c[1]-by/bl*r],c,phi:Math.PI-th,r}}
+// a chamfer cuts the corner V with a straight line from c along one edge to c along the other (like a rectangle's 面取り)
+function chamferAt(V,P,Q,c){const l1=dist(V,P),l2=dist(V,Q);if(l1<1e-9||l2<1e-9)return null;
+  const u1=[(P[0]-V[0])/l1,(P[1]-V[1])/l1],u2=[(Q[0]-V[0])/l2,(Q[1]-V[1])/l2],th=Math.acos(Math.max(-1,Math.min(1,u1[0]*u2[0]+u1[1]*u2[1])));
+  if(th>Math.PI-1e-6||th<1e-6)return null;
+  const T1=[V[0]+u1[0]*c,V[1]+u1[1]*c],T2=[V[0]+u2[0]*c,V[1]+u2[1]*c];return{t:c,u1,u2,T1,T2,M:[(T1[0]+T2[0])/2,(T1[1]+T2[1])/2],ch:true,r:c}}
+const cornerAt=(ch,V,P,Q,r)=>ch?chamferAt(V,P,Q,r):filletAt(V,P,Q,r);
+// the corner as points: the cut's two ends, or the arc
+const cornerPts=f=>f.ch?[f.T1,f.T2]:arcPts(f);
 function arcPts(f){const a1=Math.atan2(f.T1[1]-f.c[1],f.T1[0]-f.c[0]),am=Math.atan2(f.M[1]-f.c[1],f.M[0]-f.c[0]);let d=am-a1;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;
   const sg=d<0?-1:1,n=Math.max(4,Math.ceil(f.phi/(3*Math.PI/180))),out=[];for(let i=0;i<=n;i++){const a=a1+sg*f.phi*i/n;out.push([f.c[0]+f.r*Math.cos(a),f.c[1]+f.r*Math.sin(a)])}return out}
 // a path node with a corner radius (n.r) becomes two tangent points and an arc of two Bézier pieces, so it stays a curve in export
@@ -953,12 +990,13 @@ function filletNodes(s,N,env){const n=N.length,closed=s.closed;let any=false;
   const fs=N.map((nd,i)=>{const src=s.nodes[i];if(!src||src.r==null||String(src.r).trim()==='')return null;
     let r;try{r=gEv(env,`n${i}.r`,src.r)}catch(x){throw Error(`頂点${i+1}の角R：${x.message}`)}if(r<=0||(!closed&&(i===0||i===n-1)))return null;
     const P=N[(i-1+n)%n],Q=N[(i+1)%n];if(nd.hi||nd.ho||P.ho||Q.hi)throw Error(`頂点${i+1}の角R：曲線につながる頂点は丸められません`);
-    const f=filletAt([nd.x,nd.y],[P.x,P.y],[Q.x,Q.y],r);if(f)any=true;return f});
+    const f=cornerAt(src.ct==='chamfer',[nd.x,nd.y],[P.x,P.y],[Q.x,Q.y],r);if(f)any=true;return f});
   if(!any)return null;
   // each edge has to hold the tangent lengths of both its ends
   for(let i=0;i<(closed?n:n-1);i++){const j=(i+1)%n;if((fs[i]?fs[i].t:0)+(fs[j]?fs[j].t:0)>dist([N[i].x,N[i].y],[N[j].x,N[j].y])+1e-6)throw Error(`頂点${fs[j]?j+1:i+1}の角Rが大きすぎます（辺の長さが足りません）`)}
   const F=[],mids=[];
   N.forEach((nd,i)=>{const f=fs[i];if(!f){F.push(nd);return}
+    if(f.ch){F.push({x:f.T1[0],y:f.T1[1],t:'corner'},{x:f.T2[0],y:f.T2[1],t:'corner'});mids.push(f.M);return}
     const k=4/3*Math.tan(f.phi/8)*f.r,dx=f.T2[0]-f.T1[0],dy=f.T2[1]-f.T1[1],dl=Math.hypot(dx,dy)||1,d=[dx/dl,dy/dl];
     F.push({x:f.T1[0],y:f.T1[1],t:'corner',ho:[-f.u1[0]*k,-f.u1[1]*k]},{x:f.M[0],y:f.M[1],t:'smooth',hi:[-d[0]*k,-d[1]*k],ho:[d[0]*k,d[1]*k]},{x:f.T2[0],y:f.T2[1],t:'corner',hi:[-f.u2[0]*k,-f.u2[1]*k]});mids.push(f.M)});
   return{F,mids}}
@@ -974,10 +1012,10 @@ function filletOutline(s,paths,env){const fl=Array.isArray(s.fl)?s.fl:[];if(!fl.
     // follow the corner as the outline changes gradually
     f.u=+best.u.toFixed(4);f.v=+best.v.toFixed(4);
     let r;try{r=gEv(env,'fl'+k,f.r)}catch(x){throw Error(`角R ${k+1}：${x.message}`)}if(r<=0)return;
-    const p=P[best.c],n=p.length,fa=filletAt(p[best.i],p[(best.i-1+n)%n],p[(best.i+1)%n],r);if(fa)at[best.c][best.i]=fa});
+    const p=P[best.c],n=p.length,fa=cornerAt(f.ct==='chamfer',p[best.i],p[(best.i-1+n)%n],p[(best.i+1)%n],r);if(fa)at[best.c][best.i]=fa});
   const out=P.map((p,c)=>{const n=p.length,A=at[c];
     for(let i=0;i<n;i++){const j=(i+1)%n;if((A[i]?A[i].t:0)+(A[j]?A[j].t:0)>dist(p[i],p[j])+1e-6)throw Error('角Rが大きすぎます（辺の長さが足りません）')}
-    const o=[];p.forEach((q,i)=>{if(A[i]){o.push(...arcPts(A[i]));mids.push(A[i].M)}else o.push(q)});return o});
+    const o=[];p.forEach((q,i)=>{if(A[i]){o.push(...cornerPts(A[i]));mids.push(A[i].M)}else o.push(q)});return o});
   return{paths:out,lost,mids}}
 // a path's origin (p.x, p.y; 0 when empty) in drawing terms; its nodes are written relative to it
 const hasE=e=>e!=null&&String(e).trim()!=='';
@@ -1401,6 +1439,7 @@ function drawSel(it,k){const s=it.s,g=it.g;if(g.isText)return;drawEdges(it,k);if
 
 // ---------- panel ----------
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+const ALIGNS=[['l','左を揃える'],['hc','左右の中央を揃える'],['r','右を揃える'],['t','上を揃える'],['vc','上下の中央を揃える'],['b','下を揃える'],['hd','横に等間隔'],['vd','縦に等間隔']];
 const LABELS={rcx:'回転中心X',rcy:'回転中心Y',x1:'始点X',y1:'始点Y',x2:'終点X',y2:'終点Y',off:'離れ',x:'X',y:'Y',w:'幅',h:'高さ',r:'角R',cx:'中心X',cy:'中心Y',d:'直径',size:'文字の高さ',rot:'回転（度）'};
 const TYPE_LABEL=s=>({image:'下絵',dim:'寸法線',text:'テキスト',rect:'矩形',circle:'円',poly:s.closed?'閉じたパス':'開いたパス',bool:'演算 · '+OPS[s.op],offset:'オフセット · '+OFFSET_SIDES[s.side==='in'?'in':'out'],piece:'分割'+((C.byId[s.id]||{}).g&&C.byId[s.id].g.piece?` · ${C.byId[s.id].g.piece.i+1}/${C.byId[s.id].g.piece.n}`:'')}[s.type]);
 function exprRow(path,label,expr,env){let v,e;try{v=evalExpr(expr,env)}catch(x){e=x.message}
@@ -1426,10 +1465,12 @@ function renderPanel(){
     const list=picks.map((id,i)=>`<li>${i===0?'<span class="pill">本体</span> ':''}${esc(byId(id).name)}</li>`).join('');
     const tot=picks.reduce((t,id)=>{const a=areaOf(C.byId[id]);return a==null?t:t+a},0),allH=picks.every(id=>byId(id).hide),allL=picks.every(id=>byId(id).lock);
     sec.innerHTML=`<h2>${picks.length}個を選択中</h2>${tot?`<div class="small">${areaText(tot,true)}</div>`:''}<div class="btnrow"><button class="btn" id="mHide">${allH?'まとめて表示':'まとめて非表示'}</button><button class="btn" id="mLock">${allL?'まとめてロック解除':'まとめてロック'}</button></div><ol class="small" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px">${list}</ol>
+      <div class="small">本体に揃える${picks.length>2?'・等間隔に並べる':''}</div><div class="btnrow">${ALIGNS.filter(a=>picks.length>2||!a[0].endsWith('d')).map(([k,t])=>`<button class="btn ib" data-align="${k}" title="${t}" aria-label="${t}">${ICON['al_'+k]}</button>`).join('')}</div>
       <div class="small">Shift＋クリックで選択を追加・解除。最初に選んだ図形が「本体」になります（範囲選択では作図順）。ドラッグでまとめて移動できます。</div>
       <div class="btns"><button class="btn" data-op="union">合体</button><button class="btn" data-op="diff">差（本体から引く）</button><button class="btn" data-op="inter">交差</button><button class="btn" data-op="xor">排他</button></div>
       <div class="small">元の図形は「材料」として式付きのまま残り、変数を変えると結果も作り直されます。</div>`;
     sec.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>makeBool(b.dataset.op));
+    sec.querySelectorAll('[data-align]').forEach(b=>b.onclick=()=>alignPicks(b.dataset.align));
     $('mHide').onclick=()=>{pushUndo();for(const id of picks){const x=byId(id);if(allH)delete x.hide;else x.hide=true}lastPanelKey=null;render()};
     $('mLock').onclick=()=>{pushUndo();for(const id of picks){const x=byId(id);if(allL)delete x.lock;else x.lock=true}lastPanelKey=null;render()}}
   else if(!it){sec.innerHTML=`<h2>パーツ</h2><p class="empty">パーツを選ぶと寸法を式で編集できます。背景を左ドラッグで範囲選択、Shift＋クリックで追加選択。複数選ぶと合体・差などの演算ができます。</p>`}
@@ -1462,8 +1503,8 @@ function renderPanel(){
       h+=`<div class="small">元の図形</div>${pk(s.src)}<div class="small">切る線・図形</div><div style="display:flex;flex-direction:column;gap:4px">${(s.cut||[]).map(pk).join('')}</div>
       <div class="small">元の図形や切る線を動かしたり変数を変えたりすると、分割も作り直されます。ピースをドラッグすると、元の図形と切る線ごと動きます（ほかのピースも一緒に動きます）。</div>`;
       if(it.g){const b=bboxG(it.g);h+=`<div class="result"><span>外形</span><span>${fmt(b[2]-b[0])} × ${fmt(b[3]-b[1])} mm</span><span>ピース</span><span>${it.g.piece.i+1} / ${it.g.piece.n}</span></div>`}}
-    if((s.type==='bool'||s.type==='offset')&&Array.isArray(s.fl)&&s.fl.length){h+=`<div class="small">角R（フィレットで丸めた角）</div>`+s.fl.map((f,i)=>{let v,e;try{v=evalExpr(f.r,env)}catch(x){e=x.message}const lost=!!(it.g&&it.g.flLost&&it.g.flLost.includes(i));
-        return`<div class="row"><label for="f_fl${i}">角R ${i+1}</label><input type="text" id="f_fl${i}" data-path="fl.${i}.r" value="${esc(f.r)}" class="${e?'err':''}" spellcheck="false" autocomplete="off"><span style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><span class="val ${e||lost?'err':''}" title="${esc(e||'')}">${e?'エラー':lost?'外れ':'= '+fmt(v)}</span><button class="x" data-fldel="${i}" aria-label="角R ${i+1}を削除" title="削除">×</button></span></div>`}).join('');
+    if((s.type==='bool'||s.type==='offset')&&Array.isArray(s.fl)&&s.fl.length){h+=`<div class="small">角R（フィレットで丸めた・面取りした角）</div>`+s.fl.map((f,i)=>{let v,e;try{v=evalExpr(f.r,env)}catch(x){e=x.message}const lost=!!(it.g&&it.g.flLost&&it.g.flLost.includes(i));
+        return`<div class="row"><label for="f_fl${i}">${f.ct==='chamfer'?'面取り':'角R'} ${i+1}</label><input type="text" id="f_fl${i}" data-path="fl.${i}.r" value="${esc(f.r)}" class="${e?'err':''}" spellcheck="false" autocomplete="off"><span style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><span class="val ${e||lost?'err':''}" title="${esc(e||'')}">${e?'エラー':lost?'外れ':'= '+fmt(v)}</span><button class="btn nt" data-flct="${i}" title="丸め⇔面取りを切り替え" aria-label="角${i+1}の丸め⇔面取りを切り替え">${f.ct==='chamfer'?'C':'R'}</button><button class="x" data-fldel="${i}" aria-label="角R ${i+1}を削除" title="削除">×</button></span></div>`}).join('');
       if(it.g&&it.g.flLost&&it.g.flLost.length)h+=`<div class="small" style="color:var(--danger)">「外れ」の角Rは、形が変わってどの角にも当てはまらなくなっています。</div>`}
     if(s.type==='text')h+=`<div class="row"><label for="f_text">文字</label><input type="text" id="f_text" data-path="text" value="${esc(s.text||'')}" autocomplete="off"><span></span></div>`;
     if(s.type==='poly')h+=exprRow('p.x','X',s.p.x??'0',env)+exprRow('p.y','Y',s.p.y??'0',env);
@@ -1484,11 +1525,11 @@ function renderPanel(){
     if(s.type==='poly'){if(s.closed||s.nodes.length>=3||s.nodes.some(n=>n.hi||n.ho))h+=`<label class="check"><input type="checkbox" id="f_closed" data-path="closed"${s.closed?' checked':''}> 閉じた形にする</label>`;
       if(s.nodes.length>40&&showNodesFor!==s.id)h+=`<div class="small">頂点 ${s.nodes.length} 個 <button class="btn" id="bShowNodes" style="padding:2px 8px">表を表示</button></div>`;
       else{const ni=(path,v,lab)=>`<input type="text" data-path="${path}" value="${esc(v)}" aria-label="${lab}" spellcheck="false" autocomplete="off">`;
-        h+=`<div class="ntab"><div class="nrow small"><span></span><span>X</span><span>Y</span><span>R</span><span></span><span></span></div>`+s.nodes.map((n,i)=>{
-          let r=`<div class="nrow"><span class="ni"${selNodes.includes(i)?' style="color:var(--accent);font-weight:700"':''}>${i+1}</span>${ni(`nodes.${i}.x`,n.x,`頂点${i+1} X`)}${ni(`nodes.${i}.y`,n.y,`頂点${i+1} Y`)}${ni(`nodes.${i}.r`,n.r??'',`頂点${i+1} 角R`)}<button class="btn nt" data-ntog="${i}" title="角と曲線を切り替え">${n.t==='smooth'?'曲':'角'}</button><button class="x" data-ndel="${i}" aria-label="頂点${i+1}を削除">×</button></div>`;
-          for(const[hk,lab]of[['hi','入'],['ho','出']])if(n[hk])r+=`<div class="nrow sub"><span class="ni">${lab}</span>${ni(`nodes.${i}.${hk}.0`,n[hk][0],`頂点${i+1} ${lab}ハンドル X`)}${ni(`nodes.${i}.${hk}.1`,n[hk][1],`頂点${i+1} ${lab}ハンドル Y`)}<span></span><span></span><span></span></div>`;
+        h+=`<div class="ntab"><div class="nrow small"><span></span><span>X</span><span>Y</span><span>R</span><span></span><span></span><span></span></div>`+s.nodes.map((n,i)=>{
+          let r=`<div class="nrow"><span class="ni"${selNodes.includes(i)?' style="color:var(--accent);font-weight:700"':''}>${i+1}</span>${ni(`nodes.${i}.x`,n.x,`頂点${i+1} X`)}${ni(`nodes.${i}.y`,n.y,`頂点${i+1} Y`)}${ni(`nodes.${i}.r`,n.r??'',`頂点${i+1} 角R`)}${hasE(n.r)?`<button class="btn nt" data-nct="${i}" title="丸め⇔面取りを切り替え" aria-label="頂点${i+1}の丸め⇔面取りを切り替え">${n.ct==='chamfer'?'C':'R'}</button>`:'<span></span>'}<button class="btn nt" data-ntog="${i}" title="角と曲線を切り替え">${n.t==='smooth'?'曲':'角'}</button><button class="x" data-ndel="${i}" aria-label="頂点${i+1}を削除">×</button></div>`;
+          for(const[hk,lab]of[['hi','入'],['ho','出']])if(n[hk])r+=`<div class="nrow sub"><span class="ni">${lab}</span>${ni(`nodes.${i}.${hk}.0`,n[hk][0],`頂点${i+1} ${lab}ハンドル X`)}${ni(`nodes.${i}.${hk}.1`,n[hk][1],`頂点${i+1} ${lab}ハンドル Y`)}<span></span><span></span><span></span><span></span></div>`;
           return r}).join('')+`</div>`}
-      h+=`<div class="small">R はその頂点の角を丸める半径です（フィレット。空欄なら角のまま）。</div>`;
+      h+=`<div class="small">R はその頂点の角を丸める半径です（フィレット。空欄なら角のまま）。横の R / C で面取りに切り替えると、角から切り落とす長さになります。</div>`;
       h+=`<div class="small">頂点のX・Yとハンドル（頂点からの相対位置）にも式が書けます。頂点をクリックで選択（Shiftで追加）してDeleteで削除、ダブルクリックで角⇔曲線、線上をダブルクリックで頂点を追加。中に橙の点がある頂点は変数の式で決まっているのでドラッグでは動きません。水色の点は、ほかの図形に連動している頂点です。</div>`}
     if(it.err)h+=`<div class="small" style="color:var(--danger)">${esc(it.err)}</div>`;
     if(s.type==='dim'&&it.g)h+=`<div class="result"><span>寸法</span><span>${fmt(it.g.dim.L)} mm</span></div><div class="small">始点・終点の丸い四角、線の中央の丸をドラッグで調整。図形の角や中心に吸着します。離れは、始点から終点へ向かって右側が正、左側が負です。</div>`;
@@ -1520,11 +1561,11 @@ function renderPanel(){
     const conv=`<button class="btn" id="bBake" title="式と元の図形とのつながりをやめ、今の形のパスに置き換えます（元に戻すには ⌘Z）">パスに変換</button>`;
     const row1=s.type==='rect'||s.type==='circle'?`<button class="btn" id="bToPath" title="${s.type==='rect'?'矩形':'円'}をパスに変換します。式は残るので変数を変えても形が追従し、線の上をダブルクリックで頂点を足せます">パスに変換</button>`:s.type==='bool'?conv+`<button class="btn" id="bUngroup" title="演算をやめて材料を元の図形に戻します">演算を解除</button>`:s.type==='offset'?conv:s.type==='piece'?conv+`<button class="btn" id="bUnsplit" title="この分割のピースをすべて消して、元の図形と切る線に戻します">分割を解除</button>`:'';
     if(row1)h+=`<div class="btnrow" style="margin-top:4px">${row1}</div>`;
-    h+=`<div class="btnrow"${row1?'':' style="margin-top:4px"'}><button class="btn ib" id="bDup" title="複製 (⌘D)" aria-label="複製">${ICON.copy}</button>${s.type==='image'?'':`<button class="btn ib" id="bMirX" title="左右反転した形を右側に複製" aria-label="左右複製">${ICON.flipX}</button><button class="btn ib" id="bMirY" title="上下反転した形を下側に複製" aria-label="上下複製">${ICON.flipY}</button>`}<button class="btn ib" id="bHide" aria-pressed="${!!s.hide}" title="${s.hide?'表示する':'非表示にする（書き出しには影響しません）'}" aria-label="非表示">${s.hide?ICON.eyeOff:ICON.eye}</button><button class="btn ib" id="bLock" aria-pressed="${!!s.lock}" title="${s.lock?'ロックを解除':'ロック：図形の上で動かしたり消したりできないようにする'}" aria-label="ロック">${s.lock?ICON.lock:ICON.unlock}</button><button class="btn ib del" id="bDel" title="削除 (Delete)" aria-label="削除">${ICON.trash}</button></div>`;
+    h+=`<div class="btnrow"${row1?'':' style="margin-top:4px"'}><button class="btn ib" id="bDup" title="複製 (⌘D)" aria-label="複製">${ICON.copy}</button><button class="btn ib" id="bArr" title="配列複製（直線・格子・円形に並べる）" aria-label="配列複製">${ICON.arr}</button>${s.type==='image'?'':`<button class="btn ib" id="bMirX" title="左右反転した形を右側に複製" aria-label="左右複製">${ICON.flipX}</button><button class="btn ib" id="bMirY" title="上下反転した形を下側に複製" aria-label="上下複製">${ICON.flipY}</button>`}<button class="btn ib" id="bHide" aria-pressed="${!!s.hide}" title="${s.hide?'表示する':'非表示にする（書き出しには影響しません）'}" aria-label="非表示">${s.hide?ICON.eyeOff:ICON.eye}</button><button class="btn ib" id="bLock" aria-pressed="${!!s.lock}" title="${s.lock?'ロックを解除':'ロック：図形の上で動かしたり消したりできないようにする'}" aria-label="ロック">${s.lock?ICON.lock:ICON.unlock}</button><button class="btn ib del" id="bDel" title="削除 (Delete)" aria-label="削除">${ICON.trash}</button></div>`;
     sec.innerHTML=h;
     $('bHide').onclick=()=>{pushUndo();s.hide=!s.hide||undefined;if(!s.hide)delete s.hide;lastPanelKey=null;render()};
     $('bLock').onclick=()=>{pushUndo();if(s.lock)delete s.lock;else s.lock=true;lastPanelKey=null;render()};
-    $('bDup').onclick=()=>dup();if($('bMirX')){$('bMirX').onclick=()=>mirrorCopy('x');$('bMirY').onclick=()=>mirrorCopy('y')}
+    $('bDup').onclick=()=>dup();$('bArr').onclick=openArray;if($('bMirX')){$('bMirX').onclick=()=>mirrorCopy('x');$('bMirY').onclick=()=>mirrorCopy('y')}
     if(s.type==='image'){const op=$('f_op');op.onpointerdown=()=>pushUndo();op.oninput=()=>{s.op=+op.value/100;$('f_opv').textContent=op.value+'%';const im=gShapes.querySelector(`g[data-id="${s.id}"] image`);if(im)im.setAttribute('opacity',s.op);save()};op.onchange=()=>render();
       $('bImgSwap').onclick=()=>{imgFor=s.id;$('uFile').click()}}$('bDel').onclick=delSel;
     if($('bParent'))$('bParent').onclick=()=>{setSel(it.parent);render()};
@@ -1533,10 +1574,12 @@ function renderPanel(){
     if($('bGapAdd'))$('bGapAdd').onclick=()=>{const e=curEdge();if(!e)return;pushUndo();const L=e.L-e.ra-e.rb,len=Math.min(10,Math.round(L/3));gapSet(s,e,o=>{o.gaps=(o.gaps||[]).concat([{at:num(Math.round(e.ra+(L-len)/2)),len:num(len)}])});lastPanelKey=null;render()};
     sec.querySelectorAll('[data-gapdel]').forEach(b=>b.onclick=()=>{const e=curEdge();if(!e)return;pushUndo();gapSet(s,e,o=>{o.gaps.splice(+b.dataset.gapdel,1);if(!o.gaps.length)delete o.gaps});lastPanelKey=null;render()});
     if($('bBetweenKeep'))$('bBetweenKeep').onclick=keepBetween;if($('bBetweenDrop'))$('bBetweenDrop').onclick=()=>{pendingBetween=null;lastPanelKey=null;render()};
+    sec.querySelectorAll('[data-flct]').forEach(b=>b.onclick=()=>{pushUndo();const f=s.fl[+b.dataset.flct];if(f.ct==='chamfer')delete f.ct;else f.ct='chamfer';lastPanelKey=null;render()});
     sec.querySelectorAll('[data-fldel]').forEach(b=>b.onclick=()=>{pushUndo();s.fl.splice(+b.dataset.fldel,1);if(!s.fl.length)delete s.fl;lastPanelKey=null;render()});
     if($('bLost'))$('bLost').onclick=()=>{pushUndo();const lost=new Set(it.st.lost);s.st.eo=s.st.eo.filter((o,i)=>!lost.has(i));lastPanelKey=null;render()};
     if($('bShowNodes'))$('bShowNodes').onclick=()=>{showNodesFor=s.id;lastPanelKey=null;render()};
     sec.querySelectorAll('[data-ntog]').forEach(b=>b.onclick=()=>{pushUndo();toggleNode(s,+b.dataset.ntog);lastPanelKey=null;render()});
+    sec.querySelectorAll('[data-nct]').forEach(b=>b.onclick=()=>{pushUndo();const n=s.nodes[+b.dataset.nct];if(n.ct==='chamfer')delete n.ct;else n.ct='chamfer';lastPanelKey=null;render()});
     sec.querySelectorAll('[data-ndel]').forEach(b=>b.onclick=()=>{if(s.nodes.length<=2){toast('頂点は2個以上必要です');return}pushUndo();s.nodes.splice(+b.dataset.ndel,1);lastPanelKey=null;render()});
     sec.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{setSel(b.dataset.pick);render()});
     // a bool's materials and an offset's source shapes are edited alike
@@ -1645,11 +1688,13 @@ $('addVar').onclick=()=>{pushUndo();const n=uniqVarName();doc.vars.push({n,e:'10
 const cur=()=>byId(sel);
 const sh=(e,d)=>!d?e:isNum(e)?num(+e+d):`${String(e).trim()}${d<0?'-':'+'}${num(Math.abs(d))}`;
 // dx, dy in screen terms (y down); the drawing's y runs up, so its y values move by -dy
-function shiftLeaf(c,dx,dy){const S=shSmart;shiftPivot(c,dx,dy);dy=-dy;
-  if(c.type==='dim'){c.p.x1=S(c.p.x1,dx);c.p.x2=S(c.p.x2,dx);c.p.y1=S(c.p.y1,dy);c.p.y2=S(c.p.y2,dy);return}
-  if(c.type==='poly'){c.p=c.p||{};c.p.x=S(hasE(c.p.x)?c.p.x:'0',dx);c.p.y=S(hasE(c.p.y)?c.p.y:'0',dy);return}
+function shiftLeaf(c,dx,dy){moveLeaf(c,e=>shSmart(e,dx),e=>shSmart(e,-dy))}
+// rewrite a shape's position fields: fx / fy turn each x / y expression (drawing terms, y up) into the moved one
+function moveLeaf(c,fx,fy){movePivot(c,fx,fy);
+  if(c.type==='dim'){c.p.x1=fx(c.p.x1);c.p.x2=fx(c.p.x2);c.p.y1=fy(c.p.y1);c.p.y2=fy(c.p.y2);return}
+  if(c.type==='poly'){c.p=c.p||{};c.p.x=fx(hasE(c.p.x)?c.p.x:'0');c.p.y=fy(hasE(c.p.y)?c.p.y:'0');return}
   const kx=c.type==='circle'?'cx':'x',ky=c.type==='circle'?'cy':'y';
-  c.p[kx]=S(c.p[kx],dx);c.p[ky]=S(c.p[ky],dy)}
+  c.p[kx]=fx(c.p[kx]);c.p[ky]=fy(c.p[ky])}
 // write a shape's position as references to the snapped point: role says which of its points was dropped there
 function attach(c,o,role,q){const R=role||'';
   if(c.type==='rect'){const fx=/l$/.test(R)||R==='l'?0:/r$/.test(R)||R==='r'?1:0.5,fy=/^t/.test(R)?0:/^b/.test(R)?1:0.5;
@@ -1658,11 +1703,12 @@ function attach(c,o,role,q){const R=role||'';
   else if(c.type==='circle'){const fx=R==='r'?-0.5:R==='l'?0.5:0,fy=R==='b'?-0.5:R==='t'?0.5:0;
     if(q.ex&&dragEditable(o.p.cx))c.p.cx=fx?combE(q.ex,o.p.d,1,fx):q.ex;if(q.ey&&dragEditable(o.p.cy))c.p.cy=fy?combE(q.ey,o.p.d,1,-fy):q.ey}
   else if(c.type==='text'){if(q.ex&&dragEditable(o.p.x))c.p.x=q.ex;if(q.ey&&dragEditable(o.p.y))c.p.y=q.ey}}
-function shiftPivot(c,dx,dy){if(!c.p||c.p.rcx==null||String(c.p.rcx).trim()==='')return;c.p.rcx=shSmart(c.p.rcx,dx);c.p.rcy=shSmart(c.p.rcy,-dy)}
+function shiftPivot(c,dx,dy){movePivot(c,e=>shSmart(e,dx),e=>shSmart(e,-dy))}
+function movePivot(c,fx,fy){if(!c.p||c.p.rcx==null||String(c.p.rcx).trim()==='')return;c.p.rcx=fx(c.p.rcx);c.p.rcy=fy(c.p.rcy)}
 const fixedPos=c=>c.type==='dim'?['x1','y1','x2','y2'].some(k=>!isNum(c.p[k])):c.type==='poly'?c.nodes.some(n=>!isNum(n.x)||!isNum(n.y)):!(isNum(c.p[c.type==='circle'?'cx':'x'])&&isNum(c.p[c.type==='circle'?'cy':'y']));
 function toggleNode(s,i){const g=C.byId[s.id].g,N=g.lnodes||g.nodes;const n=s.nodes[i];
   if(n.t==='smooth'||n.hi||n.ho){delete n.hi;delete n.ho;n.t='corner';return}
-  delete n.r;
+  delete n.r;delete n.ct;
   const len=N.length,cl=s.closed,a=N[i],pr=N[(i-1+len)%len],nx=N[(i+1)%len];
   const hasP=cl||i>0,hasN=cl||i<len-1;const P=hasP?pr:a,Q=hasN?nx:a;
   let dx=Q.x-P.x,dy=Q.y-P.y;const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;
@@ -1681,15 +1727,77 @@ function insertNode(s,m){const g=C.byId[s.id].g,N=g.lnodes||g.nodes;if(g.rot)m=u
   const rel=(a,b)=>[num(a[0]-b[0]),num(b[1]-a[1])];
   s.nodes[i].ho=rel(p01,c.p0);s.nodes[j].hi=rel(p23,c.p3);
   s.nodes.splice(i+1,0,{x:nodeX(g,M[0]),y:nodeY(g,M[1]),t:'smooth',hi:rel(p012,M),ho:rel(p123,M)});return true}
-function cloneTree(s,dx){const c=structuredClone(s);c.id=newId();c.name=uniqName(c.name);if(c.type==='image'&&IMG[s.id])setImg(c.id,IMG[s.id]);
-  if(c.type==='bool'){c.ops=s.ops.map(id=>cloneTree(byId(id),dx));shiftPivot(c,dx,0)}
+// mv moves the copy: a number shifts it right by that much, or {fx, fy} rewrite its x / y expressions (see moveLeaf)
+function cloneTree(s,mv){if(typeof mv==='number'){const dx=mv;mv={fx:e=>shSmart(e,dx),fy:e=>e}}
+  const c=structuredClone(s);c.id=newId();c.name=uniqName(c.name);if(c.type==='image'&&IMG[s.id])setImg(c.id,IMG[s.id]);
+  if(c.type==='bool'){c.ops=s.ops.map(id=>cloneTree(byId(id),mv));movePivot(c,mv.fx,mv.fy)}
   // an offset is copied with its source shapes, so the copy has its own sources beside the originals
-  else if(c.type==='offset')c.src=(s.src||[]).map(byId).filter(Boolean).map(x=>cloneTree(x,dx));
-  else if(c.type==='piece'){c.src=cloneTree(byId(s.src),dx);c.cut=(s.cut||[]).map(byId).filter(Boolean).map(x=>cloneTree(x,dx))}else shiftLeaf(c,dx,0);
+  else if(c.type==='offset')c.src=(s.src||[]).map(byId).filter(Boolean).map(x=>cloneTree(x,mv));
+  else if(c.type==='piece'){c.src=cloneTree(byId(s.src),mv);c.cut=(s.cut||[]).map(byId).filter(Boolean).map(x=>cloneTree(x,mv))}else moveLeaf(c,mv.fx,mv.fy);
   doc.shapes.push(c);return c.id}
 function dup(){const s=cur();if(!s)return;pushUndo();
   const it=C.byId[s.id];const bb=it&&it.g?bboxG(it.g):[0,0,0,0];const dx=bb[2]-bb[0]+10;
   const id=cloneTree(s,dx);const c=byId(id);c.name=uniqName(s.name+nm(' のコピー'),c);setSel(id);render()}
+// line up the picked shapes with the main one (the first pick), or space them evenly between the outermost two.
+// Each moves with its materials / sources, the same way a drag moves them.
+function alignPicks(mode){const ss=picks.map(byId).filter(Boolean);if(ss.length<2)return;
+  const bb=ss.map(s=>{const it=C.byId[s.id];return it&&it.g?bboxG(it.g):null});
+  if(bb.some(b=>!b)){toast('エラーのある図形は整列できません');return}
+  if(ss.some(s=>[...moveTree(s)].some(x=>x.lock))){toast('ロック中のパーツは動かせません（パーツ欄の鍵で解除）');return}
+  const d=ss.map(()=>[0,0]),b0=bb[0],cx=b=>(b[0]+b[2])/2,cy=b=>(b[1]+b[3])/2;
+  if(mode==='hd'||mode==='vd'){if(ss.length<3)return;const a=mode==='hd'?0:1,o=ss.map((x,i)=>i).sort((i,j)=>(bb[i][a]+bb[i][a+2])-(bb[j][a]+bb[j][a+2]));
+    const f=bb[o[0]],l=bb[o[o.length-1]],inner=o.slice(1,-1).reduce((t,i)=>t+bb[i][a+2]-bb[i][a],0),gap=(l[a]-f[a+2]-inner)/(o.length-1);
+    let at=f[a+2]+gap;for(const i of o.slice(1,-1)){d[i][a]=at-bb[i][a];at+=bb[i][a+2]-bb[i][a]+gap}}
+  else bb.forEach((b,i)=>{if(!i)return;
+    // internal terms: y runs down, so 上 is the smaller y
+    if(mode==='l')d[i][0]=b0[0]-b[0];else if(mode==='r')d[i][0]=b0[2]-b[2];else if(mode==='hc')d[i][0]=cx(b0)-cx(b);
+    else if(mode==='t')d[i][1]=b0[1]-b[1];else if(mode==='b')d[i][1]=b0[3]-b[3];else if(mode==='vc')d[i][1]=cy(b0)-cy(b)});
+  if(d.every(v=>Math.abs(v[0])<1e-6&&Math.abs(v[1])<1e-6)){toast('すでに揃っています');return}
+  pushUndo();const done=new Set(),mv={ls:[],orig:[]};
+  ss.forEach((s,i)=>{const[dx,dy]=d[i];if(Math.abs(dx)<1e-6&&Math.abs(dy)<1e-6)return;
+    for(const c of moveTree(s)){if(done.has(c))continue;done.add(c);
+      if(c.type==='bool')shiftPivot(c,dx,dy);else if(c.type!=='offset'){mv.ls.push(c);mv.orig.push(structuredClone(c));shiftLeaf(c,dx,dy)}}});
+  lastPanelKey=null;render();const ch=exprMoves(mv);if(ch.length)askMove(ch)}
+// array copies of the selected shape: in a row (x / y spacing), a grid, or around a centre. Spacing written with variables
+// stays an expression (X + 2*間隔), so the copies follow the variable; the count includes the original.
+function openArray(){const s=cur();if(!s)return;const it=C.byId[s.id];if(!it||!it.g){toast('エラーのある図形は複製できません');return}
+  const b=bboxG(it.g),w=b[2]-b[0],h=b[3]-b[1];
+  const M=$('arrModal');if(M.dataset.id!==s.id){$('arrDX').value=num(w+5);$('arrDY').value='0';$('arrCX').value=num((b[0]+b[2])/2);$('arrCY').value=num(-(b[3]+10));$('arrA').value=''}
+  M.dataset.id=s.id;M.dataset.h=num(h);arrSync();M.hidden=false;$('arrN').focus();$('arrN').select()}
+function arrSync(){const m=$('arrModal').querySelector('input[name=arrm]:checked').value;
+  // rows of a grid go downward unless told otherwise
+  if(m==='grid'&&$('arrMode').dataset.v!=='grid'&&$('arrDY').value.trim()==='0')$('arrDY').value=num(-(+$('arrModal').dataset.h+5));
+  $('arrMode').dataset.v=m;
+  for(const el of $('arrModal').querySelectorAll('[data-arr]'))el.hidden=!el.dataset.arr.split(' ').includes(m);
+  $('arrNLbl').textContent=m==='grid'?'列数':'個数'}
+function closeArray(){$('arrModal').hidden=true}
+function doArray(){const s=byId($('arrModal').dataset.id);if(!s){closeArray();return}const m=$('arrMode').dataset.v,it=C.byId[s.id];if(!it||!it.g)return;
+  const ev=(id,lab)=>{const e=$(id).value.trim();if(!e)throw Error(lab+'を入力してください');let v;try{v=evalExpr(e,C.env)}catch(x){throw Error(lab+'：'+x.message)}return{e,v}};
+  const cnt=(id,lab)=>{const{v}=ev(id,lab);if(!(Math.round(v)===v&&v>=1&&v<=200))throw Error(lab+'は1〜200の整数にしてください');return v};
+  let made=[];
+  try{const n=cnt('arrN',m==='grid'?'列数':'個数'),rows=m==='grid'?cnt('arrRows','行数'):1;if(n*rows<2)throw Error('2個以上にしてください');
+    if(n*rows>400)throw Error('一度に作れるのは400個までです');
+    if(m==='polar'){const cx=ev('arrCX','中心X').v,cy=ev('arrCY','中心Y').v,ae=$('arrA').value.trim();let a;
+      if(ae){try{a=evalExpr(ae,C.env)}catch(x){throw Error('角度：'+x.message)}}else a=360/n;
+      pushUndo();const g=it.g,rotable=ROTATABLE(s.type)||s.type==='text';
+      // the point that is carried around the centre: the pivot of a turnable shape, a text's base point, else the middle
+      let P=null;if(ROTATABLE(s.type)&&(g.rot||g.lbb))P=pivotOf(g);else if(s.type==='text')try{P=[evalExpr(s.p.x,C.env),-evalExpr(s.p.y,C.env)]}catch(x){}
+      if(!P){const bb=bboxG(g);P=[(bb[0]+bb[2])/2,(bb[1]+bb[3])/2]}
+      for(let i=1;i<n;i++){const phi=a*i,r=-phi*Math.PI/180,q=rotP({c:[cx,-cy],cs:Math.cos(r),sn:Math.sin(r)},P),dx=q[0]-P[0],dy=q[1]-P[1];
+        const id=cloneTree(s,{fx:e=>shSmart(e,dx),fy:e=>shSmart(e,-dy)}),c=byId(id);
+        if(rotable&&s.type!=='text'&&!hasE(c.p.rcx)){c.p.rcx=num(q[0]);c.p.rcy=num(-q[1])}
+        if(rotable)c.p.rot=hasE(c.p.rot)?shSmart(c.p.rot,phi):num(phi);made.push(id)}}
+    else{const X=ev('arrDX','間隔X'),Y=ev('arrDY','間隔Y');pushUndo();
+      // x + k·spacing: a plain number is added in, an expression is kept as one
+      const by=(e,sp,k)=>!k?e:isNum(sp.e)?shSmart(e,sp.v*k):combE(e,sp.e,1,k);
+      for(let r=0;r<rows;r++)for(let i=0;i<n;i++){if(!i&&!r)continue;const ky=m==='grid'?r:i;
+        made.push(cloneTree(s,{fx:e=>by(e,X,i),fy:e=>by(e,Y,ky)}))}}}
+  catch(x){toast(x.message);return}
+  // numbered on from the original: A 2, A 3 … skipping numbers already in use
+  {let k=2;for(const id of made){const c=byId(id);while(doc.shapes.some(x=>x!==c&&x.name===`${s.name} ${k}`))k++;c.name=`${s.name} ${k++}`}}
+  closeArray();picks=[s.id,...made];sel=s.id;selEdge=null;selNodes=[];lastPanelKey=null;render();
+  const bad=made.filter(id=>{const t=C.byId[id];return!t||t.err}).length;
+  toast(bad?`${made.length}個複製しました（${bad}個にエラー）`:`${made.length}個複製しました。まとめて選択中です`)}
 // mirrored copy: flipped left-right (axis 'x') or top-bottom (axis 'y') about a line just past the shape, so it lands beside / below it.
 // Expressions stay expressions (2A − x …), so a mirrored copy keeps following the variables.
 function mirrorCopy(axis){const s=cur();if(!s)return;const it=C.byId[s.id];if(!it||!it.g){toast('エラーのある図形は反転できません');return}pushUndo();
@@ -1820,42 +1928,44 @@ function filletSegs(){const out=[],deg=Math.PI/180;
   return out}
 function segAt(m,e){const tol=(e&&e.pointerType==='touch'?14:8)/view.s;let best=null,bd=tol;for(const S of filletSegs()){const d=dist(footOn(S.a,S.b,m),m);if(d<bd){bd=d;best=S}}return best}
 // both edges as lines: their crossing X, and from X the direction of the kept (clicked) side of each
-function filletPlan(A,m1,B,m2,r){const d1=[A.b[0]-A.a[0],A.b[1]-A.a[1]],d2=[B.b[0]-B.a[0],B.b[1]-B.a[1]],l1=Math.hypot(d1[0],d1[1]),l2=Math.hypot(d2[0],d2[1]),cr=d1[0]*d2[1]-d1[1]*d2[0];
+function filletPlan(A,m1,B,m2,r,ch){const d1=[A.b[0]-A.a[0],A.b[1]-A.a[1]],d2=[B.b[0]-B.a[0],B.b[1]-B.a[1]],l1=Math.hypot(d1[0],d1[1]),l2=Math.hypot(d2[0],d2[1]),cr=d1[0]*d2[1]-d1[1]*d2[0];
   if(Math.abs(cr)<1e-6*l1*l2)return{err:'平行な線分はフィレットできません'};
   const w=[B.a[0]-A.a[0],B.a[1]-A.a[1]],t=(w[0]*d2[1]-w[1]*d2[0])/cr,X=[A.a[0]+d1[0]*t,A.a[1]+d1[1]*t];
   if(Math.hypot(X[0],X[1])>1e5)return{err:'2本の線分の交点が遠すぎます'};
   const side=(S,m,d,l)=>{const q=footOn(S.a,S.b,m),sg=(q[0]-X[0])*d[0]+(q[1]-X[1])*d[1]>=0?1:-1;return[d[0]/l*sg,d[1]/l*sg]};
-  const u1=side(A,m1,d1,l1),u2=side(B,m2,d2,l2),f=r>0?filletAt(X,[X[0]+u1[0],X[1]+u1[1]],[X[0]+u2[0],X[1]+u2[1]],r):null;
+  const u1=side(A,m1,d1,l1),u2=side(B,m2,d2,l2),f=r>0?cornerAt(ch,X,[X[0]+u1[0],X[1]+u1[1]],[X[0]+u2[0],X[1]+u2[1]],r):null;
   // the kept part of each edge has to reach its tangent point
   const reach=(S,u)=>Math.max((S.a[0]-X[0])*u[0]+(S.a[1]-X[1])*u[1],(S.b[0]-X[0])*u[0]+(S.b[1]-X[1])*u[1]);
-  const o={X,u1,u2,f};if(f&&(reach(A,u1)<f.t-1e-6||reach(B,u2)<f.t-1e-6))o.err='R が大きすぎます（線分が接点まで届きません）';return o}
+  const o={X,u1,u2,f};if(f&&(reach(A,u1)<f.t-1e-6||reach(B,u2)<f.t-1e-6))o.err=ch?'C が大きすぎます（線分が足りません）':'R が大きすぎます（線分が接点まで届きません）';return o}
 // which end of an edge is kept: the one farther along the kept direction from X
 const farEnd=(S,u,X,i0,i1)=>(S.a[0]-X[0])*u[0]+(S.a[1]-X[1])*u[1]>=(S.b[0]-X[0])*u[0]+(S.b[1]-X[1])*u[1]?i0:i1;
 const revNode=n=>{const o={...n};delete o.hi;delete o.ho;if(n.ho)o.hi=n.ho;if(n.hi)o.ho=n.hi;return o};
-function doFillet(A,m1,B,m2){const R=$('fR').value.trim();let rv;try{rv=evalExpr(R,C.env)}catch(x){toast('R：'+x.message);return false}
-  if(!(rv>0)){toast('R は正の値にしてください');return false}
+function doFillet(A,m1,B,m2){const R=$('fR').value.trim(),ch=$('fMode').value==='chamfer',RC=ch?'C':'R';let rv;try{rv=evalExpr(R,C.env)}catch(x){toast(RC+'：'+x.message);return false}
+  if(!(rv>0)){toast(RC+' は正の値にしてください');return false}
   if(sameSeg(A,B)){toast('2本目は別の線分を選んでください');return false}
-  const pl=filletPlan(A,m1,B,m2,rv);if(!pl.X){toast(pl.err);return false}
-  const sA=byId(A.id),sB=byId(B.id),before=JSON.stringify(doc);let target=A.id,msg='角を丸めました',between=null;
+  const pl=filletPlan(A,m1,B,m2,rv,ch);if(!pl.X){toast(pl.err);return false}
+  // a corner node: radius R, plus ct:'chamfer' for a chamfer of C
+  const corner=o=>{o.r=R;if(ch)o.ct='chamfer';else delete o.ct;return o},did=ch?'面取りしました':'丸めました';
+  const sA=byId(A.id),sB=byId(B.id),before=JSON.stringify(doc);let target=A.id,msg='角を'+did,between=null;
   const fail=t=>{doc=JSON.parse(before);lastPanelKey=null;render();toast(t);return false};
   try{
     if(A.id===B.id&&A.type==='rect'){const j=(A.i+1)%4===B.i?B.i:(B.i+1)%4===A.i?A.i:-1;if(j<0)throw Error('平行な線分はフィレットできません');
-      if(sA.cmode!=='each'||!Array.isArray(sA.cs)){sA.cs=[0,1,2,3].map(()=>({t:sA.ct||'round',r:sA.p.r}));sA.cmode='each'}sA.cs[j]={t:'round',r:R};msg=`${CORNER_NAMES[j]}の角を丸めました`}
+      if(sA.cmode!=='each'||!Array.isArray(sA.cs)){sA.cs=[0,1,2,3].map(()=>({t:sA.ct||'round',r:sA.p.r}));sA.cmode='each'}sA.cs[j]={t:ch?'chamfer':'round',r:R};msg=`${CORNER_NAMES[j]}の角を${did}`}
     else if(A.id===B.id&&A.type==='poly'){const n=sA.nodes.length,cl=sA.closed,i=A.i,k=B.i,j=(i+1)%n===k&&(cl||k>i)?k:(k+1)%n===i&&(cl||i>k)?i:-1;
-      if(j>=0){sA.nodes[j].r=R;msg=`頂点${j+1}の角を丸めました`}
+      if(j>=0){corner(sA.nodes[j]);msg=`頂点${j+1}の角を${did}`}
       else{// edges apart on the same path: run both to X and drop the nodes between them on the side that faces X
         const g=C.byId[A.id].g,fa=farEnd(A,pl.u1,pl.X,i,(i+1)%n),fb=farEnd(B,pl.u2,pl.X,k,(k+1)%n);let st,en;
         if(fa===i&&fb===(k+1)%n){st=(i+1)%n;en=k}else if(fa===(i+1)%n&&fb===k){st=(k+1)%n;en=i}else throw Error('この2本は延長してつなげられません（クリックする位置を変えてください）');
         if(!cl&&st>en)throw Error('この2本は延長してつなげられません（クリックする位置を変えてください）');
         const rem=[];for(let q=st;;q=(q+1)%n){rem.push(q);if(q===en)break}
         if(n-rem.length+1<(cl?3:2))throw Error('残る頂点が足りません');
-        const Xl=g.rot?unrotP(g.rot,pl.X):pl.X,Xn={x:nodeX(g,Xl[0]),y:nodeY(g,Xl[1]),r:R},removed=rem.map(q=>structuredClone(sA.nodes[q]));
+        const Xl=g.rot?unrotP(g.rot,pl.X):pl.X,Xn=corner({x:nodeX(g,Xl[0]),y:nodeY(g,Xl[1])}),removed=rem.map(q=>structuredClone(sA.nodes[q]));
         if(st<=en)sA.nodes.splice(st,rem.length,Xn);else{const set=new Set(rem);sA.nodes=sA.nodes.filter((nd,q)=>!set.has(q)).concat([Xn])}
-        between={id:sA.id,nodes:removed,kind:sA.kind,name:sA.name,rot:sA.p&&sA.p.rot!=null?{rot:sA.p.rot,rcx:sA.p.rcx,rcy:sA.p.rcy}:null};msg='2本を延長して角を丸めました'}}
+        between={id:sA.id,nodes:removed,kind:sA.kind,name:sA.name,rot:sA.p&&sA.p.rot!=null?{rot:sA.p.rot,rcx:sA.p.rcx,rcy:sA.p.rcy}:null};msg='2本を延長して角を'+did}}
     else if(A.id===B.id&&A.type==='out'){const j=A.c!==B.c?-1:(A.i+1)%A.n===B.i?B.i:(B.i+1)%A.n===A.i?A.i:-1;
       if(j<0)throw Error('演算結果・オフセットの輪郭では、隣り合う2辺だけフィレットできます');
       const g=C.byId[A.id].g,V=dedupe(g.paths[A.c],true)[j],q=g.rot?unrotP(g.rot,V):V,b=g.lbb0,u=+((q[0]-b[0])/Math.max(b[2]-b[0],1e-6)).toFixed(4),v=+((q[1]-b[1])/Math.max(b[3]-b[1],1e-6)).toFixed(4);
-      if(!Array.isArray(sA.fl))sA.fl=[];const old=sA.fl.find(f=>Math.hypot(f.u-u,f.v-v)<0.01);if(old)old.r=R;else sA.fl.push({u,v,r:R})}
+      if(!Array.isArray(sA.fl))sA.fl=[];const old=sA.fl.find(f=>Math.hypot(f.u-u,f.v-v)<0.01);if(old)corner(old);else sA.fl.push(corner({u,v}))}
     else if(sA.type==='poly'&&sB.type==='poly'&&!sA.closed&&!sB.closed){
       // two open lines: keep each on its clicked side, meet at X with the rounded corner, and become one line
       if(C.byId[A.id].g.rot||C.byId[B.id].g.rot)throw Error('回転した線どうしはフィレットできません');
@@ -1864,7 +1974,7 @@ function doFillet(A,m1,B,m2){const R=$('fR').value.trim();let rv;try{rv=evalExpr
       const nA=sA.nodes.length,nB=sB.nodes.length,fa=farEnd(A,pl.u1,pl.X,A.i,A.i+1),fb=farEnd(B,pl.u2,pl.X,B.i,B.i+1);
       const keepA=fa===A.i?sA.nodes.slice(0,A.i+1):sA.nodes.slice(A.i+1).reverse().map(revNode);
       const keepB=fb===B.i+1?sB.nodes.slice(B.i+1):sB.nodes.slice(0,B.i+1).reverse().map(revNode);
-      sA.nodes=[...keepA,{x:nodeX(C.byId[A.id].g,pl.X[0]),y:nodeY(C.byId[A.id].g,pl.X[1]),r:R},...keepB];doc.shapes=doc.shapes.filter(x=>x!==sB);msg=`「${sB.name}」とつないで角を丸めました`}
+      sA.nodes=[...keepA,corner({x:nodeX(C.byId[A.id].g,pl.X[0]),y:nodeY(C.byId[A.id].g,pl.X[1])}),...keepB];doc.shapes=doc.shapes.filter(x=>x!==sB);msg=`「${sB.name}」とつないで角を${did}`}
     else throw Error('別々の図形どうしは、開いた線（直線・折れ線）のときにフィレットできます')}
   catch(x){return fail(x.message)}
   undoS.push(before);if(undoS.length>100)undoS.shift();redoS=[];
@@ -1879,11 +1989,11 @@ function drawFillet(k){const line=(S,col,w)=>el('path',{d:`M${S.a[0]} ${S.a[1]}L
   if(!fsel)return;line(fsel.S,'var(--sel)',4);
   if(!fhover||sameSeg(fhover.S,fsel.S))return;
   let r;try{r=evalExpr($('fR').value,C.env)}catch(x){return}
-  const pl=filletPlan(fsel.S,fsel.m,fhover.S,fhover.m,r);if(!pl.X){dimText(fhover.m[0],fhover.m[1]-10*k,tr(pl.err),k);return}
+  const ch=$('fMode').value==='chamfer',pl=filletPlan(fsel.S,fsel.m,fhover.S,fhover.m,r,ch);if(!pl.X){dimText(fhover.m[0],fhover.m[1]-10*k,tr(pl.err),k);return}
   // extensions (or the trimmed parts) run from X to each edge's nearer end
   for(const S of[fsel.S,fhover.S]){const e=dist(S.a,pl.X)<dist(S.b,pl.X)?S.a:S.b;el('path',{d:`M${pl.X[0]} ${pl.X[1]}L${e[0]} ${e[1]}`,stroke:'var(--sel)','stroke-width':1,'stroke-dasharray':'3 3',fill:'none','vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver)}
-  if(pl.f){el('path',{d:dOf(arcPts(pl.f),false),stroke:pl.err?'var(--irr)':'var(--sel)','stroke-width':2.5,fill:'none','vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver);
-    dimText(pl.f.M[0],pl.f.M[1]-8*k,pl.err?tr(pl.err):'R'+fmt(r),k)}}
+  if(pl.f){el('path',{d:dOf(cornerPts(pl.f),false),stroke:pl.err?'var(--irr)':'var(--sel)','stroke-width':2.5,fill:'none','vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver);
+    dimText(pl.f.M[0],pl.f.M[1]-8*k,pl.err?tr(pl.err):(ch?'C':'R')+fmt(r),k)}}
 function ungroup(){const s=cur();if(!s||s.type!=='bool')return;if(blockedByRefs([s],'演算を解除')||blockedBySrc([s],'演算を解除'))return;pushUndo();const kids=s.ops.slice();
   doc.shapes=doc.shapes.filter(x=>x!==s);picks=kids.filter(id=>byId(id));sel=picks[0]||null;render()}
 // bake an operation or an offset into fixed polygons; a bool's materials go, an offset's sources stay
@@ -1912,7 +2022,7 @@ const toastEl=$('toast');let toastT;
 function toast(m,ms=2600){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),ms)}
 function toMM(e){const r=svg.getBoundingClientRect();return[(e.clientX-r.left-view.tx)/view.s,(e.clientY-r.top-view.ty)/view.s]}
 const snap=v=>snapStep?Math.round(v/snapStep)*snapStep:Math.round(v*100)/100;
-const HINT={measure:'2点をクリックすると距離・角度・ΔX・ΔYを表示（図形スナップが効きます）。もう一度クリックで測り直し、Escで終了',dim:'始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック',text:'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集',select:'クリックで選択（重なっている所は同じ場所をもう一度クリックで奥の図形へ）、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで矩形を描く。図形の角・中点・辺に吸着すると、その図形に連動します（Ctrl / ⌘ で一時的に吸着なし）',circle:'中心からドラッグして円を描く。中心は図形の点に吸着・連動します',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',split:'分割する図形をクリックし、続けて切る線（または図形）をクリックして Enter。最初にクリックした図形が切られます（Esc で選び直し）',fillet:'平行でない2本の線分を順にクリック。交わっていなくても延長してつなぎ、クリックした側を残して角を丸めます（R は下の欄。Esc で選び直し）',offset:'オフセットする図形をクリック。複数まとめるときは Shift＋クリックで選んで Enter（図形を選んでからこのツールを押しても作れます）'};
+const HINT={measure:'2点をクリックすると距離・角度・ΔX・ΔYを表示（図形スナップが効きます）。もう一度クリックで測り直し、Escで終了',dim:'始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック',text:'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集',select:'クリックで選択（重なっている所は同じ場所をもう一度クリックで奥の図形へ）、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで矩形を描く。図形の角・中点・辺に吸着すると、その図形に連動します（Ctrl / ⌘ で一時的に吸着なし）',circle:'中心からドラッグして円を描く。中心は図形の点に吸着・連動します',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直',split:'分割する図形をクリックし、続けて切る線（または図形）をクリックして Enter。最初にクリックした図形が切られます（Esc で選び直し）',fillet:'平行でない2本の線分を順にクリック。交わっていなくても延長してつなぎ、クリックした側を残して角を丸める・面取りします（R・C は下の欄。Esc で選び直し）',offset:'オフセットする図形をクリック。複数まとめるときは Shift＋クリックで選んで Enter（図形を選んでからこのツールを押しても作れます）'};
 // the offset tool applies to the selection at once when there is one; otherwise it waits for a click on a shape
 function setTool(t){if(pivotPick)pivotPick=null;measure=null;if(t==='offset'&&tool!=='offset'&&picks.length&&makeOffset(picks))return;
   if(t==='split'&&tool!=='split'&&picks.length>=2&&makeSplit(picks))return;
@@ -2240,6 +2350,9 @@ function askMove(ch){const box=$('mvList');let h='';
   box.innerHTML=h;$('mvModal').hidden=false;$('mvOk').focus()}
 function closeMove(keep){$('mvModal').hidden=true;
   if(!keep&&undoS.length){redoS=[];doc=JSON.parse(undoS.pop());lastPanelKey=null;render();toast('移動を取り消しました')}}
+$('fMode').onchange=()=>{const ch=$('fMode').value==='chamfer';$('fRLbl').textContent=ch?'C':'R';$('fR').setAttribute('aria-label',ch?'面取りの長さ':'フィレットの半径');render()};
+$('arrGo').onclick=doArray;$('arrCancel').onclick=closeArray;$('arrMode').onchange=arrSync;
+$('arrModal').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeArray()}else if(e.key==='Enter'&&!composing(e)&&e.target.tagName==='INPUT'){e.preventDefault();doArray()}});
 $('mvOk').onclick=()=>closeMove(true);$('mvUndo').onclick=()=>closeMove(false);
 $('mvModal').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeMove(false)}});
 // shapes under the cursor, the likeliest pick first: ones whose outline was hit (front to back), then the rest from small to large
