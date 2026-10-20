@@ -55,7 +55,7 @@ Push straight to `main` when asked; there is no build step.
 - shape: `{id,name,type,kind,p:{…},st:{on,inset,pitch,hole,method?,pos?,eo?},fill?:{t,pitch}}`; `kind` is a line type from
   `LINES` (cut 実線, thin, red, guide 破線, dashthin, chain — cut/guide are the old 裁断線/ガイド ids), `fill.t` a hatch from
   `HATCHES` (`hatchOf` clips lines / places dots in world coordinates, used by canvas and all exports)
-- types: `rect` (x,y,w,h,r; `ct` round|chamfer; `cmode:'each'` + `cs[4]{t,r}`), `circle` (cx,cy,d),
+- types: `rect` (x,y,w,h,r; `ct` round|chamfer; `cmode:'each'` + `cs[4]{t,r}`), `circle` (cx,cy,d), `ellipse` (cx,cy,w,h; rotatable), `arc` (cx,cy,r,a1,a2: counter-clockwise degrees, `arcSweep`; open),
   `poly` (`nodes:[{x,y,t?,hi?,ho?,r?}]`, `closed`; `r` rounds a corner node — `filletNodes` turns it into two tangent
   points and a two-piece Bézier arc in `g.fnodes`, while `g.nodes` stays as written for editing and references), `bool` (`op` union|diff|inter|xor, `ops:[ids]`, materials stay as shapes),
   `offset` (`src:[ids]`, `op` for several sources, `side` out|in, `join` round|miter, `p.d` distance; the sources stay
@@ -94,6 +94,11 @@ alone while an IME is composing.
 ## Things that are easy to break
 - Snapping writes references (`exOf`/`eyOf`); alignment guides never create references; rotated shapes are snapped
   to by number only.
+- `CENTRED` types are placed by cx / cy; `CURVY` types (poly, ellipse, arc) export their Bézier `g.fnodes` / `g.nodes` instead of the
+  sampled outline (an arc also goes to DXF as ARC). The arc tool takes three clicks (`arc3`).
+- Trim tool (`tool==='trim'`, `#tMode` trim | extend | break): a path or an arc is measured by u (segment index + t, or degrees from a1);
+  `trimCuts` finds where other outlines cross it, `polyRun` rebuilds the nodes of a run (whole nodes keep their expressions, cut ends are
+  numbers) and `applyRuns` writes the runs (extra runs become new shapes). `joinPicks` chains open paths / arcs whose ends meet.
 - Positions are rewritten through `moveLeaf(c, fx, fy)` (fx / fy map each x / y expression; `shiftLeaf` is the numeric case).
   `cloneTree(s, mv)` takes a number (shift right) or `{fx, fy}`; array copies (`doArray`) use it with `combE(e, spacing, 1, k)`
   so a spacing expression stays an expression. Alignment (`alignPicks`) moves each pick's `moveTree` like a drag.
