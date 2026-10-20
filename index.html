@@ -220,7 +220,7 @@ input.err{border-color:var(--danger)}
 /* panel icons: same line style as the top bar */
 .pi{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;display:block}
 .seg label .pi{display:inline-block;vertical-align:-3px}.seg.sm label .pi{display:block;margin:0 auto}
-.btn.ib{padding:5px 9px;display:inline-grid;place-items:center}.btn.ib .pi{width:18px;height:18px}.btn.ib.del:hover{color:var(--danger)}
+.btn.ib{padding:5px 9px;display:inline-grid;place-items:center}.btn.ib.al{padding:5px 0}.btn.ib .pi{width:18px;height:18px}.btn.ib.del:hover{color:var(--danger)}
 .lsample{width:56px;height:10px;justify-self:end;color:var(--fg)}
 .crow .cl{display:flex;align-items:center;color:var(--muted)}.crow .cl .pi{width:18px;height:18px}
 .small{font-size:11px;color:var(--muted);line-height:1.5}
@@ -1465,7 +1465,7 @@ function renderPanel(){
     const list=picks.map((id,i)=>`<li>${i===0?'<span class="pill">本体</span> ':''}${esc(byId(id).name)}</li>`).join('');
     const tot=picks.reduce((t,id)=>{const a=areaOf(C.byId[id]);return a==null?t:t+a},0),allH=picks.every(id=>byId(id).hide),allL=picks.every(id=>byId(id).lock);
     sec.innerHTML=`<h2>${picks.length}個を選択中</h2>${tot?`<div class="small">${areaText(tot,true)}</div>`:''}<div class="btnrow"><button class="btn" id="mHide">${allH?'まとめて表示':'まとめて非表示'}</button><button class="btn" id="mLock">${allL?'まとめてロック解除':'まとめてロック'}</button></div><ol class="small" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px">${list}</ol>
-      <div class="small">本体に揃える${picks.length>2?'・等間隔に並べる':''}</div><div class="btnrow">${ALIGNS.filter(a=>picks.length>2||!a[0].endsWith('d')).map(([k,t])=>`<button class="btn ib" data-align="${k}" title="${t}" aria-label="${t}">${ICON['al_'+k]}</button>`).join('')}</div>
+      <div class="small">本体に揃える${picks.length>2?'・等間隔に並べる':''}</div><div class="btnrow">${ALIGNS.filter(a=>picks.length>2||!a[0].endsWith('d')).map(([k,t])=>`<button class="btn ib al" data-align="${k}" title="${t}" aria-label="${t}">${ICON['al_'+k]}</button>`).join('')}</div>
       <div class="small">Shift＋クリックで選択を追加・解除。最初に選んだ図形が「本体」になります（範囲選択では作図順）。ドラッグでまとめて移動できます。</div>
       <div class="btns"><button class="btn" data-op="union">合体</button><button class="btn" data-op="diff">差（本体から引く）</button><button class="btn" data-op="inter">交差</button><button class="btn" data-op="xor">排他</button></div>
       <div class="small">元の図形は「材料」として式付きのまま残り、変数を変えると結果も作り直されます。</div>`;
