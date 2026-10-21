@@ -102,7 +102,9 @@ alone while an IME is composing.
 - dims: `dt` absent = length; `dt:'ang'` (x1,y1 vertex, x2..y3 a point on each side, off = arc radius; `angParts`); `dt:'rad'|'dia'`
   (cx, cy, r referring to the circle / arc, ang = direction; `radParts`). All give `g.dim` {lines, arrows, text}, so the exports need nothing
   per type (DXF writes ° / Ø as %%d / %%c; the PDF font uses WinAnsiEncoding). The dim tool's `#dMode` picks the kind.
-- Numeric input (`#numBox`, `numKind` / `numPlan` / `applyNum`): digits or Tab while drawing; `lastPt` is the cursor over the canvas.
+- Numeric input (`#numBox`, `numKind` / `numPlan` / `applyNum`): digits or Tab while drawing open one field per value (Tab moves,
+  an empty field takes the cursor's value); `lastPt` is the cursor over the canvas. Rectangles, ellipses and circles also draw by two
+  clicks (`draft.clicked`, `finishBox`), and after the first click the typed sizes run toward the cursor (`numSide`).
 - Positions are rewritten through `moveLeaf(c, fx, fy)` (fx / fy map each x / y expression; `shiftLeaf` is the numeric case).
   `cloneTree(s, mv)` takes a number (shift right) or `{fx, fy}`; array copies (`doArray`) use it with `combE(e, spacing, 1, k)`
   so a spacing expression stays an expression. Alignment (`alignPicks`) moves each pick's `moveTree` like a drag.

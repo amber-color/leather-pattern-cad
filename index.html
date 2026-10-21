@@ -203,8 +203,9 @@ input.err{border-color:var(--danger)}
 .crow .val{font:12px var(--mono);text-align:right;color:var(--muted)}.crow .val.err{color:var(--danger)}
 .seg.sm label{padding:4px 0;font-size:11px}
 .ntab{display:flex;flex-direction:column;gap:3px}
-.numbox{position:fixed;z-index:15;display:flex;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--accent);border-radius:5px;padding:3px 6px;font:11px var(--mono);color:var(--muted);box-shadow:0 2px 8px rgba(0,0,0,.25)}
-.numbox[hidden]{display:none}.numbox input{width:120px;font:12px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:2px 5px}.numbox input.err{border-color:var(--danger)}
+.numbox{position:fixed;z-index:15;display:grid;grid-template-columns:max-content 90px max-content;gap:4px 6px;align-items:center;background:var(--panel);border:1px solid var(--accent);border-radius:6px;padding:6px 8px;font:11px var(--ui);color:var(--muted);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.numbox[hidden]{display:none}.numbox label{display:contents}.numbox input{width:100%;box-sizing:border-box;font:12px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:3px 5px}
+.numbox input.err{border-color:var(--danger)}.numbox .nh{grid-column:1/-1;font-size:10px}
 .arrgrid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 10px;align-items:center}
 #arrModal [hidden]{display:none!important}
 .nrow{display:grid;grid-template-columns:22px minmax(0,1fr) minmax(0,1fr) 44px 22px 30px 18px;gap:4px;align-items:center}
@@ -450,7 +451,7 @@ input.err{border-color:var(--danger)}
   <div class="btns"><button class="btn primary" id="mCopy">コピー</button><button class="btn" id="mSave">テキストで保存</button><button class="btn" id="mClose">閉じる</button></div>
 </div></div>
 
-<div class="numbox" id="numBox" hidden><span id="numLbl"></span><input type="text" id="numIn" aria-label="数値入力" spellcheck="false" autocomplete="off"></div>
+<div class="numbox" id="numBox" role="group" aria-label="数値入力" hidden></div>
 <input type="file" id="uFile" accept="image/*" hidden>
 <div class="vhelp" id="varHelp" role="tooltip" data-noi18n hidden></div>
 <div class="sugg" id="sugg" role="listbox" aria-label="候補" data-noi18n hidden></div>
@@ -508,8 +509,8 @@ const fmt=(v,d=1)=>(Math.round(v*10**d)/10**d).toFixed(d);
 const LANG=(()=>{let u={};try{u=JSON.parse(localStorage.getItem('ppp-ui')||'{}')||{}}catch(e){}
   if(u.lang==='ja'||u.lang==='en')return u.lang;const l=(navigator.languages&&navigator.languages[0])||navigator.language||'ja';return/^ja/i.test(l)?'ja':'en'})();
 const EN_EXACT={
-  '角度：頂点、1本目の辺の点、2本目の辺の点の順にクリックし、マウスで弧の位置を決めてもう一度クリック（図形スナップが効きます）':'Angle: click the vertex, a point on the first side, then a point on the second, place the arc with the mouse and click again (object snap applies)','半径：円か円弧をクリック。クリックした向きに寸法線を引きます（あとで丸をドラッグして向きを変更）':'Radius: click a circle or an arc. The dimension points where you clicked (drag its round handle later to turn it)','直径：円か円弧をクリック。クリックした向きに寸法線を引きます（あとで丸をドラッグして向きを変更）':'Diameter: click a circle or an arc. The dimension points where you clicked (drag its round handle later to turn it)','寸法の種類':'Dimension type','円か円弧をクリックしてください':'Click a circle or an arc','頂点と同じ位置の点があります':'A point sits on the vertex','2本の向きが同じです':'The two sides point the same way','頂点X':'Vertex X','頂点Y':'Vertex Y','1本目X':'Side 1 X','1本目Y':'Side 1 Y','2本目X':'Side 2 X','2本目Y':'Side 2 Y','向き（度）':'Direction (°)','寸法線 · 角度':'Dimension · angle','寸法線 · 半径':'Dimension · radius','寸法線 · 直径':'Dimension · diameter','頂点と2本の辺の点の丸い四角、弧の中央の丸をドラッグで調整。図形の角や中心に吸着します。':'Drag the round squares (vertex and a point on each side) or the circle at the middle of the arc to adjust. They snap to corners and centres.','中心と半径は円の値を参照しているので、円を変えると寸法もついてきます。丸をドラッグで向きを変更（Shiftで15°ごと）。':'The centre and radius refer to the circle, so the dimension follows it. Drag the circle handle to turn it (Shift: 15° steps).','向きが式で決まっているので、パネルで編集してください':'The direction is set by an expression; edit it in the panel','半径が式で決まっているので、パネルで編集してください':'The radius is set by an expression; edit it in the panel','数値入力':'Numeric input','長さ, 角度':'Length, angle','幅, 高さ':'Width, height','値を入力してください':'Enter a value','カンマで区切って2つ入力してください':'Enter two values separated by a comma','直径は正の値にしてください':'The diameter must be positive','幅と高さは正の値にしてください':'Width and height must be positive','幅と高さは0以外にしてください':'Width and height can’t be 0',  '半径':'Radius',  'トリム・延長・切断 (X)':'Trim, extend, break (X)','トリム':'Trim','延長':'Extend','切断':'Break','線の編集':'Line edit','トリム：交わる線と線の間の、クリックした部分を消す。延長：クリックした端を次に交わる線まで伸ばす。切断：クリックした位置で2本に分ける（線・パス・円弧が対象。下の欄で切り替え、Esc で終了）':'Trim: remove the clicked part between crossing lines. Extend: run the clicked end on to the next line it meets. Break: split in two where you click (lines, paths and arcs; switch in the field below, Esc to finish)','閉じた形は、2か所以上で交わる線がないとトリムできません':'A closed shape needs lines crossing it in two or more places to trim','交わる線がないのでトリムできません（線ごと消すなら Delete）':'Nothing crosses it, so there is nothing to trim (Delete removes the whole line)','閉じた形は延長できません':'Closed shapes can’t be extended','延長した先に交わる線がありません':'Nothing to meet in that direction','曲線の端は延長できません':'A curved end can’t be extended','端では切断できません':'Can’t break at an end','トリム・延長・切断できるのは線・パス・円弧です（矩形・円は「パスに変換」してから）':'Trim, extend and break work on lines, paths and arcs (convert rectangles and circles to paths first)','エラーのある図形は編集できません':'Shapes with errors can’t be edited','切断して開いた線にしました':'Broken open into a line','2本に分けました':'Split in two','結合（1本の線に）':'Join (into one line)','端がつながっている線・パス・円弧を1本のパスにします（輪になれば閉じた形）':'Join lines, paths and arcs whose ends meet into one path (closed if they come back round)','エラーのある図形は結合できません':'Shapes with errors can’t be joined','ロック中のパーツは結合できません':'Locked parts can’t be joined','端どうしがつながっていない線があります（端を図形スナップでつないでから結合してください）':'Some ends don’t meet (snap the ends together first, then join)',
-  '楕円':'Ellipse','円弧':'Arc','楕円 (E)':'Ellipse (E)','円弧 (A)':'Arc (A)','開始角（度）':'Start angle (°)','終了角（度）':'End angle (°)','弧の長さ':'Arc length','楕円をパスに変換します。式は残るので変数を変えても形が追従し、線の上をダブルクリックで頂点を足せます':'Convert the ellipse to a path. Its expressions stay, so it still follows the variables; double-click the line to add nodes','円弧をパスに変換します（数値になります）。結合したパスの一部にするときなどに':'Convert the arc to a path (as plain numbers), e.g. to join it into a path','開始角から終了角へ反時計回りに描きます（右が0°、上が90°）。両端と中央の丸をドラッグで調整できます。':'Drawn counter-clockwise from the start angle to the end angle (right is 0°, up is 90°). Drag the ends or the middle handle to adjust.','ドラッグで囲んだ範囲に楕円を描く（Shiftで正円）。回転はパネルか丸いハンドルで。数字キーで幅・高さを入力するとカーソルの位置に作れます':'Drag to draw an ellipse filling the box (Shift for a circle). Rotate it in the panel or with the round handle. Type numbers for the width and height to make one at the cursor','始点と終点をクリックし、円弧が通る点をクリック（図形スナップが効きます。Escでやり直し）':'Click the start and the end, then a point the arc passes through (object snap applies; Esc starts over)','3点が一直線上にあるので円弧になりません':'The three points are in a line, so they make no arc','半径は正の値に':'The radius must be positive','半径が変数の式で決まっているので、パネルで編集してください':'The radius is set by a variable expression; edit it in the panel',
+  'Tab で次の項目・Enter で確定・空欄はカーソルの位置':'Tab: next field · Enter: make it · empty: from the cursor','長さを入力してください':'Enter the length','幅を入力してください':'Enter the width','高さを入力してください':'Enter the height','直径を入力してください':'Enter the diameter',  '角度：頂点、1本目の辺の点、2本目の辺の点の順にクリックし、マウスで弧の位置を決めてもう一度クリック（図形スナップが効きます）':'Angle: click the vertex, a point on the first side, then a point on the second, place the arc with the mouse and click again (object snap applies)','半径：円か円弧をクリック。クリックした向きに寸法線を引きます（あとで丸をドラッグして向きを変更）':'Radius: click a circle or an arc. The dimension points where you clicked (drag its round handle later to turn it)','直径：円か円弧をクリック。クリックした向きに寸法線を引きます（あとで丸をドラッグして向きを変更）':'Diameter: click a circle or an arc. The dimension points where you clicked (drag its round handle later to turn it)','寸法の種類':'Dimension type','円か円弧をクリックしてください':'Click a circle or an arc','頂点と同じ位置の点があります':'A point sits on the vertex','2本の向きが同じです':'The two sides point the same way','頂点X':'Vertex X','頂点Y':'Vertex Y','1本目X':'Side 1 X','1本目Y':'Side 1 Y','2本目X':'Side 2 X','2本目Y':'Side 2 Y','向き（度）':'Direction (°)','寸法線 · 角度':'Dimension · angle','寸法線 · 半径':'Dimension · radius','寸法線 · 直径':'Dimension · diameter','頂点と2本の辺の点の丸い四角、弧の中央の丸をドラッグで調整。図形の角や中心に吸着します。':'Drag the round squares (vertex and a point on each side) or the circle at the middle of the arc to adjust. They snap to corners and centres.','中心と半径は円の値を参照しているので、円を変えると寸法もついてきます。丸をドラッグで向きを変更（Shiftで15°ごと）。':'The centre and radius refer to the circle, so the dimension follows it. Drag the circle handle to turn it (Shift: 15° steps).','向きが式で決まっているので、パネルで編集してください':'The direction is set by an expression; edit it in the panel','半径が式で決まっているので、パネルで編集してください':'The radius is set by an expression; edit it in the panel','数値入力':'Numeric input','長さ, 角度':'Length, angle','幅, 高さ':'Width, height','値を入力してください':'Enter a value','カンマで区切って2つ入力してください':'Enter two values separated by a comma','直径は正の値にしてください':'The diameter must be positive','幅と高さは正の値にしてください':'Width and height must be positive','幅と高さは0以外にしてください':'Width and height can’t be 0',  '半径':'Radius',  'トリム・延長・切断 (X)':'Trim, extend, break (X)','トリム':'Trim','延長':'Extend','切断':'Break','線の編集':'Line edit','トリム：交わる線と線の間の、クリックした部分を消す。延長：クリックした端を次に交わる線まで伸ばす。切断：クリックした位置で2本に分ける（線・パス・円弧が対象。下の欄で切り替え、Esc で終了）':'Trim: remove the clicked part between crossing lines. Extend: run the clicked end on to the next line it meets. Break: split in two where you click (lines, paths and arcs; switch in the field below, Esc to finish)','閉じた形は、2か所以上で交わる線がないとトリムできません':'A closed shape needs lines crossing it in two or more places to trim','交わる線がないのでトリムできません（線ごと消すなら Delete）':'Nothing crosses it, so there is nothing to trim (Delete removes the whole line)','閉じた形は延長できません':'Closed shapes can’t be extended','延長した先に交わる線がありません':'Nothing to meet in that direction','曲線の端は延長できません':'A curved end can’t be extended','端では切断できません':'Can’t break at an end','トリム・延長・切断できるのは線・パス・円弧です（矩形・円は「パスに変換」してから）':'Trim, extend and break work on lines, paths and arcs (convert rectangles and circles to paths first)','エラーのある図形は編集できません':'Shapes with errors can’t be edited','切断して開いた線にしました':'Broken open into a line','2本に分けました':'Split in two','結合（1本の線に）':'Join (into one line)','端がつながっている線・パス・円弧を1本のパスにします（輪になれば閉じた形）':'Join lines, paths and arcs whose ends meet into one path (closed if they come back round)','エラーのある図形は結合できません':'Shapes with errors can’t be joined','ロック中のパーツは結合できません':'Locked parts can’t be joined','端どうしがつながっていない線があります（端を図形スナップでつないでから結合してください）':'Some ends don’t meet (snap the ends together first, then join)',
+  '楕円':'Ellipse','円弧':'Arc','楕円 (E)':'Ellipse (E)','円弧 (A)':'Arc (A)','開始角（度）':'Start angle (°)','終了角（度）':'End angle (°)','弧の長さ':'Arc length','楕円をパスに変換します。式は残るので変数を変えても形が追従し、線の上をダブルクリックで頂点を足せます':'Convert the ellipse to a path. Its expressions stay, so it still follows the variables; double-click the line to add nodes','円弧をパスに変換します（数値になります）。結合したパスの一部にするときなどに':'Convert the arc to a path (as plain numbers), e.g. to join it into a path','開始角から終了角へ反時計回りに描きます（右が0°、上が90°）。両端と中央の丸をドラッグで調整できます。':'Drawn counter-clockwise from the start angle to the end angle (right is 0°, up is 90°). Drag the ends or the middle handle to adjust.','ドラッグ、または2点をクリックして、囲んだ範囲に楕円を描く（Shiftで正円）。回転はパネルか丸いハンドルで。1点目のあと（またはその前）に数字キーで幅・高さを入力できます':'Drag, or click two points, to draw an ellipse filling the box (Shift for a circle). Rotate it in the panel or with the round handle. Type numbers for the width and height after the first point (or before it)','始点と終点をクリックし、円弧が通る点をクリック（図形スナップが効きます。Escでやり直し）':'Click the start and the end, then a point the arc passes through (object snap applies; Esc starts over)','3点が一直線上にあるので円弧になりません':'The three points are in a line, so they make no arc','半径は正の値に':'The radius must be positive','半径が変数の式で決まっているので、パネルで編集してください':'The radius is set by a variable expression; edit it in the panel',
   '左を揃える':'Align left edges','左右の中央を揃える':'Align horizontal centres','右を揃える':'Align right edges','上を揃える':'Align top edges','上下の中央を揃える':'Align vertical centres','下を揃える':'Align bottom edges','横に等間隔':'Distribute horizontally','縦に等間隔':'Distribute vertically','本体に揃える':'Align to the base','本体に揃える・等間隔に並べる':'Align to the base, or space evenly','エラーのある図形は整列できません':'Shapes with errors can’t be aligned','すでに揃っています':'Already in line','配列複製（直線・格子・円形に並べる）':'Array copy (in a row, a grid or around a centre)','配列複製':'Array copy','並べ方':'Layout','直線':'Row','格子':'Grid','円形':'Circular','個数':'Count','列数':'Columns','行数':'Rows','間隔X':'Spacing X','間隔Y':'Spacing Y','角度':'Angle','空欄で一周に均等':'Empty: evenly round a full turn','複製する':'Copy','個数は元の図形を含めた数です。間隔は1つごとにずらす距離（mm）で、右・上が＋です。変数を使った式で書くと、複製も変数に追従します。':'The count includes the original. Spacing is how far each copy is moved from the previous one (mm); right and up are positive. Write it with a variable and the copies follow that variable.','個数は元の図形を含めた数です。中心のまわりに、角度ずつ反時計回りに回して並べます（時計回りはマイナス）。':'The count includes the original. Copies are turned counter-clockwise around the centre by the angle each (negative for clockwise).','エラーのある図形は複製できません':'Shapes with errors can’t be copied','2個以上にしてください':'Make it 2 or more','一度に作れるのは400個までです':'Up to 400 at a time','丸める':'Round','角の処理':'Corner','面取りの長さ':'Chamfer length','C は正の値にしてください':'C must be positive','C が大きすぎます（線分が足りません）':'C is too large (an edge is too short)','角を面取りしました':'Corner chamfered','2本を延長して角を面取りしました':'Extended both edges and chamfered the corner','丸め⇔面取りを切り替え':'Switch between round and chamfer',
   '無題の型紙':'Untitled pattern','プロジェクト名':'Project name','プロジェクト名：保存・書き出しのファイル名になります':'Project name: used as the file name when saving and exporting',
   '下絵を置きました。四隅・辺の中点のハンドルで大きさを変えられます（Shift で縦横比を保つ）':'Underlay placed. Drag its corner and side handles to resize (Shift keeps the proportions)','四隅・辺の中点のハンドルで大きさを変えられます（Shift で縦横比を保つ）。作図の目安なので書き出しには出ません。画像は保存（.json）に入り、共有リンクには入りません。':'Drag the corner and side handles to resize (Shift keeps the proportions). A drawing aid, never exported. The image is kept in saved .json files but not in share links.',
@@ -528,8 +529,8 @@ const EN_EXACT={
   '元に戻す (⌘Z)':'Undo (⌘Z)','やり直し (⇧⌘Z)':'Redo (⇧⌘Z)','全体表示 (⇧F)':'Fit to view (⇧F)','フィレット (F)':'Fillet (F)','フィレットの半径':'Fillet radius','縮小':'Zoom out','拡大':'Zoom in','スナップ':'Snap','なし':'None','図形スナップ':'Object snap',
   '図形の端点・中点・中心・交点などに吸着します（S で切り替え。Ctrl / ⌘ を押している間は一時的に無効）':'Snap to endpoints, midpoints, centres, intersections and more (S toggles; hold Ctrl / ⌘ to suspend)',
   'クリックで選択（重なっている所は同じ場所をもう一度クリックで奥の図形へ）、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動':'Click to select (click the same spot again for the shape underneath); drag on the background to box-select (Shift adds). Drag a shape to move it; right-drag to pan',
-  'ドラッグで矩形を描く。図形の角・中点・辺に吸着すると、その図形に連動します（Ctrl / ⌘ で一時的に吸着なし）。数字キーで幅・高さを入力するとカーソルの位置に作れます':'Drag to draw a rectangle. Snapping to a shape’s corner, midpoint or edge links it to that shape (Ctrl / ⌘ to suspend snapping). Type numbers for the width and height to make one at the cursor',
-  '中心からドラッグして円を描く。中心は図形の点に吸着・連動します。数字キーで直径を入力するとカーソルの位置に作れます':'Drag from the centre to draw a circle; the centre snaps to and links with shape points. Type a number for the diameter to make one at the cursor',
+  'ドラッグ、または2点をクリックして矩形を描く。図形の角・中点・辺に吸着すると、その図形に連動します（Ctrl / ⌘ で一時的に吸着なし）。1点目をクリックしたあと（またはその前）に数字キーで幅・高さを入力できます':'Drag, or click two points, to draw a rectangle. Snapping to a corner, midpoint or edge links it to that shape (hold Ctrl / ⌘ to snap off for a moment). Type numbers for the width and height after the first click (or before it)',
+  '中心をクリックして、もう一度クリック（またはドラッグ）で円を描く。中心は図形の点に吸着・連動します。中心のあと（またはその前）に数字キーで直径を入力できます':'Click the centre, then click again (or drag) to draw a circle. The centre snaps to and links with shape points. Type a number for the diameter after the centre (or before it)',
   'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直。数字キーで長さ・角度を入力できます':'Click to add points. Click the first point to close; double-click or Enter to finish; Shift for horizontal / vertical. Type numbers for the length and angle',
   'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直。数字キーで長さ・角度を入力できます':'Click for a corner point, drag for a curve point. Click the first point to close; double-click or Enter to finish; Shift for horizontal / vertical. Type numbers for the length and angle',
   '始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック。2点目は数字キーで長さ・角度を入力できます':'Click the start and end (snaps to corners, midpoints and centres), move to place the line, then click again. Type numbers for the length and angle of the second point',
@@ -632,7 +633,7 @@ const EN_EXACT={
 };
 // [Japanese with {0}…, English, optional {index:{ja:en}} for words that read differently inside the sentence]
 const EN_PAT=[
-  ['「{0}」：{1}','“{0}”: {1}',{1:'T'}],  ['「{0}」の頂点はほかの図形から参照されています。番号がずれていないか確かめてください','Other shapes refer to the nodes of “{0}”; check that the node numbers still match'],['{0}本を結合して閉じた形にしました','Joined {0} into a closed shape'],['{0}本を1本に結合しました','Joined {0} into one line'],
+    ['「{0}」：{1}','“{0}”: {1}',{1:'T'}],  ['「{0}」の頂点はほかの図形から参照されています。番号がずれていないか確かめてください','Other shapes refer to the nodes of “{0}”; check that the node numbers still match'],['{0}本を結合して閉じた形にしました','Joined {0} into a closed shape'],['{0}本を1本に結合しました','Joined {0} into one line'],
   ['{0}を入力してください','Enter the {0}',{0:'T'}],['{0}は1〜200の整数にしてください','{0} must be a whole number from 1 to 200',{0:'T'}],['間隔X：{0}','Spacing X: {0}',{0:'T'}],['間隔Y：{0}','Spacing Y: {0}',{0:'T'}],['中心X：{0}','Centre X: {0}',{0:'T'}],['中心Y：{0}','Centre Y: {0}',{0:'T'}],['個数：{0}','Count: {0}',{0:'T'}],['列数：{0}','Columns: {0}',{0:'T'}],['行数：{0}','Rows: {0}',{0:'T'}],['角度：{0}','Angle: {0}',{0:'T'}],['C：{0}','C: {0}',{0:'T'}],['{0}個複製しました（{1}個にエラー）','Made {0} copies ({1} with errors)'],['{0}個複製しました。まとめて選択中です','Made {0} copies; they are all selected'],['{0}の角を面取りしました','Chamfered the corner: {0}',{0:'T'}],['頂点{0}の角を面取りしました','Chamfered the corner at node {0}'],['「{0}」とつないで角を面取りしました','Joined with “{0}” and chamfered the corner'],['面取り {0}','Chamfer {0}'],['角{0}の丸め⇔面取りを切り替え','Switch corner {0} between round and chamfer'],['頂点{0}の丸め⇔面取りを切り替え','Switch node {0} between round and chamfer'],
   ['{0} mm（縦横比を保つ）','{0} mm (keeps the aspect ratio)'],
   ['非表示 {0} · すべて表示','Hidden {0} · show all'],['下絵を {0}% にしました','Underlay scaled to {0}%'],['{0}個をコピーしました','Copied {0}'],['{0}個を貼り付けました（変数 {1}個も追加）','Pasted {0} (and {1} variables)'],['{0}個を貼り付けました','Pasted {0}'],['面積の合計 {0} cm²（{1} デシ）','Total area {0} cm² ({1} dm²)'],['面積 {0} cm²（{1} デシ）','Area {0} cm² ({1} dm²)'],['計測：{0}','Measure: {0}'],
@@ -674,6 +675,7 @@ const EN_PAT=[
   ['角（{0}）：{1}','Corner ({0}): {1}',{0:'T',1:'T'}],['頂点{0}の{1}：{2}','Node {0} {1}: {2}',{1:'T',2:'T'}],['回転：{0}','Rotation: {0}',{0:'T'}],['回転中心X：{0}','Pivot X: {0}',{0:'T'}],['回転中心Y：{0}','Pivot Y: {0}',{0:'T'}],
   ['「{0}」が閉じた形ではありません','“{0}” isn’t a closed shape'],['辺{0}のピッチは正の値に','Edge {0}: pitch must be positive'],['図形「{0}」が見つかりません','No shape called “{0}”'],['「{0}」という名前の図形が{1}個あります','{1} shapes are called “{0}”'],
   ['図形「{0}」との参照が循環しています','References with “{0}” form a loop'],['図形「{0}」にエラーがあります','Shape “{0}” has an error'],
+  ['{0}：{1}','{0}: {1}',{0:'T',1:'T'}]
 ].map(([ja,en,caps])=>{const lit=ja.replace(/\{\d\}/g,'');const re=new RegExp('^'+ja.replace(/[.*+?^$()|[\]\\]/g,'\\$&').replace(/\\?\{(\d)\\?\}/g,'(.+?)')+'$','s');
   const order=[...ja.matchAll(/\{(\d)\}/g)].map(m=>+m[1]);return{re,en,caps:caps||{},order,w:lit.length}}).sort((a,b)=>b.w-a.w);
 const HAS_JA=/[　-ヿ㐀-鿿！-～]/;
@@ -2078,51 +2080,64 @@ function doFillet(A,m1,B,m2){const R=$('fR').value.trim(),ch=$('fMode').value===
 // ---------- numeric input while drawing ----------
 // type a number (or Tab) while drawing: the next point by length and angle, a start point, or a size at the cursor
 let lastPt=null;
-function numKind(){if(!lastPt)return null;const D=draft;
-  if((tool==='line'||tool==='poly')&&D&&D.type==='poly'&&D.nodes.length)return{k:'seg',lab:'長さ, 角度'};
-  if((tool==='line'||tool==='poly')&&!D)return{k:'start',lab:'X, Y'};
-  if(tool==='rect'&&!D)return{k:'rect',lab:'幅, 高さ'};if(tool==='ellipse'&&!D)return{k:'ell',lab:'幅, 高さ'};if(tool==='circle'&&!D)return{k:'circ',lab:'直径'};
-  if(tool==='dim'&&dimMode()==='len'&&D&&D.type==='dim'&&D.stage===1)return{k:'dimlen',lab:'長さ, 角度'};return null}
-function openNum(init){const K=numKind();if(!K)return;const B=$('numBox'),I=$('numIn');B.dataset.k=K.k;$('numLbl').textContent=K.lab;I.value=init;I.classList.remove('err');B.hidden=false;
-  const r=B.getBoundingClientRect();B.style.left=Math.max(4,Math.min(innerWidth-r.width-4,lastPt.cx+16))+'px';B.style.top=Math.max(4,Math.min(innerHeight-r.height-4,lastPt.cy+16))+'px';
-  I.focus();I.setSelectionRange(I.value.length,I.value.length);render()}
-function closeNum(){const I=$('numIn');if(document.activeElement===I)I.blur();if($('numBox').hidden)return;$('numBox').hidden=true;render()}
-// "40, 30": parts split at top-level commas (full-width digits and 、 work too); each is an expression
-function numParts(str){const t=String(str).replace(/[０-９．＋－]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[、，]/g,',').replace(/[<＜]/g,',');
-  const out=[];let depth=0,cur='';for(const ch of t){if(ch==='(')depth++;if(ch===')')depth--;if(ch===','&&!depth){out.push(cur);cur=''}else cur+=ch}out.push(cur);
-  return out.map(x=>x.trim()).filter(Boolean).map(e=>{let v;try{v=evalExpr(e,C.env)}catch(x){throw Error(`「${e}」：${x.message}`)}return{e:isNum(e)?num(v):e,v}})}
-// what the typed values make, without changing anything yet
-function numPlan(){const k=$('numBox').dataset.k,P=numParts($('numIn').value);if(!P.length)throw Error('値を入力してください');const need=n=>{if(P.length<n)throw Error('カンマで区切って2つ入力してください')};
-  // the next point from the last one: length, and the angle typed or else toward the cursor
-  const along=A=>{const L=P[0].v,h=[lastPt.m[0],lastPt.m[1]],t=P[1]?P[1].v*Math.PI/180:(Math.hypot(h[0]-A.x,h[1]-A.y)>1e-9?Math.atan2(-(h[1]-A.y),h[0]-A.x):0),dx=L*Math.cos(t),dy=L*Math.sin(t);
+function numKind(){if(!lastPt)return null;const D=draft,LA=[['長さ','mm'],['角度','°']],WH=[['幅','mm'],['高さ','mm']];
+  if((tool==='line'||tool==='poly')&&D&&D.type==='poly'&&D.nodes.length)return{k:'seg',f:LA};
+  if((tool==='line'||tool==='poly')&&!D)return{k:'start',f:[['X','mm'],['Y','mm']]};
+  if(tool==='rect'||tool==='ellipse')return!D?{k:tool,f:WH}:D.clicked?{k:tool+'2',f:WH}:null;
+  if(tool==='circle')return!D?{k:'circ',f:[['直径','mm']]}:D.clicked?{k:'circ2',f:[['直径','mm']]}:null;
+  if(tool==='dim'&&dimMode()==='len'&&D&&D.type==='dim'&&D.stage===1)return{k:'dimlen',f:LA};return null}
+const numIns=()=>[...$('numBox').querySelectorAll('input')];
+// one field per value; Tab moves between them, Enter makes it, Esc closes
+function openNum(init){const K=numKind();if(!K)return;const B=$('numBox');B.dataset.k=K.k;
+  B.innerHTML=K.f.map(([lab,u],i)=>`<label><span>${lab}</span><input type="text" data-i="${i}" aria-label="${lab}" spellcheck="false" autocomplete="off"><span>${u}</span></label>`).join('')+
+    `<div class="nh">Tab で次の項目・Enter で確定・空欄はカーソルの位置</div>`;
+  const I=numIns();I[0].value=init;
+  for(const inp of I){inp.addEventListener('keydown',e=>{e.stopPropagation();if(composing(e))return;
+      if(e.key==='Enter'){e.preventDefault();applyNum()}else if(e.key==='Escape'){e.preventDefault();closeNum()}
+      else if(e.key==='Tab'){e.preventDefault();const L=numIns(),j=(L.indexOf(inp)+(e.shiftKey?-1:1)+L.length)%L.length;L[j].focus();L[j].select()}});
+    inp.addEventListener('input',()=>{inp.classList.remove('err');render()})}
+  B.hidden=false;const r=B.getBoundingClientRect();B.style.left=Math.max(4,Math.min(innerWidth-r.width-4,lastPt.cx+16))+'px';B.style.top=Math.max(4,Math.min(innerHeight-r.height-4,lastPt.cy+16))+'px';
+  I[0].focus();I[0].setSelectionRange(init.length,init.length);render()}
+$('numBox').addEventListener('focusout',()=>setTimeout(()=>{if(!$('numBox').contains(document.activeElement))closeNum()},0));
+function closeNum(){const B=$('numBox');if(B.contains(document.activeElement))document.activeElement.blur();if(B.hidden)return;B.hidden=true;render()}
+// each field as {e, v}, or null when empty (full-width digits work too)
+function numVals(){return numIns().map(inp=>{const t=inp.value.replace(/[０-９．＋－]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).trim();if(!t)return null;
+  let v;try{v=evalExpr(t,C.env)}catch(x){inp.classList.add('err');throw Error(`${inp.getAttribute('aria-label')}：${x.message}`)}return{e:isNum(t)?num(v):t,v}})}
+// what the typed values make, without changing anything yet. An empty field takes the cursor's value
+function numPlan(){const k=$('numBox').dataset.k,P=numVals(),q=snapAt(lastPt.m,lastPt.e);
+  const along=A=>{const dx0=q.x-A.x,dy0=-(q.y-A.y),c=Math.hypot(dx0,dy0),L=P[0]?P[0].v:c,t=P[1]?P[1].v*Math.PI/180:(c>1e-9?Math.atan2(dy0,dx0):0),dx=L*Math.cos(t),dy=L*Math.sin(t);
     return{x:A.x+dx,y:A.y-dy,ex:A.ex?combE(A.ex,num(dx)):null,ey:A.ey?combE(A.ey,num(dy)):null}};
   if(k==='seg')return{k,q:along(draft.nodes.at(-1))};if(k==='dimlen')return{k,q:along(draft.a)};
-  if(k==='start'){need(2);return{k,q:{x:P[0].v,y:-P[1].v,ex:P[0].e,ey:P[1].e}}}
-  const q=snapAt(lastPt.m,lastPt.e);
-  if(k==='circ'){if(!(P[0].v>0))throw Error('直径は正の値にしてください');return{k,q,d:P[0]}}
-  need(2);const[W,H]=P;if(k==='ell'){if(!(W.v>0&&H.v>0))throw Error('幅と高さは正の値にしてください');return{k,q,W,H}}
-  if(!W.v||!H.v)throw Error('幅と高さは0以外にしてください');return{k,q,W,H}}
-function applyNum(){let pl;try{pl=numPlan()}catch(x){$('numIn').classList.add('err');toast(x.message);return}
-  const st=(on,ins)=>({on,inset:ins,pitch:'ピッチ',hole:'穴'}),put=sh=>{pushUndo();fixStitchDefaults(sh);doc.shapes.push(sh);closeNum();setSel(sh.id);setTool('select')};
+  if(k==='start')return{k,q:{x:P[0]?P[0].v:q.x,y:P[1]?-P[1].v:q.y,ex:P[0]?P[0].e:q.ex||null,ey:P[1]?P[1].e:q.ey||null}};
+  // sizes: typed, or after a first click the cursor's distance; which way they run follows the cursor
+  const two=k.endsWith('2'),A=two?draft.a:q,size=(i,lab,d)=>{if(P[i])return P[i];if(two)return{e:num(Math.abs(d)),v:Math.abs(d)};throw Error(`${lab}を入力してください`)};
+  if(k.startsWith('circ')){const D=size(0,'直径',2*Math.hypot(q.x-A.x,q.y-A.y));if(!(D.v>0))throw Error('直径は正の値にしてください');return{k,A,D}}
+  const W=size(0,'幅',q.x-A.x),H=size(1,'高さ',q.y-A.y);if(!W.v||!H.v)throw Error('幅と高さは0以外にしてください');
+  return{k,A,W,H,sx:two&&q.x<A.x?-1:1,sy:two&&q.y>A.y?-1:1}}
+// a typed size from point a along direction s (a negative size turns it round): which way it runs, its length, and where it starts
+const numSide=(aE,P,s)=>{const d=P.v<0?-s:s,len=P.v<0?num(-P.v):P.e;return{d,len,pos:d>0?aE:combE(aE,len,-1)}};
+function applyNum(){let pl;try{pl=numPlan()}catch(x){toast(x.message);return}
+  const st=(on,ins)=>({on,inset:ins,pitch:'ピッチ',hole:'穴'}),put=sh=>{pushUndo();fixStitchDefaults(sh);doc.shapes.push(sh);closeNum();draft=null;setSel(sh.id);setTool('select')};
   const{k,q}=pl;
   if(k==='seg'){draft.nodes.push({x:q.x,y:q.y,ex:q.ex||null,ey:q.ey||null});closeNum();return}
   if(k==='start'){draft={type:'poly',nodes:[{x:q.x,y:q.y,ex:q.ex,ey:q.ey}],straight:tool==='line'};closeNum();return}
   if(k==='dimlen'){draft.b=q;draft.stage=2;draft.off=0;closeNum();return}
-  if(k==='circ')return put({id:newId(),name:uniqName(nm('穴・円')),type:'circle',kind:'cut',p:{cx:exOf(q),cy:eyOf(q),d:pl.d.e},st:st(false,'2')});
-  if(k==='ell')return put({id:newId(),name:uniqName(nm('楕円')),type:'ellipse',kind:'cut',p:{cx:exOf(q),cy:eyOf(q),w:pl.W.e,h:pl.H.e},st:st(false,'3')});
-  // a rectangle from the cursor's corner; a negative size runs left / down from it
-  const{W,H}=pl,X=W.v>0?{x:exOf(q),w:W.e}:{x:combE(exOf(q),num(W.v)),w:num(-W.v)},Y=H.v>0?{y:eyOf(q),h:H.e}:{y:combE(eyOf(q),num(H.v)),h:num(-H.v)};
-  put({id:newId(),name:uniqName(nm('パーツ')),type:'rect',kind:'cut',p:{x:X.x,y:Y.y,w:X.w,h:Y.h,r:'R' in C.env?'R':'0'},st:st(true,'縫い代')})}
+  const A=pl.A;
+  if(k.startsWith('circ'))return put({id:newId(),name:uniqName(nm('穴・円')),type:'circle',kind:'cut',p:{cx:exOf(A),cy:eyOf(A),d:pl.D.e},st:st(false,'2')});
+  const X=numSide(exOf(A),pl.W,pl.sx),Y=numSide(eyOf(A),pl.H,pl.sy);
+  // an ellipse typed at the cursor is centred there; after a first click it fills the box from that point
+  if(k==='ellipse')return put({id:newId(),name:uniqName(nm('楕円')),type:'ellipse',kind:'cut',p:{cx:exOf(A),cy:eyOf(A),w:X.len,h:Y.len},st:st(false,'3')});
+  if(k==='ellipse2')return put({id:newId(),name:uniqName(nm('楕円')),type:'ellipse',kind:'cut',p:{cx:combE(exOf(A),X.len,X.d,0.5),cy:combE(eyOf(A),Y.len,Y.d,0.5),w:X.len,h:Y.len},st:st(false,'3')});
+  put({id:newId(),name:uniqName(nm('パーツ')),type:'rect',kind:'cut',p:{x:X.pos,y:Y.pos,w:X.len,h:Y.len,r:'R' in C.env?'R':'0'},st:st(true,'縫い代')})}
 // dashed preview of what Enter will make
 function drawNumPrev(k){let pl;try{pl=numPlan()}catch(x){return}const A={stroke:'var(--sel)','stroke-width':1.5,fill:'none','stroke-dasharray':'4 3','vector-effect':'non-scaling-stroke','pointer-events':'none'},q=pl.q;
-  if(pl.k==='seg'||pl.k==='dimlen'){const a=pl.k==='seg'?draft.nodes.at(-1):draft.a;el('path',{d:`M${a.x} ${a.y}L${q.x} ${q.y}`,...A},gOver);dimText((a.x+q.x)/2,(a.y+q.y)/2-6*k,fmt(Math.hypot(q.x-a.x,q.y-a.y)),k)}
-  else if(pl.k==='start')el('circle',{cx:q.x,cy:q.y,r:4*k,...A,'stroke-dasharray':''},gOver);
-  else if(pl.k==='circ')el('circle',{cx:q.x,cy:q.y,r:pl.d.v/2,...A},gOver);
-  else if(pl.k==='ell')el('ellipse',{cx:q.x,cy:q.y,rx:pl.W.v/2,ry:pl.H.v/2,...A},gOver);
-  else{const x=Math.min(q.x,q.x+pl.W.v),y=Math.min(q.y,q.y-pl.H.v);el('rect',{x,y,width:Math.abs(pl.W.v),height:Math.abs(pl.H.v),...A},gOver)}}
-$('numIn').addEventListener('keydown',e=>{e.stopPropagation();if(composing(e))return;if(e.key==='Enter'){e.preventDefault();applyNum()}else if(e.key==='Escape'){e.preventDefault();closeNum()}});
-$('numIn').addEventListener('input',()=>{$('numIn').classList.remove('err');render()});
-$('numIn').addEventListener('blur',()=>setTimeout(closeNum,0));
+  if(pl.k==='seg'||pl.k==='dimlen'){const a=pl.k==='seg'?draft.nodes.at(-1):draft.a;el('path',{d:`M${a.x} ${a.y}L${q.x} ${q.y}`,...A},gOver);dimText((a.x+q.x)/2,(a.y+q.y)/2-6*k,fmt(Math.hypot(q.x-a.x,q.y-a.y)),k);return}
+  if(pl.k==='start'){el('circle',{cx:q.x,cy:q.y,r:4*k,...A,'stroke-dasharray':''},gOver);return}
+  const P0=pl.A;if(pl.k.startsWith('circ')){el('circle',{cx:P0.x,cy:P0.y,r:Math.abs(pl.D.v)/2,...A},gOver);return}
+  const dx=(pl.W.v<0?-pl.sx:pl.sx)*Math.abs(pl.W.v),dy=-(pl.H.v<0?-pl.sy:pl.sy)*Math.abs(pl.H.v);
+  if(pl.k==='ellipse'){el('ellipse',{cx:P0.x,cy:P0.y,rx:Math.abs(dx)/2,ry:Math.abs(dy)/2,...A},gOver);return}
+  if(pl.k==='ellipse2'){el('ellipse',{cx:P0.x+dx/2,cy:P0.y+dy/2,rx:Math.abs(dx)/2,ry:Math.abs(dy)/2,...A},gOver);return}
+  el('rect',{x:Math.min(P0.x,P0.x+dx),y:Math.min(P0.y,P0.y+dy),width:Math.abs(dx),height:Math.abs(dy),...A},gOver)}
 // ---------- trim / extend / break / join (lines, paths and arcs) ----------
 // a target's run is measured by u: segment index + t along a path, degrees from a1 along an arc
 function trimTarget(s){const it=s&&C.byId[s.id];if(!it||!it.g||it.err)return null;const g=it.g;
@@ -2275,7 +2290,7 @@ const toastEl=$('toast');let toastT;
 function toast(m,ms=2600){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),ms)}
 function toMM(e){const r=svg.getBoundingClientRect();return[(e.clientX-r.left-view.tx)/view.s,(e.clientY-r.top-view.ty)/view.s]}
 const snap=v=>snapStep?Math.round(v/snapStep)*snapStep:Math.round(v*100)/100;
-const HINT={dimang:'角度：頂点、1本目の辺の点、2本目の辺の点の順にクリックし、マウスで弧の位置を決めてもう一度クリック（図形スナップが効きます）',dimrad:'半径：円か円弧をクリック。クリックした向きに寸法線を引きます（あとで丸をドラッグして向きを変更）',dimdia:'直径：円か円弧をクリック。クリックした向きに寸法線を引きます（あとで丸をドラッグして向きを変更）',trim:'トリム：交わる線と線の間の、クリックした部分を消す。延長：クリックした端を次に交わる線まで伸ばす。切断：クリックした位置で2本に分ける（線・パス・円弧が対象。下の欄で切り替え、Esc で終了）',measure:'2点をクリックすると距離・角度・ΔX・ΔYを表示（図形スナップが効きます）。もう一度クリックで測り直し、Escで終了',dim:'始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック。2点目は数字キーで長さ・角度を入力できます',text:'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集',select:'クリックで選択（重なっている所は同じ場所をもう一度クリックで奥の図形へ）、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグで矩形を描く。図形の角・中点・辺に吸着すると、その図形に連動します（Ctrl / ⌘ で一時的に吸着なし）。数字キーで幅・高さを入力するとカーソルの位置に作れます',circle:'中心からドラッグして円を描く。中心は図形の点に吸着・連動します。数字キーで直径を入力するとカーソルの位置に作れます',ellipse:'ドラッグで囲んだ範囲に楕円を描く（Shiftで正円）。回転はパネルか丸いハンドルで。数字キーで幅・高さを入力するとカーソルの位置に作れます',arc:'始点と終点をクリックし、円弧が通る点をクリック（図形スナップが効きます。Escでやり直し）',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直。数字キーで長さ・角度を入力できます',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直。数字キーで長さ・角度を入力できます',split:'分割する図形をクリックし、続けて切る線（または図形）をクリックして Enter。最初にクリックした図形が切られます（Esc で選び直し）',fillet:'平行でない2本の線分を順にクリック。交わっていなくても延長してつなぎ、クリックした側を残して角を丸める・面取りします（R・C は下の欄。Esc で選び直し）',offset:'オフセットする図形をクリック。複数まとめるときは Shift＋クリックで選んで Enter（図形を選んでからこのツールを押しても作れます）'};
+const HINT={dimang:'角度：頂点、1本目の辺の点、2本目の辺の点の順にクリックし、マウスで弧の位置を決めてもう一度クリック（図形スナップが効きます）',dimrad:'半径：円か円弧をクリック。クリックした向きに寸法線を引きます（あとで丸をドラッグして向きを変更）',dimdia:'直径：円か円弧をクリック。クリックした向きに寸法線を引きます（あとで丸をドラッグして向きを変更）',trim:'トリム：交わる線と線の間の、クリックした部分を消す。延長：クリックした端を次に交わる線まで伸ばす。切断：クリックした位置で2本に分ける（線・パス・円弧が対象。下の欄で切り替え、Esc で終了）',measure:'2点をクリックすると距離・角度・ΔX・ΔYを表示（図形スナップが効きます）。もう一度クリックで測り直し、Escで終了',dim:'始点と終点をクリック（図形の角・辺の中点・円の中心に吸着）、マウスで線の位置を決めてもう一度クリック。2点目は数字キーで長さ・角度を入力できます',text:'クリックした位置に文字を置く（文字の左下が基準点）。置いたあとパネルで文字・高さ・回転を編集',select:'クリックで選択（重なっている所は同じ場所をもう一度クリックで奥の図形へ）、背景を左ドラッグで範囲選択（Shiftで追加）。図形ドラッグで移動、右ドラッグで画面移動',rect:'ドラッグ、または2点をクリックして矩形を描く。図形の角・中点・辺に吸着すると、その図形に連動します（Ctrl / ⌘ で一時的に吸着なし）。1点目をクリックしたあと（またはその前）に数字キーで幅・高さを入力できます',circle:'中心をクリックして、もう一度クリック（またはドラッグ）で円を描く。中心は図形の点に吸着・連動します。中心のあと（またはその前）に数字キーで直径を入力できます',ellipse:'ドラッグ、または2点をクリックして、囲んだ範囲に楕円を描く（Shiftで正円）。回転はパネルか丸いハンドルで。1点目のあと（またはその前）に数字キーで幅・高さを入力できます',arc:'始点と終点をクリックし、円弧が通る点をクリック（図形スナップが効きます。Escでやり直し）',line:'クリックで頂点を追加。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直。数字キーで長さ・角度を入力できます',poly:'クリックで角の点、ドラッグで曲線の点。始点クリックで閉じる、ダブルクリックかEnterで終了、Shiftで水平垂直。数字キーで長さ・角度を入力できます',split:'分割する図形をクリックし、続けて切る線（または図形）をクリックして Enter。最初にクリックした図形が切られます（Esc で選び直し）',fillet:'平行でない2本の線分を順にクリック。交わっていなくても延長してつなぎ、クリックした側を残して角を丸める・面取りします（R・C は下の欄。Esc で選び直し）',offset:'オフセットする図形をクリック。複数まとめるときは Shift＋クリックで選んで Enter（図形を選んでからこのツールを押しても作れます）'};
 // the offset tool applies to the selection at once when there is one; otherwise it waits for a click on a shape
 function setTool(t){if(pivotPick)pivotPick=null;measure=null;if(t==='offset'&&tool!=='offset'&&picks.length&&makeOffset(picks))return;
   if(t==='split'&&tool!=='split'&&picks.length>=2&&makeSplit(picks))return;
@@ -2414,6 +2429,14 @@ function drawDraft(k){
     else el('path',{d:`M${a.x} ${a.y}L${b.x} ${b.y}`,...L,'stroke-dasharray':'4 3','stroke-width':1},gOver)}
   else if(draft.type==='circle'){const r=Math.hypot(draft.b.x-draft.a.x,draft.b.y-draft.a.y);
     el('circle',{cx:draft.a.x,cy:draft.a.y,r,fill:'none',stroke:'var(--sel)','stroke-width':1.5,'vector-effect':'non-scaling-stroke'},gOver);dimText(draft.a.x,draft.a.y-r-6*k,'Ø'+fmt(2*r),k)}}
+// a rectangle, ellipse or circle from the draft's two points (dragged, or clicked one after the other)
+function finishBox(d){
+  if(d.type==='rect'){const A=d.a,B=d.b,L=A.x<=B.x?A:B,Rt=A.x<=B.x?B:A,T=A.y<=B.y?A:B,Bt=A.y<=B.y?B:A,w=Rt.x-L.x,h=Bt.y-T.y;
+    if(w>=1&&h>=1){pushUndo();const s={id:newId(),name:uniqName(nm('パーツ')),type:'rect',kind:'cut',p:(()=>{const X=span(L.ex,Rt.ex,L.x,w,'x','w'),Y=span(Bt.ey,T.ey,-Bt.y,h,'y','h');return{x:X.x,y:Y.y,w:X.w,h:Y.h,r:'R' in C.env?'R':'0'}})(),st:{on:true,inset:'縫い代',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
+  else if(d.type==='ellipse'){const w=Math.abs(d.b.x-d.a.x),h=Math.abs(d.b.y-d.a.y);
+    if(w>=1&&h>=1){pushUndo();const s={id:newId(),name:uniqName(nm('楕円')),type:'ellipse',kind:'cut',p:{cx:num((d.a.x+d.b.x)/2),cy:num(-(d.a.y+d.b.y)/2),w:num(w),h:num(h)},st:{on:false,inset:'3',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
+  else{const r=Math.hypot(d.b.x-d.a.x,d.b.y-d.a.y);if(r>=0.5){pushUndo();const s={id:newId(),name:uniqName(nm('穴・円')),type:'circle',kind:'cut',p:{cx:exOf(d.a),cy:eyOf(d.a),d:String(+(2*r).toFixed(2))},st:{on:false,inset:'2',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
+  render()}
 // a new rectangle's side: both ends snapped → it spans between them; one end → it hangs on that end and keeps its size
 function span(a,b,v0,len,kp,kl){const n=num(len);if(a&&b)return{[kp]:a,[kl]:combE(b,a,-1)};if(a)return{[kp]:a,[kl]:n};if(b)return{[kp]:combE(b,n,-1),[kl]:n};return{[kp]:num(v0),[kl]:n}}
 function polySnap(m,e){const D=draft.nodes,last=D.at(-1);let q=snapAt(m,e,{extra:D.map(n=>({x:n.x,y:n.y,ex:n.ex,ey:n.ey}))});
@@ -2473,7 +2496,9 @@ svg.addEventListener('pointerdown',e=>{
     doc.shapes.push(t);setSel(t.id);setTool('select');return}
   if(tool==='text'){pushUndo();const q=snapAt(m,e);const t={id:newId(),name:uniqName(nm('テキスト')),type:'text',kind:'cut',text:nm('テキスト'),p:{x:exOf(q),y:eyOf(q),size:'5',rot:'0'},st:{on:false,inset:'3',pitch:'4',hole:'1.2'}};
     doc.shapes.push(t);setSel(t.id);setTool('select');requestAnimationFrame(()=>{const f=$('f_text');if(f){f.focus();f.select()}});return}
-  if(tool==='rect'||tool==='circle'||tool==='ellipse'){const q=snapAt(m,e);draft={type:tool,a:q,b:q};setHint(q);render();return}
+  if(tool==='rect'||tool==='circle'||tool==='ellipse'){const q=snapAt(m,e);
+    if(draft&&draft.clicked){if(!e.shiftKey||draft.type==='circle')draft.b=q;const d=draft;draft=null;finishBox(d);return}
+    draft={type:tool,a:q,b:q,sx:e.clientX,sy:e.clientY};setHint(q);render();return}
   if(tool==='arc'){const q=snapAt(m,e);
     if(!draft){draft={type:'arc',a:q,b:q,stage:1};setHint(q);render();return}
     if(draft.stage===1){if(Math.hypot(draft.a.x-q.x,draft.a.y-q.y)<0.5)return;draft.b=q;draft.c=q;draft.stage=2;render();return}
@@ -2633,13 +2658,10 @@ svg.addEventListener('pointerup',e=>{if(e.pointerType==='touch'&&touchUp(e)){ren
     const hit=C.items.filter(it=>it.g&&!it.parent&&!it.s.hide&&!it.g.isImage).filter(it=>{const b=bboxG(it.g);return b[0]>=x0&&b[2]<=x1&&b[1]>=y0&&b[3]<=y1}).map(it=>it.s.id);
     picks=d.add?d.base.concat(hit.filter(id=>!d.base.includes(id))):hit;sel=picks[0]||null;lastPanelKey=null;render();
     if(hit.length)toast(`${hit.length}個を選択しました`);return}
-  if(draft&&draft.type!=='poly'&&draft.type!=='dim'&&draft.type!=='arc'){const d=draft;draft=null;
-    if(d.type==='rect'){const A=d.a,B=d.b,L=A.x<=B.x?A:B,Rt=A.x<=B.x?B:A,T=A.y<=B.y?A:B,Bt=A.y<=B.y?B:A,w=Rt.x-L.x,h=Bt.y-T.y;
-      if(w>=1&&h>=1){pushUndo();const s={id:newId(),name:uniqName(nm('パーツ')),type:'rect',kind:'cut',p:(()=>{const X=span(L.ex,Rt.ex,L.x,w,'x','w'),Y=span(Bt.ey,T.ey,-Bt.y,h,'y','h');return{x:X.x,y:Y.y,w:X.w,h:Y.h,r:'R' in C.env?'R':'0'}})(),st:{on:true,inset:'縫い代',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
-    else if(d.type==='ellipse'){const w=Math.abs(d.b.x-d.a.x),h=Math.abs(d.b.y-d.a.y);
-      if(w>=1&&h>=1){pushUndo();const s={id:newId(),name:uniqName(nm('楕円')),type:'ellipse',kind:'cut',p:{cx:num((d.a.x+d.b.x)/2),cy:num(-(d.a.y+d.b.y)/2),w:num(w),h:num(h)},st:{on:false,inset:'3',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
-    else{const r=Math.hypot(d.b.x-d.a.x,d.b.y-d.a.y);if(r>=0.5){pushUndo();const s={id:newId(),name:uniqName(nm('穴・円')),type:'circle',kind:'cut',p:{cx:exOf(d.a),cy:eyOf(d.a),d:String(+(2*r).toFixed(2))},st:{on:false,inset:'2',pitch:'ピッチ',hole:'穴'}};fixStitchDefaults(s);doc.shapes.push(s);setSel(s.id);setTool('select');return}}
-    render()}
+  if(draft&&(draft.type==='rect'||draft.type==='ellipse'||draft.type==='circle')){const d=draft;
+    // a click without dragging keeps the first point: the second comes from another click or typed values
+    if(!d.clicked&&Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<5){d.clicked=true;render();return}
+    if(!d.clicked){draft=null;finishBox(d)}}
   if(drag&&drag.kind==='move'&&!drag.moved&&drag.click)clickPick(drag.click);
   if(drag&&drag.kind==='move'&&drag.moved){const ch=exprMoves(drag);if(ch.length)askMove(ch)}
   drag=null});
