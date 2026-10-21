@@ -1167,12 +1167,14 @@ function gapPlan(L,p,method,pos){let n=Math.floor(L/p+1e-9),r=L-n*p;
   if(r<EPS)return n?Array(n).fill(L/n):[L];
   if(!n)return[L];
   const m=method==='auto'?(r<p/2?'loosen':'tighten'):method;let base,spec;
-  if(m==='loosen'){if(pos==='both'&&n>=2){base=n-2;spec=[p+r/2,p+r/2]}else{base=n-1;spec=[p+r]}}
-  else{if(pos==='both'){base=n-1;spec=[(p+r)/2,(p+r)/2]}else{base=n;spec=[r]}}
-  const full=Array(base).fill(p);
-  if(spec.length===2)return[spec[0],...full,spec[1]];
+  // in the middle, an even number of gaps has no single middle one: the two middle gaps share the remainder
+  const two=pos==='both'||pos==='center'&&(m==='loosen'?n:n+1)%2===0;
+  if(m==='loosen'){if(two&&n>=2){base=n-2;spec=[p+r/2,p+r/2]}else{base=n-1;spec=[p+r]}}
+  else{if(two){base=n-1;spec=[(p+r)/2,(p+r)/2]}else{base=n;spec=[r]}}
+  const full=Array(base).fill(p),h=Math.floor(full.length/2);
+  if(spec.length===2)return pos==='center'?[...full.slice(0,h),...spec,...full.slice(h)]:[spec[0],...full,spec[1]];
   if(pos==='start')return[spec[0],...full];if(pos==='end')return[...full,spec[0]];
-  const h=Math.floor(full.length/2);return[...full.slice(0,h),spec[0],...full.slice(h)]}
+  return[...full.slice(0,h),spec[0],...full.slice(h)]}
 // the part of a polyline between arc lengths a and b
 function slicePoly(P,a,b){const out=[];let acc=0;
   for(let i=0;i<P.length-1;i++){const A=P[i],B=P[i+1],l=dist(A,B),s0=acc,s1=acc+l;acc=s1;if(s1<a||s0>b||!l)continue;
