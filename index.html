@@ -2098,12 +2098,16 @@ function openNum(init,auto){const K=numKind();if(!K)return;const B=$('numBox');B
       if(e.key==='Enter'){e.preventDefault();applyNum()}else if(e.key==='Escape'){e.preventDefault();closeNum()}
       else if(e.key==='Tab'){e.preventDefault();const L=numIns(),j=(L.indexOf(inp)+(e.shiftKey?-1:1)+L.length)%L.length;L[j].focus();L[j].select()}});
     inp.addEventListener('input',()=>{inp.classList.remove('err');render()})}
-  B.hidden=false;const r=B.getBoundingClientRect();B.style.left=Math.max(4,Math.min(innerWidth-r.width-4,lastPt.cx+16))+'px';B.style.top=Math.max(4,Math.min(innerHeight-r.height-4,lastPt.cy+16))+'px';
+  B.hidden=false;placeNum();
   I[0].focus();I[0].setSelectionRange(init.length,init.length);render()}
 // after a click that leaves a second point to give, the fields open by themselves (with a mouse; on touch they'd pop up the keyboard)
 function autoNum(){const K=numKind();if(K&&['seg','dimlen','rect2','ellipse2','circ2'].includes(K.k)&&$('numBox').hidden)openNum('',true)}
 // (after the click itself has been handled)
 svg.addEventListener('pointerup',e=>{if(e.pointerType==='mouse'&&!e.button)setTimeout(autoNum,0)});
+// the fields ride along at the cursor's lower right, going to its other side at the edges of the window
+function placeNum(){const B=$('numBox');if(B.hidden||!lastPt)return;const r=B.getBoundingClientRect(),g=16;
+  let x=lastPt.cx+g,y=lastPt.cy+g;if(x+r.width>innerWidth-4)x=lastPt.cx-g-r.width;if(y+r.height>innerHeight-4)y=lastPt.cy-g-r.height;
+  B.style.left=Math.max(4,x)+'px';B.style.top=Math.max(4,y)+'px'}
 $('numBox').addEventListener('focusout',()=>setTimeout(()=>{if(!$('numBox').contains(document.activeElement))closeNum()},0));
 function closeNum(){const B=$('numBox');if(B.contains(document.activeElement))document.activeElement.blur();if(B.hidden)return;B.hidden=true;render()}
 // each field as {e, v}, or null when empty (full-width digits work too)
@@ -2554,7 +2558,7 @@ svg.addEventListener('pointerdown',e=>{
     const bs=tree.filter(x=>x.type==='bool');
     drag={kind:'move',click,s,ls,bs,bp:bs.map(x=>structuredClone(x.p)),m0:m,orig:ls.map(c=>structuredClone(c)),base,ctx,moved:false,undo:JSON.stringify(doc)};render();return}
   drag={kind:'box',a:m,b:m,sx:e.clientX,sy:e.clientY,add:e.shiftKey,base:picks.slice()}});
-svg.addEventListener('pointermove',e=>{if(e.pointerType==='touch'&&touchMove(e))return;const m=toMM(e);lastPt={m,cx:e.clientX,cy:e.clientY,e:{pointerType:e.pointerType,ctrlKey:e.ctrlKey,metaKey:e.metaKey}};$('sPos').textContent=`x ${fmt(m[0])}  y ${fmt(-m[1])}`;
+svg.addEventListener('pointermove',e=>{if(e.pointerType==='touch'&&touchMove(e))return;const m=toMM(e);lastPt={m,cx:e.clientX,cy:e.clientY,e:{pointerType:e.pointerType,ctrlKey:e.ctrlKey,metaKey:e.metaKey}};placeNum();$('sPos').textContent=`x ${fmt(m[0])}  y ${fmt(-m[1])}`;
   if(pivotPick&&!drag){const q=snapAt(m,e,pivotPick.ctx);pivotPick.q=q;setHint(q);render();return}
   if(tool==='measure'&&!drag){const q=snapAt(m,e);setHint(q);if(measure&&!measure.done)measure.b=q;render();return}
   if(tool==='dim'&&!drag&&draft&&draft.dt==='ang'){if(draft.stage<3){const q=snapAt(m,e);setHint(q);if(draft.stage===1)draft.b=q;else draft.c=q}else draft.off=Math.max(1,Math.hypot(m[0]-draft.a.x,m[1]-draft.a.y));render();return}
