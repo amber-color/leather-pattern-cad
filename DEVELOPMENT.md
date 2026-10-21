@@ -99,6 +99,10 @@ alone while an IME is composing.
 - Trim tool (`tool==='trim'`, `#tMode` trim | extend | break): a path or an arc is measured by u (segment index + t, or degrees from a1);
   `trimCuts` finds where other outlines cross it, `polyRun` rebuilds the nodes of a run (whole nodes keep their expressions, cut ends are
   numbers) and `applyRuns` writes the runs (extra runs become new shapes). `joinPicks` chains open paths / arcs whose ends meet.
+- dims: `dt` absent = length; `dt:'ang'` (x1,y1 vertex, x2..y3 a point on each side, off = arc radius; `angParts`); `dt:'rad'|'dia'`
+  (cx, cy, r referring to the circle / arc, ang = direction; `radParts`). All give `g.dim` {lines, arrows, text}, so the exports need nothing
+  per type (DXF writes ° / Ø as %%d / %%c; the PDF font uses WinAnsiEncoding). The dim tool's `#dMode` picks the kind.
+- Numeric input (`#numBox`, `numKind` / `numPlan` / `applyNum`): digits or Tab while drawing; `lastPt` is the cursor over the canvas.
 - Positions are rewritten through `moveLeaf(c, fx, fy)` (fx / fy map each x / y expression; `shiftLeaf` is the numeric case).
   `cloneTree(s, mv)` takes a number (shift right) or `{fx, fy}`; array copies (`doArray`) use it with `combE(e, spacing, 1, k)`
   so a spacing expression stays an expression. Alignment (`alignPicks`) moves each pick's `moveTree` like a drag.
