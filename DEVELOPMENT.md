@@ -106,10 +106,13 @@ alone while an IME is composing.
   an empty field takes the cursor's value); after a click that leaves a second point to give they open by themselves (`autoNum`, mouse
   only), and while still empty they hand Enter / Esc / Backspace / tool letters back to the document; `lastPt` is the cursor over the canvas. Rectangles, ellipses and circles also draw by two
   clicks (`draft.clicked`, `finishBox`), and after the first click the typed sizes run toward the cursor (`numSide`).
-- Move / copy by distance: `startMove(copy)` sets `tool='move'` and `mvop` {ids, base}; the destination is clicked (`moveDest`) or typed
+- Move / copy by distance: rail tools `move` (G) / `copy` (⇧G); `moveBegin` takes the selection or lets the next click pick
+  (`mvop.picking`), then `mvop` {ids, base}; the destination is clicked (`moveDest`) or typed
   (numeric kind `mv`). Moving goes through `shiftShapes` (also used by alignment); copying through `pasteClip(clipOf(), dx, dy, true)`.
   Shifts skip expressions that refer to a shape moving by the same amount (`followsIn`, `shiftLeafBy`), so a hole placed at
   `A.中心X` isn't moved twice when A moves with it (drag, align, move, paste).
+- Rail tool `array` (Y) opens the array dialog for the selection, or for the next shape clicked.
+- On desktop the rail's tools shrink (down to 30px) before the rail scrolls (`.rail .tool{flex:0 1 40px}`).
 - Positions are rewritten through `moveLeaf(c, fx, fy)` (fx / fy map each x / y expression; `shiftLeaf` is the numeric case).
   `cloneTree(s, mv)` takes a number (shift right) or `{fx, fy}`; array copies (`doArray`) use it with `combE(e, spacing, 1, k)`
   so a spacing expression stays an expression. Alignment (`alignPicks`) moves each pick's `moveTree` like a drag.
