@@ -106,7 +106,7 @@ alone while an IME is composing.
   an empty field takes the cursor's value); after a click that leaves a second point to give they open by themselves (`autoNum`, mouse
   only), and while still empty they hand Enter / Esc / Backspace / tool letters back to the document; `lastPt` is the cursor over the canvas. Rectangles, ellipses and circles also draw by two
   clicks (`draft.clicked`, `finishBox`), and after the first click the typed sizes run toward the cursor (`numSide`).
-- Move / copy by distance: rail tools `move` (G) / `copy` (⇧G); `moveBegin` takes the selection or lets the next click pick
+- Move / copy by distance: rail tools `move` (M) / `copy` (C); `moveBegin` takes the selection or lets the next click pick
   (`mvop.picking`), then `mvop` {ids, base}; the destination is clicked (`moveDest`) or typed
   (numeric kind `mv`). Moving goes through `shiftShapes` (also used by alignment); copying through `pasteClip(clipOf(), dx, dy, true)`.
   Shifts skip expressions that refer to a shape moving by the same amount (`followsIn`, `shiftLeafBy`), so a hole placed at
