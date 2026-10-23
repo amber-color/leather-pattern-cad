@@ -116,6 +116,9 @@ alone while an IME is composing.
 - Positions are rewritten through `moveLeaf(c, fx, fy)` (fx / fy map each x / y expression; `shiftLeaf` is the numeric case).
   `cloneTree(s, mv)` takes a number (shift right) or `{fx, fy}`; array copies (`doArray`) use it with `combE(e, spacing, 1, k)`
   so a spacing expression stays an expression. Alignment (`alignPicks`) moves each pick's `moveTree` like a drag.
+- Rect / image side handles: an X or Y written from the shape's own size (`100-自分.幅`) stays as written and the size is solved
+  for the dragged side (`selfLin`); writing `combE(X, 幅)` back into 幅 there would refer to itself. As a net for every handle drag,
+  a step that leaves the shape in error is undone (`drag.last`, a second pointermove listener).
 - Moves rewrite expressions with `shSmart` (adjust a trailing constant); a drag that changed expression positions asks
   for confirmation (`mvModal`).
 - Japanese IME: never act on Enter while composing (`composing(e)`), or text is committed twice.
