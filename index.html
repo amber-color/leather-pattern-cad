@@ -13,12 +13,13 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/clipper-lib@6.4.2/clipper.js"></script>
 <style>
-/* Layout: tool rail | taupe drawing canvas | inspector. */
+/* Layout: tool rail | drawing canvas | inspector. The canvas follows the theme: paper-white with ink-dark lines in light mode,
+   a dark cutting mat with light lines in dark mode. */
 :root{
   --bg:#eef0ec; --panel:#f8f9f6; --line:#d3d8cf; --fg:#1f2a24; --muted:#5f6d64;
   --accent:#b8611f; --accent-soft:#f3e1d1; --danger:#b3261e; --ok:#2f7a4b;
-  --mat:#363331; --mat-minor:rgba(255,255,255,.07); --mat-major:rgba(255,255,255,.16);
-  --cut:#f4efe2; --lred:#ff6b5e; --lcyan:#3fd6f0; --guide:#9fc3b1; --stitch:#f0a94a; --sel:#ffb36b; --irr:#ff6f6f; --frame:#b9a7ff; --osnap:#7fe6ff; --ax-x:#ff7f6e; --ax-y:#7fdc8f; --ck:#8a4d1c; --cs:#1f5f8b; --cn:#b8611f; --cb:#8a3fa0;
+  --mat:#faf8f3; --mat-minor:rgba(40,30,20,.07); --mat-major:rgba(40,30,20,.16); --tint:rgba(60,45,30,.045);
+  --cut:#1f1b17; --lred:#d42a1d; --lcyan:#0b8fb2; --guide:#3f7a5f; --stitch:#c0630c; --sel:#d9620d; --irr:#d93a2f; --frame:#6a4fd0; --osnap:#0a7fb0; --ax-x:#cf3f2b; --ax-y:#2e9445; --ck:#8a4d1c; --cs:#1f5f8b; --cn:#b8611f; --cb:#8a3fa0;
   --ui:"IBM Plex Sans JP",system-ui,-apple-system,"Hiragino Sans",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
   color-scheme:light;
@@ -27,11 +28,13 @@
   --bg:#141916; --panel:#1b211d; --line:#2e3832; --fg:#e4e9e3; --muted:#93a198;
   --accent:#e58a45; --accent-soft:#3a2a1d; --danger:#ef7b70; --ok:#6cc08d;
   --mat:#262423; --ck:#e5a46a; --cs:#8cc4e8; --cn:#f0a94a; --cb:#d39be8; --mat-minor:rgba(255,255,255,.05); --mat-major:rgba(255,255,255,.12);
+  --cut:#f4efe2; --lred:#ff6b5e; --lcyan:#3fd6f0; --guide:#9fc3b1; --stitch:#f0a94a; --sel:#ffb36b; --irr:#ff6f6f; --frame:#b9a7ff; --osnap:#7fe6ff; --ax-x:#ff7f6e; --ax-y:#7fdc8f; --tint:rgba(244,239,226,.06);
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#141916; --panel:#1b211d; --line:#2e3832; --fg:#e4e9e3; --muted:#93a198;
   --accent:#e58a45; --accent-soft:#3a2a1d; --danger:#ef7b70; --ok:#6cc08d;
   --mat:#262423; --ck:#e5a46a; --cs:#8cc4e8; --cn:#f0a94a; --cb:#d39be8; --mat-minor:rgba(255,255,255,.05); --mat-major:rgba(255,255,255,.12);
+  --cut:#f4efe2; --lred:#ff6b5e; --lcyan:#3fd6f0; --guide:#9fc3b1; --stitch:#f0a94a; --sel:#ffb36b; --irr:#ff6f6f; --frame:#b9a7ff; --osnap:#7fe6ff; --ax-x:#ff7f6e; --ax-y:#7fdc8f; --tint:rgba(244,239,226,.06);
   color-scheme:dark}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13px;overflow:hidden}
@@ -1459,7 +1462,7 @@ function render(){
       if(H.fill)el('path',{d,'fill-rule':'evenodd',fill:hc,'fill-opacity':.22,stroke:'none',...A},grp);
       if(H.lines.length)el('path',{d:H.lines.map(P=>dOf(P,false)).join(''),fill:'none',stroke:hc,'stroke-opacity':.55,'stroke-width':.8,'vector-effect':'non-scaling-stroke',...A},grp);
       if(H.dots.length){const r=H.r;el('path',{d:H.dots.map(([x,y])=>`M${fmt(x-r,3)} ${fmt(y,3)}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0`).join(''),fill:hc,'fill-opacity':.6,stroke:'none',...A},grp)}}
-    el('path',{d,'fill-rule':'evenodd',fill:g.closed&&!faint?(it.hatch?'rgba(0,0,0,0)':'rgba(244,239,226,0.06)'):'none',stroke:on?'var(--sel)':LN.scr,
+    el('path',{d,'fill-rule':'evenodd',fill:g.closed&&!faint?(it.hatch?'rgba(0,0,0,0)':'var(--tint)'):'none',stroke:on?'var(--sel)':LN.scr,
       'stroke-width':on?Math.max(2,LN.sw):LN.sw,'stroke-dasharray':faint?'3 3':LN.dash,'vector-effect':'non-scaling-stroke','stroke-linejoin':'round'},grp);
     el('path',{d,fill:'none',stroke:'transparent','stroke-width':12,'vector-effect':'non-scaling-stroke'},grp);
     if(it.st){const sg=faint?el('g',{'pointer-events':'none',opacity:s.noexp?.45:1},gShapes):grp;
