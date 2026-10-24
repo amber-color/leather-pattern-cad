@@ -1306,6 +1306,7 @@ function edgeMapper(mats,insB){mats=mats.map(m=>({...m,tol:Math.abs(m.st.ins-ins
       if(fr>EPS)o.from=num(fr);if(to>EPS)o.to=num(to)}
     return o}}
 const curEdge=()=>{const it=C.byId[sel];return it&&it.st&&selEdge?it.st.edges.find(x=>x.key===selEdge.key):null};
+const LASTG=new WeakMap();
 function compute(){
   const{env,errs}=envOf();const out={env,verr:errs,items:[],byId:{}};
   const parent={};for(const s of doc.shapes)if(s.type==='bool')for(const id of s.ops)parent[id]=s.id;
@@ -1317,6 +1318,8 @@ function compute(){
     if(!ts.length)throw Error(`図形「${name}」が見つかりません`);if(ts.length>1)throw Error(`「${name}」という名前の図形が${ts.length}個あります`);
     let g;try{g=gOf(ts[0])}catch(e){throw Error(/循環/.test(e.message)?`図形「${name}」との参照が循環しています`:`図形「${name}」にエラーがあります`)}return shapeProp(ts[0],g,prop)}});
   for(const s of doc.shapes){const it={s,parent:parent[s.id]||null};try{it.g=gOf(s)}catch(e){it.err=e.message}
+    // the last outline that worked, kept to show a shape in error where it was (in red) instead of letting it vanish
+    if(it.g)LASTG.set(s,it.g);else it.ghost=LASTG.get(s)||null;
     if(it.g&&it.g.closed&&!it.g.isText&&s.fill&&HATCHES[s.fill.t]&&s.fill.t!=='none'){try{const pt=s.fill.t==='fill'?1:evalExpr(s.fill.pitch||'2',sEnv(s));if(!(pt>0))throw Error('塗りの間隔は正の値に');it.hatch=hatchOf(it.g.paths,s.fill.t,pt)}catch(e){it.fillerr=e.message}}
     // stitch holes come from each shape's own settings, materials included; an operation is stitched on its own outline
     // only while none of its materials is; a piece (分割) follows the same rule with its source and cutters
@@ -1430,7 +1433,7 @@ function render(){
   const picked=i=>picks.includes(i.s.id)||i.s.id===sel;
   const isImg=i=>i.s.type==='image',rest=C.items.filter(i=>!isImg(i));
   const order=C.items.filter(isImg).concat(rest.filter(i=>i.parent&&!picked(i)),rest.filter(i=>!i.parent&&!picked(i)),rest.filter(picked));
-  for(const it of order){const s=it.s,g=it.g;if(!g)continue;const on=picks.includes(s.id),mat=!!it.parent;
+  for(const it of order){const s=it.s,g=it.g;if(!g){if(it.ghost&&!s.hide)drawGhost(it,k);continue}const on=picks.includes(s.id),mat=!!it.parent;
     // a hidden part is left out (shown faint only while it is selected, so it can be shown again)
     if(s.hide&&!on&&s.id!==sel)continue;
     const faint=mat&&s.id!==sel;
@@ -1502,6 +1505,13 @@ function drawEdges(it,k){if(!it.st)return;
         el('rect',{x:ends[0][0]-4.5*k,y:ends[0][1]-4.5*k,width:9*k,height:9*k,rx:4.5*k,fill:'var(--panel)',stroke:'var(--stitch)','stroke-width':2,'vector-effect':'non-scaling-stroke','data-h':'ra',style:'cursor:grab',class:'h'},gOver);
         el('rect',{x:ends[1][0]-4.5*k,y:ends[1][1]-4.5*k,width:9*k,height:9*k,rx:4.5*k,fill:'var(--panel)',stroke:'var(--stitch)','stroke-width':2,'vector-effect':'non-scaling-stroke','data-h':'rb',style:'cursor:grab',class:'h'},gOver)}}
   }}
+// a shape in error, drawn in red where it last worked; it can still be clicked to select it and fix it in the panel
+function drawGhost(it,k){const s=it.s,g=it.ghost,on=picks.includes(s.id)||s.id===sel,grp=el('g',{'data-id':s.id,'pointer-events':'auto',class:'ghost'},gShapes);
+  const A={stroke:'var(--danger)','stroke-width':on?2.5:1.5,fill:'none','stroke-dasharray':'6 3','vector-effect':'non-scaling-stroke','pointer-events':'none'};
+  if(g.isDim){const D=g.dim,d=D.lines.map(([a,b])=>`M${a[0]} ${a[1]}L${b[0]} ${b[1]}`).join('');el('path',{d,...A},grp);el('path',{d,stroke:'transparent','stroke-width':10,fill:'none','vector-effect':'non-scaling-stroke'},grp);return}
+  if(g.isText){const t=el('text',{x:g.x,y:g.y,'font-size':g.size,'font-family':TEXT_FONT,fill:'var(--danger)',transform:g.rot?`rotate(${g.rot} ${g.x} ${g.y})`:''},grp);t.textContent=g.str;return}
+  const d=dPaths(g.paths,g.closed);el('path',{d,...A},grp);el('path',{d,stroke:'transparent','stroke-width':10,fill:'none','vector-effect':'non-scaling-stroke'},grp);
+  const b=bboxG(g),t=el('text',{x:(b[0]+b[2])/2,y:b[1]-6*k,'font-size':11*k,fill:'var(--danger)','text-anchor':'middle','font-family':'var(--ui)','pointer-events':'none'},grp);t.textContent=s.name+(LANG==='en'?': error':'：エラー')}
 function drawSel(it,k){const s=it.s,g=it.g;if(g.isText)return;drawEdges(it,k);if(s.lock)return;
   if(ROTATABLE(s.type)&&!it.parent){const bb=bboxG(g),hx=(bb[0]+bb[2])/2,hy=bb[1]-26*k;
     el('line',{x1:hx,y1:bb[1],x2:hx,y2:hy,stroke:'var(--sel)','stroke-width':1,'stroke-dasharray':'2 2','vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver);

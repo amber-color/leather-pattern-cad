@@ -121,6 +121,8 @@ alone while an IME is composing.
 - Rect / image side handles: an X or Y written from the shape's own size (`100-自分.幅`) stays as written and the size is solved
   for the dragged side (`selfLin`); writing `combE(X, 幅)` back into 幅 there would refer to itself. As a net for every handle drag,
   a step that leaves the shape in error is undone (`drag.last`, a second pointermove listener).
+- A shape in error keeps its last outline that worked (`LASTG`, a WeakMap on the shape object; `it.ghost`) and is drawn red and
+  dashed by `drawGhost` (selectable, never exported or snapped to; `it.g` stays empty, so the rest of the code sees it as before).
 - Moves rewrite expressions with `shSmart` (adjust a trailing constant); a drag that changed expression positions asks
   for confirmation (`mvModal`).
 - Japanese IME: never act on Enter while composing (`composing(e)`), or text is committed twice.
