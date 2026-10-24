@@ -98,7 +98,9 @@ alone while an IME is composing.
   sampled outline (an arc also goes to DXF as ARC). The arc tool takes three clicks (`arc3`).
 - Trim tool (`tool==='trim'`, `#tMode` trim | extend | break): a path or an arc is measured by u (segment index + t, or degrees from a1);
   `trimCuts` finds where other outlines cross it, `polyRun` rebuilds the nodes of a run (whole nodes keep their expressions, cut ends are
-  numbers) and `applyRuns` writes the runs (extra runs become new shapes). `joinPicks` chains open paths / arcs whose ends meet.
+  numbers) and `applyRuns` writes the runs (extra runs become new shapes). `joinPicks` chains open paths / arcs whose ends meet; the line that stays is one other shapes build on or refer to beyond its
+  nodes (else the first picked), node references (`点N` / `始点` / `終点`) move onto the joined path's new indices, and a join that
+  would leave the path in error is rolled back.
 - dims: `dt` absent = length; `dt:'ang'` (x1,y1 vertex, x2..y3 a point on each side, off = arc radius; `angParts`); `dt:'rad'|'dia'`
   (cx, cy, r referring to the circle / arc, ang = direction; `radParts`). All give `g.dim` {lines, arrows, text}, so the exports need nothing
   per type (DXF writes ° / Ø as %%d / %%c; the PDF font uses WinAnsiEncoding). The dim tool's `#dMode` picks the kind.

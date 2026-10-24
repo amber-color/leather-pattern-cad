@@ -638,7 +638,7 @@ const EN_EXACT={
 };
 // [Japanese with {0}…, English, optional {index:{ja:en}} for words that read differently inside the sentence]
 const EN_PAT=[
-  ['{0}が自分の値の式で決まっているので、この辺はパネルで編集してください','{0} is set from the shape’s own size, so edit this side in the panel',{0:'T'}],  ['{0} mm 先にコピーしました（続けてコピー、Esc で終了）','Copied {0} mm away (copy again, or Esc to finish)'],    ['「{0}」：{1}','“{0}”: {1}',{1:'T'}],  ['「{0}」の頂点はほかの図形から参照されています。番号がずれていないか確かめてください','Other shapes refer to the nodes of “{0}”; check that the node numbers still match'],['{0}本を結合して閉じた形にしました','Joined {0} into a closed shape'],['{0}本を1本に結合しました','Joined {0} into one line'],
+  ['{0}はほかの図形から使われているので、まとめて結合できません','{0}: other shapes are built on these, so they can’t all be joined'],['「{0}」の中心や半径がほかの図形から参照されているので、結合できません','Other shapes refer to the centre or radius of “{0}”, so it can’t be joined'],['{0}本を「{1}」に結合しました','Joined {0} into “{1}”'],['結合するとエラーになるので、やめました：{0}','Joining would give an error, so it was not done: {0}',{0:'T'}],  ['{0}が自分の値の式で決まっているので、この辺はパネルで編集してください','{0} is set from the shape’s own size, so edit this side in the panel',{0:'T'}],  ['{0} mm 先にコピーしました（続けてコピー、Esc で終了）','Copied {0} mm away (copy again, or Esc to finish)'],    ['「{0}」：{1}','“{0}”: {1}',{1:'T'}],  ['「{0}」の頂点はほかの図形から参照されています。番号がずれていないか確かめてください','Other shapes refer to the nodes of “{0}”; check that the node numbers still match'],['{0}本を結合して閉じた形にしました','Joined {0} into a closed shape'],['{0}本を1本に結合しました','Joined {0} into one line'],
   ['{0}を入力してください','Enter the {0}',{0:'T'}],['{0}は1〜200の整数にしてください','{0} must be a whole number from 1 to 200',{0:'T'}],['間隔X：{0}','Spacing X: {0}',{0:'T'}],['間隔Y：{0}','Spacing Y: {0}',{0:'T'}],['中心X：{0}','Centre X: {0}',{0:'T'}],['中心Y：{0}','Centre Y: {0}',{0:'T'}],['個数：{0}','Count: {0}',{0:'T'}],['列数：{0}','Columns: {0}',{0:'T'}],['行数：{0}','Rows: {0}',{0:'T'}],['角度：{0}','Angle: {0}',{0:'T'}],['C：{0}','C: {0}',{0:'T'}],['{0}個複製しました（{1}個にエラー）','Made {0} copies ({1} with errors)'],['{0}個複製しました。まとめて選択中です','Made {0} copies; they are all selected'],['{0}の角を面取りしました','Chamfered the corner: {0}',{0:'T'}],['頂点{0}の角を面取りしました','Chamfered the corner at node {0}'],['「{0}」とつないで角を面取りしました','Joined with “{0}” and chamfered the corner'],['面取り {0}','Chamfer {0}'],['角{0}の丸め⇔面取りを切り替え','Switch corner {0} between round and chamfer'],['頂点{0}の丸め⇔面取りを切り替え','Switch node {0} between round and chamfer'],
   ['{0} mm（縦横比を保つ）','{0} mm (keeps the aspect ratio)'],
   ['非表示 {0} · すべて表示','Hidden {0} · show all'],['下絵を {0}% にしました','Underlay scaled to {0}%'],['{0}個をコピーしました','Copied {0}'],['{0}個を貼り付けました（変数 {1}個も追加）','Pasted {0} (and {1} variables)'],['{0}個を貼り付けました','Pasted {0}'],['面積の合計 {0} cm²（{1} デシ）','Total area {0} cm² ({1} dm²)'],['面積 {0} cm²（{1} デシ）','Area {0} cm² ({1} dm²)'],['計測：{0}','Measure: {0}'],
@@ -2287,28 +2287,63 @@ function drawTrim(k){const h=thover;if(!h)return;const s=byId(h.id),T=trimTarget
   if(mode==='trim')L(run(pl.gone[0],pl.gone[1]),'var(--danger)',4,'1 5');
   else if(mode==='extend'){if(T.arc){const a=pl.end?T.g.sw:-pl.d,b=pl.end?T.g.sw+pl.d:0;L(run(a,b),'var(--sel)',2,'4 3')}else L([pl.from,pl.to],'var(--sel)',2,'4 3')}
   else{const q=trimPt(T,pl.u);el('circle',{cx:q[0],cy:q[1],r:5*k,fill:'none',stroke:'var(--danger)','stroke-width':2,'vector-effect':'non-scaling-stroke','pointer-events':'none'},gOver)}}
-// join: open paths and arcs whose ends meet become one path (closed when the chain comes back to its start)
+// join: open paths and arcs whose ends meet become one path (closed when the chain comes back to its start). The picking order
+// doesn't matter: references between the picked lines, and references from other shapes to their nodes, move onto the joined path
 const joinable=ss=>ss.length>=2&&ss.every(s=>s&&(s.type==='poly'&&!s.closed||s.type==='arc'&&C.byId[s.id]&&C.byId[s.id].g&&C.byId[s.id].g.sw<360-1e-9));
+// a node reference: 点3X / 始点Y … as [node key, axis], or null for anything else (左, 幅, 中心X …)
+const nodeRef=prop=>{const m=/^(点\d+|始点|終点)([XY])$/.exec(prop||'');return m?[m[1],m[2]]:null};
 function joinPicks(){const ss=picks.map(byId).filter(Boolean);if(!joinable(ss))return;
   if(ss.some(s=>!C.byId[s.id]||!C.byId[s.id].g)){toast('エラーのある図形は結合できません');return}if(ss.some(s=>s.lock)){toast('ロック中のパーツは結合できません');return}
-  const tgt=ss[0],gone=ss.slice(1);if(blockedByRefs(gone,'結合')||blockedBySrc(gone,'結合'))return;
+  const ids=new Set(ss.map(x=>x.id)),names=new Map(ss.map(x=>[x.name,x])),others=doc.shapes.filter(o=>!ids.has(o.id));
+  // the line that has to stay: one an offset / split / operation is built on, or one referred to by more than its nodes
+  const hard=new Set();
+  for(const o of others){if(o.type==='offset')(o.src||[]).forEach(id=>ids.has(id)&&hard.add(byId(id)));if(o.type==='bool')o.ops.forEach(id=>ids.has(id)&&hard.add(byId(id)));
+    for(const x of ss)if(pieceUses(o,x.id))hard.add(x);
+    for(const[ob,k]of exprSlots(o))for(const t of refsIn(ob[k]))if(names.has(t.name)&&!nodeRef(t.prop))hard.add(names.get(t.name))}
+  if(hard.size>1){toast(`${[...hard].map(x=>`「${x.name}」`).join('')}はほかの図形から使われているので、まとめて結合できません`,4000);return}
+  const tgt=hard.size?[...hard][0]:ss[0],gone=ss.filter(x=>x!==tgt);
+  if(tgt.type==='arc'&&hard.size){toast(`「${tgt.name}」の中心や半径がほかの図形から参照されているので、結合できません`,4000);return}
   const tg=tgt.type==='poly'?C.byId[tgt.id].g:{org:[0,0]},{at,hv}=nodeIn(tg),same=x=>x.type==='poly'&&tgt.type==='poly'&&!C.byId[x.id].g.rot&&!tg.rot&&String(x.p&&hasE(x.p.x)?x.p.x:'0')===String(hasE(tgt.p.x)?tgt.p.x:'0')&&String(x.p&&hasE(x.p.y)?x.p.y:'0')===String(hasE(tgt.p.y)?tgt.p.y:'0');
-  // each piece as nodes in the target's terms, with its two ends on the drawing
+  // each piece as nodes in the target's terms, with its two ends on the drawing; org lists the node keys (name + 点3 …) each node stands for
   const P=ss.map(x=>{const g=C.byId[x.id].g,N=x.type==='arc'?g.fnodes:g.nodes;
-    const nodes=same(x)?structuredClone(x.nodes):N.map((n,i)=>{const o=at([n.x,n.y]);if(n.hi)o.hi=hv(n.hi);if(n.ho)o.ho=hv(n.ho);const src=x.type==='poly'&&x.nodes[i];if(src&&hasE(src.r)){o.r=src.r;if(src.ct)o.ct=src.ct}return o});
-    return{nodes,a:[N[0].x,N[0].y],b:[N.at(-1).x,N.at(-1).y]}});
-  const tol=0.05,ch={nodes:P[0].nodes,a:P[0].a,b:P[0].b};let rest=P.slice(1);
+    const nodes=(same(x)?structuredClone(x.nodes):N.map((n,i)=>{const o=at([n.x,n.y]);if(n.hi)o.hi=hv(n.hi);if(n.ho)o.ho=hv(n.ho);const src=x.type==='poly'&&x.nodes[i];if(src&&hasE(src.r)){o.r=src.r;if(src.ct)o.ct=src.ct}return o})).map(n=>({...n,_own:x.name}));
+    const org=N.map((n,i)=>[x.type==='arc'?(i===0?x.name+'\u0001始点':i===N.length-1?x.name+'\u0001終点':null):x.name+'\u0001点'+(i+1)].filter(Boolean));
+    return{nodes,org,a:[N[0].x,N[0].y],b:[N.at(-1).x,N.at(-1).y]}});
+  // a node whose position refers to one of the picked lines
+  const onPick=n=>[n.x,n.y].some(e=>refsIn(e).some(t=>names.has(t.name===SELF?n._own:t.name)));
+  // where two nodes meet, the kept one takes the other's position when its own was snapped to a picked line (X = 線A.点2X),
+  // or it would end up referring to itself
+  const take=(keep,from)=>{if(onPick(keep)&&!onPick(from)){keep.x=from.x;keep.y=from.y;keep._own=from._own}};
+  const tol=0.05,ch={nodes:P[0].nodes,org:P[0].org,a:P[0].a,b:P[0].b};let rest=P.slice(1);
   while(rest.length){const pc=rest.find(x=>[x.a,x.b].some(q=>dist(q,ch.a)<tol||dist(q,ch.b)<tol));
     if(!pc){toast('端どうしがつながっていない線があります（端を図形スナップでつないでから結合してください）',4000);return}
-    const rv=()=>pc.nodes.slice().reverse().map(revNode);
-    if(dist(ch.b,pc.a)<tol||dist(ch.b,pc.b)<tol){const fw=dist(ch.b,pc.a)<tol,ns=fw?pc.nodes:rv(),l=ch.nodes.at(-1);if(ns[0].ho)l.ho=ns[0].ho;else delete l.ho;ch.nodes=ch.nodes.concat(ns.slice(1));ch.b=fw?pc.b:pc.a}
-    else{const fw=dist(ch.a,pc.b)<tol,ns=fw?pc.nodes:rv(),f=ch.nodes[0];if(ns.at(-1).hi)f.hi=ns.at(-1).hi;else delete f.hi;ch.nodes=ns.slice(0,-1).concat(ch.nodes);ch.a=fw?pc.a:pc.b}
+    const fwd=f=>f?{ns:pc.nodes,os:pc.org}:{ns:pc.nodes.slice().reverse().map(revNode),os:pc.org.slice().reverse()};
+    // the meeting nodes become one: the chain's node stays and takes the other's handle and keys
+    if(dist(ch.b,pc.a)<tol||dist(ch.b,pc.b)<tol){const f=dist(ch.b,pc.a)<tol,{ns,os}=fwd(f),l=ch.nodes.at(-1);if(ns[0].ho)l.ho=ns[0].ho;else delete l.ho;
+      take(l,ns[0]);ch.org.at(-1).push(...os[0]);ch.nodes=ch.nodes.concat(ns.slice(1));ch.org=ch.org.concat(os.slice(1));ch.b=f?pc.b:pc.a}
+    else{const f=dist(ch.a,pc.b)<tol,{ns,os}=fwd(f),n0=ch.nodes[0];if(ns.at(-1).hi)n0.hi=ns.at(-1).hi;else delete n0.hi;
+      take(n0,ns.at(-1));ch.org[0].push(...os.at(-1));ch.nodes=ns.slice(0,-1).concat(ch.nodes);ch.org=os.slice(0,-1).concat(ch.org);ch.a=f?pc.a:pc.b}
     rest=rest.filter(x=>x!==pc)}
-  let closed=false;if(ch.nodes.length>2&&dist(ch.a,ch.b)<tol){const l=ch.nodes.pop();if(l.hi)ch.nodes[0].hi=l.hi;closed=true}
-  pushUndo();
+  let closed=false;if(ch.nodes.length>2&&dist(ch.a,ch.b)<tol){const l=ch.nodes.pop();if(l.hi)ch.nodes[0].hi=l.hi;take(ch.nodes[0],l);ch.org[0].push(...ch.org.pop());closed=true}
+  const idx=new Map();ch.org.forEach((ks,j)=>ks.forEach(k=>idx.set(k,j+1)));
+  // a reference to a picked line's node → the joined path's node (自分.点j inside it, 名前.点j elsewhere); inside, any other reference
+  // to a picked line (its 左, 幅 …) would now point at the path itself, so it is written as its value
+  const rw=(e,own)=>{let t;try{t=tokenize(String(e))}catch(x){return e}let out=String(e);
+    for(const k of t.filter(k=>k.k==='ref').reverse()){const nmv=k.name===SELF?own:k.name;if(!nmv||!names.has(nmv))continue;const nr=nodeRef(k.prop),j=nr&&idx.get(nmv+'\u0001'+nr[0]);let rep=null;
+      if(j)rep=(own?(LANG==='en'?'self':SELF):refName(tgt.name))+'.'+propOut(`点${j}${nr[1]}`);
+      else if(own){try{const v=evalExpr(refName(nmv)+'.'+propOut(k.prop),C.env);rep=v<0?`(${num(v)})`:num(v)}catch(x){}}
+      if(rep!=null)out=out.slice(0,k.at)+rep+out.slice(k.end)}
+    return out};
+  const undo=JSON.stringify(doc);pushUndo();
+  for(const n of ch.nodes){const own=n._own;delete n._own;for(const k of['x','y','r'])if(hasE(n[k]))n[k]=rw(n[k],own);for(const h of['hi','ho'])if(n[h])n[h]=n[h].map(v=>rw(v,own))}
+  for(const o of others)for(const[ob,k]of exprSlots(o))ob[k]=rw(ob[k],null);
   if(tgt.type==='poly'){tgt.nodes=ch.nodes;tgt.closed=closed}
   else{const o={id:tgt.id,name:tgt.name,type:'poly',kind:tgt.kind,closed,nodes:ch.nodes,p:{},st:tgt.st};for(const key of['fill','noexp','hide'])if(tgt[key]!=null)o[key]=tgt[key];doc.shapes.splice(doc.shapes.indexOf(tgt),1,o)}
-  doc.shapes=doc.shapes.filter(x=>!gone.includes(x));setSel(tgt.id);lastPanelKey=null;render();toast(closed?`${ss.length}本を結合して閉じた形にしました`:`${ss.length}本を1本に結合しました`)}
+  doc.shapes=doc.shapes.filter(x=>!gone.includes(x));setSel(tgt.id);lastPanelKey=null;render();
+  // a joined path that doesn't work is not kept
+  const bad=C.byId[tgt.id]&&C.byId[tgt.id].err;
+  if(bad){doc=JSON.parse(undo);undoS.pop();picks=ss.map(x=>x.id);sel=picks[0];lastPanelKey=null;render();toast(`結合するとエラーになるので、やめました：${bad}`,5000);return}
+  toast(closed?`${ss.length}本を結合して閉じた形にしました`:`${ss.length}本を「${tgt.name}」に結合しました`)}
 function keepBetween(){const b=pendingBetween;if(!b)return;pendingBetween=null;pushUndo();
   const o={id:newId(),name:uniqName(b.name+nm(' の間の辺')),type:'poly',kind:b.kind,nodes:b.nodes,closed:false,p:b.rot?{...b.rot}:{},st:{on:false,inset:'3',pitch:'4',hole:'1.2'}};
   doc.shapes.push(o);lastPanelKey=null;render();toast('間の辺を別の線として残しました')}
