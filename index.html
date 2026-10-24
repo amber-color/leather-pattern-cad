@@ -2402,7 +2402,7 @@ function setTool(t){if(pivotPick)pivotPick=null;measure=null;if(t==='offset'&&to
   if(t==='array'&&sel){openArray();t='select'}
   mvop=null;tool=t;draft=null;snapHint=null;fsel=null;fhover=null;$('fRBox').hidden=t!=='fillet';$('tMBox').hidden=t!=='trim';$('dMBox').hidden=t!=='dim';thover=null;document.querySelectorAll('.tool[data-tool]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));svg.className.baseVal=t==='select'||t==='offset'||t==='split'?'':'draw';$('sHint').textContent=HINT[t==='dim'&&dimMode()!=='len'?'dim'+dimMode():t];if(isMv())moveBegin(t==='copy');render()}
 document.querySelectorAll('.tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
-function contentBB(){const{items,bb}=exportItems(expOpts('pdf'),true);return items.length?bb:null}
+function contentBB(){const{items,bb}=exportItems(expOpts('pdf'),true);return items.length?printBB(bb):null}
 // printable area of every page that the PDF button would produce, with the paper edge drawn faintly around it
 function drawFrame(k){const bb=contentBB();if(!bb)return;const L=pdfLayout(bb,{size:UI.pdfSize||'A4',orient:UI.pdfOrient||'auto'}),{aw,ah,cols,rows,M,pw,ph}=L;
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=bb[0]+c*aw,y=bb[1]+r*ah;
@@ -2964,6 +2964,8 @@ function buildDXF(opt){const{items}=exportItems(opt);const L=[];const add=(...a)
     else for(const p of g.paths)poly(layer,p,g.closed)}
   add(0,'ENDSEC',0,'EOF');return L.join('\n')+'\n'}
 const PAPERS={A4:[210,297,'A4'],A3:[297,420,'A3'],A5:[148,210,'A5'],B4:[257,364,'B4'],B5:[182,257,'B5'],Letter:[215.9,279.4,'レター']};
+// the printed area runs 1 mm past the outermost lines, so a line on the edge isn't cut down to half its width
+const PRINT_PAD=1,printBB=bb=>[bb[0]-PRINT_PAD,bb[1]-PRINT_PAD,bb[2]+PRINT_PAD,bb[3]+PRINT_PAD];
 function pdfLayout(bb,o){const M=10,BAR=6,bw=bb[2]-bb[0]+0.01,bh=bb[3]-bb[1]+0.01;
   if(o.size==='fit'){const pw=Math.max(bw+2*M,120),ph=bh+2*M+BAR;return{pw,ph,aw:pw-2*M,ah:ph-2*M-BAR,cols:1,rows:1,M,label:`図形に合わせる（${fmt(pw,0)} × ${fmt(ph,0)} mm）`}}
   const[a,b,name]=PAPERS[o.size]||PAPERS.A4;const cand=o.orient==='portrait'?[[a,b]]:o.orient==='landscape'?[[b,a]]:[[a,b],[b,a]];let best=null;
@@ -2975,7 +2977,7 @@ function textMask(str,size){const pxmm=400/25.4,px=size*pxmm,cv=document.createE
   const d=ctx.getImageData(0,0,w,h).data,rb=Math.ceil(w/8);let bin='';
   for(let y=0;y<h;y++){const row=new Uint8Array(rb);for(let x=0;x<w;x++)if(d[(y*w+x)*4+3]>110)row[x>>3]|=0x80>>(x&7);bin+=String.fromCharCode.apply(null,row)}
   return{w,h,bin,wmm:w/pxmm,hmm:h/pxmm}}
-function buildPDF(o,opt){const{items,bb}=exportItems(opt);const K=72/25.4;
+function buildPDF(o,opt){const{items,bb:bb0}=exportItems(opt),bb=printBB(bb0);const K=72/25.4;
   const L=pdfLayout(bb,o);const{pw,ph,aw,ah,cols,rows,M}=L;
   const masks=new Map();let mi=0;for(const{s:sh,g,out,name}of items){if(out&&g.isText&&g.str)masks.set(sh.id,{name:'Im'+(++mi),m:textMask(g.str,g.size)});if(name)masks.set('n:'+sh.id,{name:'Im'+(++mi),m:textMask(name.str,NAME_SIZE)})}const objs=[];const pages=[];
   const F=v=>(Math.round(v*1000)/1000).toString();
@@ -3039,7 +3041,7 @@ function pdfOpts(){return{size:$('pdfSize').value,orient:(document.querySelector
 let expFmt='pdf';
 function updatePdfInfo(){const pdf=expFmt==='pdf',o=pdf?pdfOpts():{size:'fit'},{bb,items}=exportItems(expOpts(expFmt));$('pdfOrient').classList.toggle('off',o.size==='fit');
   if(!items.length){$('pdfInfo').innerHTML='<span>書き出す図形がありません</span><span></span>';$('pdfPrev').innerHTML='';$('pdfGo').disabled=true;return}$('pdfGo').disabled=false;
-  const L=pdfLayout(bb,o);renderPdfPreview(L,items,bb);
+  const pb=printBB(bb),L=pdfLayout(pb,o);renderPdfPreview(L,items,pb);
   $('pdfInfo').innerHTML=(pdf?`<span>用紙</span><span>${L.label}</span><span>枚数</span><span>${L.cols*L.rows}枚${L.cols*L.rows>1?`（横${L.cols} × 縦${L.rows}）`:''}</span>`:'')+`<span>型紙</span><span>${fmt(bb[2]-bb[0])} × ${fmt(bb[3]-bb[1])} mm</span>`}
 function openExport(f){expFmt=f;const pdf=f==='pdf',o=expOpts(f);
   $('pdfTitle').textContent={pdf:'実寸PDFの書き出し',svg:'SVGの書き出し',dxf:'DXFの書き出し'}[f];$('expPaper').style.display=pdf?'contents':'none';$('pdfNote').hidden=!pdf;
